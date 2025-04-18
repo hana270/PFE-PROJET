@@ -1,0 +1,127 @@
+<app-layout>
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+    <!-- Navbar -->
+    <nav class="navbar navbar-main navbar-expand-lg px-0 mx-3 shadow-none border-radius-xl" id="navbarBlur"
+      data-scroll="true">
+      <div class="container-fluid py-1 px-3">
+  
+    <!-- End Navbar -->
+    <!---------------------------------  DETAIL PERSONNALISE BASSIN  
+  ---------------------------------  ---------------------------------  ---------------------------------  
+  ---------------------------------  ---------------------------------  ---------------------------------  
+  -->
+  <div class="container">
+    <div class="row">
+      <div class="col-full">
+        <!-- Chargement en cours -->
+        <div *ngIf="loading" class="loading-container">
+          <div class="spinner"></div>
+          <p style="margin-top: 15px; color: #6b7280;">Chargement des détails du bassin...</p>
+        </div>
+  
+        <!-- Erreur -->
+        <div *ngIf="error" class="alert alert-danger">
+          <i class="fas fa-exclamation-circle" style="margin-right: 10px;"></i>
+          Une erreur s'est produite lors du chargement des données. Veuillez réessayer plus tard.
+        </div>
+  
+        <!-- Détails du bassin personnalisé -->
+        <div *ngIf="!loading && !error" class="card main-card">
+          <div class="section-header">
+            <i class="fas fa-swimming-pool"></i>
+            <h3>Détails du bassin personnalisé</h3>
+          </div>
+  
+          <div class="row">
+            <!-- Informations générales -->
+            <div class="col col-half">
+              <div class="bassin-info">
+                <h4><i class="fas fa-info-circle"></i>Informations générales</h4>
+  
+                <div class="info-item">
+                  <span class="info-label">Matériaux :</span>
+                  <div style="margin-top: 8px;">
+                    <span *ngFor="let materiau of bassinPersonnalise.materiaux" class="badge badge-blue">{{ materiau }}</span>
+                  </div>
+                </div>
+  
+                <div class="info-item">
+                  <span class="info-label">Dimensions :</span>
+                  <div style="margin-top: 8px;">
+                    <span *ngFor="let dimension of bassinPersonnalise.dimensions" class="badge badge-green">{{ dimension }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          <!-- Section pour la durée de fabrication -->
+<!-- Section pour la durée de fabrication -->
+<div class="col-full">
+  <div class="bassin-info">
+    <h4><i class="fas fa-clock"></i> Durée de fabrication</h4>
+    
+    <div class="info-item" *ngIf="bassinPersonnalise?.dureeFabrication !== undefined">
+      <div class="info-row">
+        <span class="info-label">Durée estimée :</span>
+        <span class="info-value">{{ bassinPersonnalise.dureeFabrication }} jours</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+            <!-- Section pour les accessoires -->
+            <div class="col-full" style="margin-top: 30px;">
+              <h4><i class="fas fa-toolbox"></i>Accessoires</h4>
+  
+              <!-- Liste des accessoires -->
+              <div *ngIf="bassinPersonnalise.accessoires.length > 0; else noAccessoires">
+                <div *ngFor="let accessoire of bassinPersonnalise.accessoires" class="accessoire-card">
+                  <div class="accessoire-image">
+                    <img [src]="accessoire.imageUrl" alt="{{ accessoire.nomAccessoire }}" />
+                  </div>
+                  <div class="accessoire-details">
+                    <div class="accessoire-title">{{ accessoire.nomAccessoire }}</div>
+                    <div>
+                      <span style="font-weight: 600; color: #4b5563;">Prix : </span>
+                      <span class="accessoire-price">{{ accessoire.prixAccessoire | currency:'TND' }}</span>
+                    </div>
+                    <div style="margin-top: 15px;">
+                      
+                    </div>
+                  </div>
+                </div>
+              </div>
+  
+              <!-- Message si aucun accessoire n'est disponible -->
+              <ng-template #noAccessoires>
+                <div class="no-accessoires">
+                  <i class="fas fa-info-circle" style="margin-right: 8px; color: #6b7280;"></i>
+                  Aucun accessoire disponible pour ce bassin.
+                </div>
+              </ng-template>
+            </div>
+          </div>
+  
+          <!-- Zone de danger -->
+          <!--<div class="danger-zone">
+            <div class="danger-zone-title">
+              <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+              Zone de danger
+            </div>
+            <p style="color: #6b7280; margin-bottom: 20px;">
+              Attention, la suppression du bassin personnalisé est irréversible et entraînera la suppression de tous les accessoires associés.
+            </p>
+            <button class="btn btn-danger" (click)="supprimerBassinPersonnalise()">
+              <i class="fas fa-trash" style="margin-right: 8px;"></i>Supprimer ce bassin
+            </button>
+          </div>
+          -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!---------------------------------  FOOTER  
+    ---------------------------------  ---------------------------------  ---------------------------------  
+    ---------------------------------  ---------------------------------  ---------------------------------  
+    -->

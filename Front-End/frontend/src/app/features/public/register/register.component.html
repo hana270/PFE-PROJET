@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscription</title>
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --secondary-color: #1e40af;
+      --background-color: #f8fafc;
+      --card-background: rgba(255, 255, 255, 0.95);
+      --text-color: #1f2937;
+      --text-muted: #6b7280;
+      --error-color: #dc2626;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+      background-color: var(--background-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .background-animation {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      z-index: -1;
+      animation: animateBackground 10s infinite alternate;
+    }
+
+    @keyframes animateBackground {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    .card {
+      background: var(--card-background);
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-title {
+      font-family: 'Times New Roman', Times, serif;
+      font-style: oblique;
+      color: var(--text-color);
+      font-size: 1.875rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 0.875rem;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-1px);
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .text-muted {
+      color: var(--text-muted);
+    }
+
+    .text-primary {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .text-primary:hover {
+      color: var(--secondary-color);
+    }
+
+    .invalid-feedback {
+      color: var(--error-color);
+      font-size: 0.875rem;
+      margin-top: -0.5rem;
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+    }
+
+    .alert-danger {
+      background-color: #fee2e2;
+      border-color: #fca5a5;
+      color: var(--error-color);
+    }
+  </style>
+</head>
+<body>
+  <div class="background-animation"></div>
+  <div class="card">
+    <h2 class="form-title">Inscription</h2>
+    <p class="form-subtitle">Rejoignez notre communauté professionnelle</p>
+
+    <!-- Message d'erreur global -->
+    <div *ngIf="err" class="alert alert-danger">
+      <i class="fas fa-exclamation-circle me-2"></i>
+      {{ err }}
+    </div>
+
+    <form [formGroup]="myForm" (ngSubmit)="onRegister()">
+      <!-- Nom d'utilisateur -->
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Nom d'utilisateur"
+        formControlName="username"
+        [ngClass]="{'is-invalid': myForm.controls['username'].invalid && myForm.controls['username'].touched}"
+      />
+      <div *ngIf="myForm.controls['username'].invalid && myForm.controls['username'].touched" class="invalid-feedback">
+        Le nom d'utilisateur est obligatoire.
+      </div>
+
+      <!-- Email -->
+      <input
+        type="email"
+        class="form-control"
+        placeholder="Email"
+        formControlName="email"
+        [ngClass]="{'is-invalid': myForm.controls['email'].invalid && myForm.controls['email'].touched}"
+      />
+      <div *ngIf="myForm.controls['email'].invalid && myForm.controls['email'].touched" class="invalid-feedback">
+        <div *ngIf="myForm.controls['email'].hasError('required')">L'email est obligatoire.</div>
+        <div *ngIf="myForm.controls['email'].hasError('email')">Veuillez entrer une adresse email valide.</div>
+      </div>
+
+      <!-- Mot de passe -->
+      <input
+        type="password"
+        class="form-control"
+        placeholder="Mot de passe"
+        formControlName="password"
+        [ngClass]="{'is-invalid': myForm.controls['password'].invalid && myForm.controls['password'].touched}"
+      />
+      <div *ngIf="myForm.controls['password'].invalid && myForm.controls['password'].touched" class="invalid-feedback">
+        <div *ngIf="myForm.controls['password'].hasError('required')">Le mot de passe est obligatoire.</div>
+        <div *ngIf="myForm.controls['password'].hasError('minlength')">Le mot de passe doit contenir au moins 6 caractères.</div>
+      </div>
+
+      <!-- Confirmer le mot de passe -->
+      <input
+        type="password"
+        class="form-control"
+        placeholder="Confirmer le mot de passe"
+        formControlName="confirmPassword"
+        [ngClass]="{'is-invalid': (myForm.controls['confirmPassword'].invalid || myForm.hasError('mismatch')) && myForm.controls['confirmPassword'].touched}"
+      />
+      <div *ngIf="(myForm.controls['confirmPassword'].invalid || myForm.hasError('mismatch')) && myForm.controls['confirmPassword'].touched" class="invalid-feedback">
+        <div *ngIf="myForm.controls['confirmPassword'].hasError('required')">Veuillez confirmer votre mot de passe.</div>
+        <div *ngIf="myForm.hasError('mismatch')">Les mots de passe ne correspondent pas.</div>
+      </div>
+
+      <!-- Bouton d'inscription -->
+      <button type="submit" class="btn-primary" [disabled]="myForm.invalid || loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+        S'inscrire
+      </button>
+    </form>
+
+    <!-- Lien vers la page de connexion -->
+    <div class="text-center mt-3">
+      <p class="text-muted">Vous avez déjà un compte ? <a routerLink="/login" class="text-primary">Se connecter</a></p>
+    </div>
+  </div>
+</body>
+</html>

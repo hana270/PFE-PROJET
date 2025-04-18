@@ -1,0 +1,107 @@
+<app-layout>
+  <div class="container-fluid">
+    <div class="stocks-container fade-in" @fadeIn>
+      <div class="stocks-header">
+        <div class="stocks-title">
+          <h2>Gestion des Stocks</h2>
+          <span class="stocks-subtitle">{{ showArchived ? 'Bassins archivés' : 'Bassins actifs' }}</span>
+        </div>
+        <div class="stocks-actions">
+          <button class="btn btn-primary" (click)="exportStockReport()">
+            <i class="material-icons">file_download</i>
+            <span class="d-none d-sm-inline">Exporter</span>
+          </button>
+          <button class="btn btn-secondary" (click)="toggleArchivedView()">
+            <i class="material-icons">{{ showArchived ? 'visibility' : 'archive' }}</i>
+            <span class="d-none d-sm-inline">{{ showArchived ? 'Voir actifs' : 'Archives' }}</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Filtres et recherche -->
+      <div class="stocks-filters">
+        <div class="search-box">
+          <i class="material-icons">search</i>
+          <input type="text" placeholder="Rechercher un bassin..." [(ngModel)]="searchQuery" (input)="applyFilters()">
+        </div>
+        <div class="filter-group">
+          <label>Statut:</label>
+          <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+            <option value="all">Tous</option>
+            <option value="low">Stock faible</option>
+            <option value="available">Disponible</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Catégorie:</label>
+          <select [(ngModel)]="categoryFilter" (change)="applyFilters()">
+            <option [ngValue]="null">Toutes</option>
+            <option *ngFor="let category of categories" [ngValue]="category.idCategorie">
+              {{ category.nomCategorie }}
+            </option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Tableau des bassins -->
+      <div class="stocks-table-container" *ngIf="filteredBassins.length > 0">
+       <table class="stocks-table">
+  <thead>
+    <tr>
+      <th>Bassin</th>
+      <th>Catégorie</th>
+      <th>Prix</th>
+      <th>Stock</th>
+      <th>Statut</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let bassin of filteredBassins" [ngClass]="{'low-stock': bassin.stock < 5}">
+      <td class="bassin-name">
+        <div class="bassin-info">
+          <span class="name">{{ bassin.nomBassin }}</span>
+          <span class="desc">{{ bassin.description | slice:0:50 }}{{ bassin.description.length > 50 ? '...' : '' }}</span>
+        </div>
+      </td>
+      <td>{{ bassin.categorie.nomCategorie || 'Non catégorisé' }}</td>
+      <td>{{ bassin.prix | currency:'DT ':'symbol':'1.0-0' }}</td>
+      <td>{{ bassin.stock }}</td>
+      <td>
+        <span class="status-badge" [ngClass]="bassin.stock < 5 ? 'warning' : 'success'">
+          {{ bassin.stock < 5 ? 'Faible' : 'Disponible' }}
+        </span>
+      </td>
+      <td class="action-buttons">
+        <button class="btn btn-info btn-sm" (click)="viewDetails(bassin.idBassin)" title="Détails">
+          <i class="material-icons">visibility</i>
+        </button>
+        <button class="btn btn-primary btn-sm" (click)="openStockActionDialog(bassin, 'ajuster')" title="Ajuster">
+          <i class="material-icons">inventory_2</i>
+        </button>
+        <button *ngIf="!bassin.archive" class="btn btn-danger btn-sm" (click)="openStockActionDialog(bassin, 'archiver')" title="Archiver">
+          <i class="material-icons">archive</i>
+        </button>
+        <button *ngIf="bassin.archive" class="btn btn-success btn-sm" (click)="openStockActionDialog(bassin, 'desarchiver')" title="Désarchiver">
+          <i class="material-icons">unarchive</i>
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+      </div>
+      
+      <!-- Aucun résultat -->
+      <div class="no-results" *ngIf="filteredBassins.length === 0">
+        <i class="material-icons">inventory_2</i>
+        <p>Aucun bassin trouvé</p>
+        <button class="btn btn-secondary" (click)="resetFilters()">
+          Réinitialiser les filtres
+        </button>
+      </div>
+    </div>
+    
+    <!-- Toast notifications container -->
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+</app-layout>

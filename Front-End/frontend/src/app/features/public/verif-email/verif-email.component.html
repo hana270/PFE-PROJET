@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification Email</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50; /* Couleur principale */
+            --accent-color: #3498db; /* Couleur d'accentuation */
+            --success-color: #2ecc71; /* Couleur de succès */
+            --error-color: #e74c3c; /* Couleur d'erreur */
+            --background-color: #f8f9fa; /* Couleur de fond */
+        }
+
+        body {
+            background-color: var(--background-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-header {
+            background: var(--primary-color);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 1.5rem;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .verification-icon {
+            color: var(--primary-color);
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            animation: bounce 1.5s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .verification-message {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .btn-verify {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-verify:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .alert-danger {
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--error-color);
+            color: var(--error-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        /* Styles pour SweetAlert2 */
+        .swal2-popup {
+            border-radius: 15px !important;
+            padding: 2rem !important;
+        }
+
+        .swal2-title {
+            font-size: 1.5rem !important;
+            font-weight: 600 !important;
+            color: var(--primary-color) !important;
+        }
+
+        .swal2-confirm {
+            background-color: var(--success-color) !important;
+            border-radius: 8px !important;
+            padding: 0.75rem 2rem !important;
+            font-size: 1rem !important;
+            font-weight: 500 !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .swal2-confirm:hover {
+            transform: translateY(-2px) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            Vérification de l'email
+        </div>
+        <div class="card-body">
+            <div class="text-center">
+                <i class="fas fa-envelope-open-text verification-icon"></i>
+                <p class="verification-message">
+                    Nous avons envoyé un code de vérification à votre adresse email.
+                </p>
+            </div>
+
+            <form>
+                <div class="alert alert-danger" *ngIf="err">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>{{err}}</strong>
+                </div>
+
+                <div class="form-group mb-4">
+                    <input
+                        type="text"
+                        id="code"
+                        name="code"
+                        [(ngModel)]="code"
+                        class="form-control"
+                        placeholder="Code de vérification"
+                        maxlength="6"
+                        autocomplete="off"
+                    />
+                </div>
+
+                <div class="d-grid">
+                    <button type="button" class="btn btn-verify" (click)="onValidateEmail()">
+                        Vérifier
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Configuration globale de SweetAlert2
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'center',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+
+        // Exemple d'utilisation du toast
+        function showSuccessToast() {
+            Toast.fire({
+                icon: 'success',
+                title: 'Email vérifié avec succès'
+            });
+        }
+    </script>
+</body>
+</html>

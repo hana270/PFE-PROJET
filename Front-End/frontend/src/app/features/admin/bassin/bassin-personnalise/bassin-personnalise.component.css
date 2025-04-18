@@ -1,0 +1,341 @@
+/* Reset et styles de base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  body {
+    background-color: #f5f7f9;
+    color: #333;
+    line-height: 1.6;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  /* Carte principale */
+  .card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 30px;
+    overflow: hidden;
+  }
+  
+  .card-body {
+    padding: 25px;
+  }
+  
+  /* En-tête avec titre et bouton retour */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+  }
+  
+  .header h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    font-weight: 600;
+  }
+  
+  .btn-retour {
+    display: flex;
+    align-items: center;
+    background-color: transparent;
+    border: 1px solid #ccc;
+    color: #555;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-retour:hover {
+    background-color: #f1f1f1;
+    border-color: #999;
+  }
+  
+  .btn-retour i {
+    margin-right: 8px;
+  }
+  
+  /* ID du bassin */
+  .id-section {
+    margin-bottom: 25px;
+  }
+  
+  .id-section label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #546E7A;
+  }
+  
+  .id-display {
+    background-color: #edf2f7;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-weight: 600;
+    color: #2c3e50;
+    letter-spacing: 1px;
+    display: inline-block;
+  }
+  
+  /* Grille pour les sections */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  @media (min-width: 768px) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  /* Sections du formulaire */
+  .form-section {
+    background-color: #f8fafc;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+  }
+  
+  .form-section h3 {
+    color: #1a73e8;
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+  }
+  
+  .form-section h3 i {
+    margin-right: 10px;
+  }
+  
+  /* Styles pour les checkboxes */
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .checkbox-wrapper {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .checkbox-wrapper input[type="checkbox"] {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+  
+  .checkbox-wrapper label {
+    cursor: pointer;
+  }
+  
+  /* Style pour les accessoires */
+/* Conteneur principal des accessoires */
+#accessoires-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Espace entre les cartes d'accessoires */
+  padding: 20px;
+  background-color: #f9f9f9; /* Fond léger pour isoler visuellement */
+  border-radius: 8px;
+  border: 1px solid #e1e4e8;
+}
+
+/* Carte d'accessoire */
+.accessoire-card {
+  background-color: white;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* En-tête de la carte */
+.accessoire-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.accessoire-header h5 {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 600;
+}
+
+/* Bouton Supprimer */
+.btn-delete {
+  background-color: transparent;
+  border: 1px solid #e74c3c;
+  color: #e74c3c;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.btn-delete:hover {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.btn-delete i {
+  margin-right: 5px;
+}
+
+/* Grille pour les champs d'accessoire */
+.accessoire-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
+  gap: 15px;
+}
+
+/* Groupe d'input */
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #546E7A;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.input-group input:focus {
+  border-color: #3498db;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Groupe prix avec symbole TND */
+.price-wrapper {
+  position: relative;
+}
+
+.price-wrapper input {
+  padding-right: 40px; /* Espace pour le symbole TND */
+}
+
+.currency-symbol {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Styles de base pour les boutons */
+.btn {
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  padding: 10px 16px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bouton secondaire (Annuler) */
+.btn-secondary {
+  background-color: #f1f3f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.btn-secondary:hover {
+  background-color: #e9ecef;
+}
+
+/* Bouton success (Enregistrer les options) */
+.btn-success {
+  background-color: #28a745;
+  color: white;
+  padding: 12px 25px;
+  font-size: 1rem;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+}
+
+/* Bouton avec icône (Ajouter un accessoire) */
+.btn-secondary i {
+  margin-right: 8px;
+}
+
+/* Conteneur pour les boutons Annuler et Enregistrer */
+.buttons-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  gap: 10px; /* Espace entre les boutons */
+}
+
+.error-message {
+    color: #e74c3c;
+    font-size: 0.8rem;
+    margin-top: 4px;
+  }
+
+  /* Style pour le champ durée de fabrication */
+.input-group {
+  margin-bottom: 15px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.input-group input[type="number"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.875em;
+  margin-top: 5px;
+}

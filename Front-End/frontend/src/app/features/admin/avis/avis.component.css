@@ -1,0 +1,60 @@
+/* Styles généraux */
+body {
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Tableau */
+.table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.table-responsive {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* Étoiles de notation */
+.star-rating {
+  color: #ffc107; /* Couleur des étoiles */
+}
+
+.star-rating .fa-star {
+  font-size: 1rem;
+}
+
+/* Boutons */
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.btn-info {
+  background-color: #0dcaf0;
+  border-color: #0dcaf0;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-info:hover, .btn-danger:hover {
+  opacity: 0.9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .table th, .table td {
+    white-space: nowrap;
+  }
+
+  .btn-sm {
+    margin-bottom: 5px;
+  }
+}

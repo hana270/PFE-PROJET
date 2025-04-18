@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validation du code</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="background-animation"></div>
+  <div class="card">
+    <h2 class="form-title">Validation du code</h2>
+    <p class="form-subtitle">Entrez le code à 4 chiffres reçu par email</p>
+
+    <form [formGroup]="validateCodeForm" (ngSubmit)="onSubmit()">
+      <!-- Champ Code -->
+      <div class="form-group">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Code à 4 chiffres"
+          formControlName="code"
+          [ngClass]="{'is-invalid': validateCodeForm.controls['code'].invalid && validateCodeForm.controls['code'].touched}"
+        />
+        <div *ngIf="validateCodeForm.controls['code'].invalid && validateCodeForm.controls['code'].touched" class="invalid-feedback">
+          <div *ngIf="validateCodeForm.controls['code'].hasError('required')">Le code est obligatoire.</div>
+          <div *ngIf="validateCodeForm.controls['code'].hasError('pattern')">Veuillez entrer un code à 4 chiffres.</div>
+        </div>
+      </div>
+
+      <!-- Boutons -->
+      <button type="submit" class="btn-primary" [disabled]="validateCodeForm.invalid || loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+        {{ loading ? 'Validation en cours...' : 'Valider' }}
+      </button>
+      <button type="button" class="btn-secondary" (click)="goToLogin()">Annuler</button>
+    </form>
+  </div>
+</body>
+</html>

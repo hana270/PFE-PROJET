@@ -1,0 +1,299 @@
+.favorites-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-container {
+    flex: 1;
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+}
+
+.favorites-header {
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+}
+
+.favorites-header h1 {
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+}
+
+.favorites-header h1 .material-icons {
+    color: #f44336;
+    margin-right: 0.5rem;
+    font-size: 2rem;
+}
+
+.empty-favorites {
+    padding: 4rem 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.empty-content {
+    max-width: 400px;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.empty-content .material-icons {
+    font-size: 5rem;
+    color: #ccc;
+    margin-bottom: 1rem;
+}
+
+.empty-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-content p {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.empty-content .btn {
+    display: inline-flex;
+    align-items: center;
+}
+
+.empty-content .btn .material-icons {
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+    color: inherit;
+}
+
+.favorites-grid {
+    margin-top: 2rem;
+    display: grid;
+    gap: 1.5rem;
+}
+
+.favorite-card {
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.favorite-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.favorite-image {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+}
+
+.favorite-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+
+.action-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.action-overlay.visible {
+    opacity: 1;
+}
+
+.action-overlay button {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.action-overlay button .material-icons {
+    font-size: 20px;
+}
+
+.action-overlay button:hover {
+    transform: scale(1.1);
+}
+
+.favorite-info {
+    padding: 1.25rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.bassin-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.bassin-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #4CAF50;
+    margin-bottom: 0.75rem;
+}
+
+.bassin-details {
+    background-color: #f9f9f9;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+}
+
+.bassin-details p {
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.bassin-details p:last-child {
+    margin-bottom: 0;
+}
+
+.bassin-description {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.5;
+    margin-top: auto;
+}
+
+.quick-actions {
+    display: flex;
+    border-top: 1px solid #eee;
+}
+
+.quick-actions button {
+    border: none;
+    background: transparent;
+    padding: 0.75rem;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.quick-actions button .material-icons {
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.btn-add-cart {
+    color: #4CAF50;
+    border-right: 1px solid #eee;
+}
+
+.btn-add-cart:hover {
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+.btn-remove-favorite {
+    color: #F44336;
+}
+
+.btn-remove-favorite:hover {
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+#notificationContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.notification {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 15px 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    max-width: 350px;
+}
+
+.notification i {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+.notification.success i {
+    color: #4CAF50;
+}
+
+.notification.error i {
+    color: #F44336;
+}
+
+.notification.info i {
+    color: #2196F3;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.hide {
+    transform: translateX(100%);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .favorites-page .favorites-grid .favorite-card .favorite-image {
+        height: 180px;
+    }
+}
+
+@media (max-width: 768px) {
+    .favorites-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .favorites-grid .row {
+        margin-left: -10px;
+        margin-right: -10px;
+    }
+
+    .favorites-grid .row [class*="col-"] {
+        padding-left: 10px;
+        padding-right: 10px;
+        margin-bottom: 20px;
+    }
+}

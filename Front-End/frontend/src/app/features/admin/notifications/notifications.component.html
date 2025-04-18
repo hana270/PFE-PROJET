@@ -1,0 +1,41 @@
+<div class="notification-container">
+  <div class="notification-trigger" (click)="togglePanel()">
+    <i class="material-icons">notifications</i>
+    <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+  </div>
+  
+  <div class="notification-panel" [class.show]="showPanel">
+    <div class="notification-header">
+      <h3>Notifications</h3>
+      <div class="notification-actions">
+        <button class="action-btn" (click)="markAllAsRead()" *ngIf="unreadCount > 0">
+          <i class="material-icons">done_all</i>
+          <span>Tout marquer comme lu</span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="notification-list" *ngIf="notifications.length > 0">
+      <div class="notification-item" 
+           *ngFor="let notification of notifications"
+           [class.unread]="!notification.read"
+           (click)="markAsRead(notification)">
+        <div class="notification-icon" [ngClass]="notification.type">
+          <i class="material-icons">{{ getNotificationIcon(notification.type) }}</i>
+        </div>
+        <div class="notification-content">
+          <p class="notification-message">{{ notification.message }}</p>
+          <span class="notification-date">{{ formatDate(notification.date) }}</span>
+        </div>
+        <button class="delete-btn" (click)="deleteNotification(notification, $event)">
+          <i class="material-icons">close</i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="notification-empty" *ngIf="notifications.length === 0">
+      <i class="material-icons">notifications_off</i>
+      <p>Aucune notification</p>
+    </div>
+  </div>
+</div>

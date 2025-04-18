@@ -1,0 +1,161 @@
+/* Conteneur principal */
+.page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 2rem;
+  font-family: "Roboto", sans-serif; /* Utilisation d'une police moderne */
+}
+
+/* Carte personnalisée */
+.custom-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  padding: 2rem;
+  max-width: 800px;
+  width: 100%;
+}
+
+/* Titre de la carte */
+.card-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.card-subtitle {
+  font-size: 1rem;
+  color: #7f8c8d;
+}
+
+/* Image de profil */
+.profile-image-container {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.profile-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #babec2;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Bouton pour changer la photo */
+.btn-primary {
+  background-color: #042841;
+  border-color: #042841;
+  font-weight: 500;
+  padding: 0.5rem 1.5rem;
+  border-radius: 25px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #25455c;
+  color: #f0f4f7;
+}
+
+/* Formulaire */
+.profile-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.profile-form .form-label {
+  font-weight: 500;
+  color: #34495e;
+  margin-bottom: 0.5rem;
+}
+
+.profile-form .custom-input {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  font-size: 1rem;
+}
+
+.profile-form .custom-input:focus {
+  border-color: #042841;
+  box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+}
+
+/* Boutons */
+.custom-button {
+  background-color: #042841;
+  color: #ffffff;
+  border: none;
+  border-radius: 25px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.custom-button:hover {
+  background-color: #1f2d36;
+}
+
+.custom-button:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}
+
+/* Onglets */
+.nav-pills .nav-link {
+  border-radius: 25px;
+  padding: 0.75rem 1.5rem;
+  margin: 0 0.5rem;
+  color: #34495e;
+  font-weight: 500;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.nav-pills .nav-link.active-tab {
+  background-color: #042841;
+  color: #ffffff;
+}
+
+.nav-pills .nav-link:hover:not(.active-tab) {
+  background-color: #ecf0f1;
+}
+
+/* Message de feedback */
+.custom-alert {
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+.custom-alert.alert-success {
+  background-color: #d5f5e3;
+  color: #27ae60;
+}
+
+.custom-alert.alert-danger {
+  background-color: #f8d7da;
+  color: #e74c3c;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}

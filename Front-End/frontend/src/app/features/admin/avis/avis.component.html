@@ -1,0 +1,88 @@
+<app-layout pageTitle="Gestion des Avis">
+  <!-- Indicateur de chargement -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <!-- Message si aucun avis n'est disponible -->
+  <div *ngIf="!isLoading && avisList.length === 0" class="alert alert-info text-center">
+    Aucun avis disponible pour le moment.
+  </div>
+
+  <!-- Liste des avis -->
+  <div *ngIf="!isLoading && avisList.length > 0" class="container-fluid p-3">
+    <h2 class="mb-4">Liste des avis clients</h2>
+    <p class="text-muted">{{ avisList.length }} avis</p>
+
+    <!-- Filtres et recherche -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <input type="text" class="form-control" placeholder="Rechercher un avis..." [(ngModel)]="searchQuery" (input)="onSearchInput()">
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" [(ngModel)]="selectedRating" (change)="filterAvis()">
+          <option value="">Toutes les notes</option>
+          <option value="5">⭐⭐⭐⭐⭐</option>
+          <option value="4">⭐⭐⭐⭐</option>
+          <option value="3">⭐⭐⭐</option>
+          <option value="2">⭐⭐</option>
+          <option value="1">⭐</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-outline-secondary w-100" (click)="resetFilters()">
+          <i class="fas fa-sync-alt"></i> Réinitialiser
+        </button>
+      </div>
+    </div>
+
+    <!-- Tableau des avis -->
+    <div class="table-responsive">
+      <table class="table table-striped table-hover">
+        <thead class="table-light">
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Utilisateur</th>
+            <th scope="col">Bassin</th>
+            <th scope="col">Date</th>
+            <th scope="col">Note</th>
+            <th scope="col">Commentaire</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let avis of filteredAvis">
+            <td>{{ avis.idAvis }}</td>
+            <td>{{ avis.nom || 'Anonyme' }}</td>
+            <td>
+              <a [routerLink]="['/admin/details-bassin', avis.bassin.idBassin]" class="text-primary">
+                {{ avis.bassin.nomBassin || 'Non spécifié' }}
+              </a>
+            </td>
+            <td>{{ avis.dateSoumission | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <span class="star-rating">
+                <i *ngFor="let star of [1, 2, 3, 4, 5]" class="fas fa-star" [ngClass]="{'text-warning': star <= avis.note, 'text-secondary': star > avis.note}"></i>
+              </span>
+            </td>
+            <td>
+              {{ avis.message.length > 30 ? (avis.message | slice:0:30) + '...' : avis.message }}
+            </td>
+            <td>
+              <!-- Bouton pour voir les détails de l'avis -->
+              <button class="btn btn-sm btn-info me-2" (click)="viewAvisDetails(avis)">
+                <i class="fas fa-eye"></i> Voir
+              </button>
+              <!-- Bouton pour supprimer l'avis -->
+              <button class="btn btn-sm btn-danger" (click)="deleteAvis(avis.idAvis)">
+                <i class="fas fa-trash"></i> Supprimer
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</app-layout>

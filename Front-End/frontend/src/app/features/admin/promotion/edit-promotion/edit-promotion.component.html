@@ -1,0 +1,397 @@
+<app-layout pageTitle="Modifier la promotion">
+  <div class="container-fluid">
+    <div *ngIf="isLoading" class="text-center my-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+      <p class="mt-2">Chargement de la promotion...</p>
+    </div>
+
+    <div *ngIf="!isLoading" class="card shadow">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-edit me-2"></i>Modifier la Promotion
+        </h5>
+        <button class="btn btn-light" (click)="goBack()">
+          <i class="fas fa-arrow-left me-1"></i> Retour
+        </button>
+      </div>
+
+      <div class="card-body">
+        <form (ngSubmit)="onSubmit()" #promotionForm="ngForm">
+          <!-- Informations générales -->
+          <div class="mb-4">
+            <h6 class="text-muted text-uppercase fw-bold small mb-3">
+              <i class="fas fa-info-circle me-2"></i>Informations générales
+            </h6>
+            <div class="card bg-light p-3">
+              <!-- Nom de la Promotion -->
+              <div class="mb-3">
+                <label for="nomPromotion" class="form-label">Nom de la Promotion</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="nomPromotion"
+                  name="nomPromotion"
+                  [(ngModel)]="promotion.nomPromotion"
+                  required
+                  placeholder="Entrez le nom de la promotion">
+                <div *ngIf="promotionForm.controls['nomPromotion']?.invalid && promotionForm.controls['nomPromotion']?.touched"
+                    class="text-danger small mt-1">
+                  Le nom de la promotion est requis.
+                </div>
+              </div>
+        
+              <!-- Taux de Réduction -->
+              <div class="mb-3">
+                <label for="tauxReduction" class="form-label">Taux de Réduction (%)</label>
+                <div class="input-group">
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="tauxReduction"
+                    name="tauxReduction"
+                    [(ngModel)]="promotion.tauxReduction"
+                    required
+                    min="1"
+                    max="100"
+                    placeholder="Entrez le taux de réduction (1-100)"
+                    (input)="validateTauxReduction()">
+                  <span class="input-group-text">%</span>
+                </div>
+                <div *ngIf="tauxReductionError" class="text-danger small mt-1">
+                  {{ tauxReductionError }}
+                </div>
+              </div>
+        
+              <!-- Dates et Heures -->
+              <div class="row">
+                <!-- Date de Début -->
+                <div class="col-md-6 mb-3">
+                  <label for="dateDebut" class="form-label">Date de Début</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="dateDebut"
+                      name="dateDebut"
+                      [(ngModel)]="dateDebutString"
+                      required
+                      (change)="onDateChange()">
+                  </div>
+                  <div *ngIf="dateDebutError" class="text-danger small mt-1">
+                    {{ dateDebutError }}
+                  </div>
+                </div>
+                
+                <!-- Heure de Début -->
+                <div class="col-md-6 mb-3">
+                  <label for="heureDebut" class="form-label">Heure de Début</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                    <input
+                      type="time"
+                      class="form-control"
+                      id="heureDebut"
+                      name="heureDebut"
+                      [(ngModel)]="heureDebut"
+                      required
+                      (change)="onDateChange()">
+                  </div>
+                </div>
+        
+                <!-- Date de Fin -->
+                <div class="col-md-6 mb-3">
+                  <label for="dateFin" class="form-label">Date de Fin</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="dateFin"
+                      name="dateFin"
+                      [(ngModel)]="dateFinString"
+                      required
+                      (change)="onDateChange()">
+                  </div>
+                  <div *ngIf="dateFinError" class="text-danger small mt-1">
+                    {{ dateFinError }}
+                  </div>
+                </div>
+                
+                <!-- Heure de Fin -->
+                <div class="col-md-6 mb-3">
+                  <label for="heureFin" class="form-label">Heure de Fin</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                    <input
+                      type="time"
+                      class="form-control"
+                      id="heureFin"
+                      name="heureFin"
+                      [(ngModel)]="heureFin"
+                      required
+                      (change)="onDateChange()">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        
+          <!-- Navigation par onglets -->
+          <div class="mb-4">
+            <ul class="nav nav-tabs" id="selectionTab" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="bassins-tab" data-bs-toggle="tab" data-bs-target="#bassins-content" 
+                  type="button" role="tab" aria-controls="bassins-content" aria-selected="true">
+                  <i class="fas fa-water me-2"></i>Bassins 
+                  <span *ngIf="selectedBassinIds.length > 0" class="badge bg-primary rounded-pill ms-2">
+                    {{selectedBassinIds.length}}
+                  </span>
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="categories-tab" data-bs-toggle="tab" data-bs-target="#categories-content" 
+                  type="button" role="tab" aria-controls="categories-content" aria-selected="false">
+                  <i class="fas fa-tags me-2"></i>Catégories 
+                  <span *ngIf="selectedCategorieIds.length > 0" class="badge bg-primary rounded-pill ms-2">
+                    {{selectedCategorieIds.length}}
+                  </span>
+                </button>
+              </li>
+            </ul>
+            
+            <div class="tab-content pt-3" id="selectionTabContent">
+              <!-- Onglet Bassins -->
+              <div class="tab-pane fade show active" id="bassins-content" role="tabpanel" aria-labelledby="bassins-tab">
+                <div class="card">
+                  <div class="card-header bg-light">
+                    <div class="row align-items-center">
+                      <div class="col-md-8">
+                        <div class="input-group">
+                          <span class="input-group-text"><i class="fas fa-search"></i></span>
+                          <input type="text" class="form-control" placeholder="Rechercher un bassin..." 
+                            [(ngModel)]="bassinSearchTerm" name="bassinSearchTerm">
+                          <button class="btn btn-outline-secondary" type="button" (click)="bassinSearchTerm = ''">
+                            <i class="fas fa-times"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="col-md-4 mt-2 mt-md-0">
+                        <div class="d-flex justify-content-end">
+                          <button type="button" class="btn btn-sm btn-outline-secondary me-2" (click)="selectAllBassins()">
+                            <i class="fas fa-check-square me-1"></i>Tout
+                          </button>
+                          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="deselectAllBassins()">
+                            <i class="fas fa-square me-1"></i>Aucun
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                    <div *ngIf="filteredBassins.length === 0" class="text-center py-3 text-muted">
+                      <i class="fas fa-info-circle me-2"></i>Aucun bassin trouvé
+                    </div>
+                    
+                    <!-- Grid des bassins -->
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+                      <div *ngFor="let bassin of paginatedBassins" class="col">
+                        <div class="card h-100" [ngClass]="{'border-danger': isBassinOverlapping(bassin.idBassin), 'border-success': !isBassinOverlapping(bassin.idBassin)}">
+                          <div class="card-body p-2">
+                            <div class="form-check">
+                              <input 
+                                class="form-check-input" 
+                                type="checkbox" 
+                                [value]="bassin.idBassin" 
+                                [checked]="isBassinSelected(bassin.idBassin)"
+                                (change)="toggleBassinSelection(bassin.idBassin)"
+                                [id]="'bassin' + bassin.idBassin"
+                                [disabled]="isBassinOverlapping(bassin.idBassin)">
+                              <label class="form-check-label" [for]="'bassin' + bassin.idBassin">
+                                {{bassin.nomBassin}}
+                              </label>
+                              <span class="ms-2">
+                                <span *ngIf="!isBassinOverlapping(bassin.idBassin)" class="badge bg-success">
+                                  <i class="fas fa-check-circle me-1"></i>Disponible
+                                </span>
+                                <span *ngIf="isBassinOverlapping(bassin.idBassin)" class="badge bg-danger">
+                                  <i class="fas fa-exclamation-circle me-1"></i>Déjà en promotion
+                                </span>
+                              </span>
+                            </div>
+                            <!-- Promotion details if overlapping -->
+                            <div *ngIf="isBassinOverlapping(bassin.idBassin)" class="mt-2 small">
+                              <div class="text-danger">
+                                <i class="fas fa-calendar-times me-1"></i>
+                                {{getBassinOverlappingInfo(bassin.idBassin).nom}} 
+                                ({{ getBassinOverlappingInfo(bassin.idBassin).dateDebut | date:'dd/MM/yyyy' }} - 
+                                {{ getBassinOverlappingInfo(bassin.idBassin).dateFin | date:'dd/MM/yyyy' }})
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <small class="text-muted">{{selectedBassinIds.length}} bassin(s) sélectionné(s)</small>
+                      </div>
+                      <div>
+                        <nav aria-label="Page navigation" *ngIf="filteredBassins.length > itemsPerPage">
+                          <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item" [ngClass]="{'disabled': currentBassinPage === 1}">
+                              <button class="page-link" (click)="prevBassinPage()">
+                                <i class="fas fa-chevron-left"></i>
+                              </button>
+                            </li>
+                            <li class="page-item disabled">
+                              <span class="page-link">{{currentBassinPage}} / {{getTotalPages(filteredBassins.length)}}</span>                                                        </li>
+                            <li class="page-item" [ngClass]="{'disabled': currentBassinPage === Math.ceil(filteredBassins.length / itemsPerPage)}">
+                              <button class="page-link" (click)="nextBassinPage()">
+                                <i class="fas fa-chevron-right"></i>
+                              </button>
+                            </li>
+                          </ul>
+                        </nav>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Onglet Catégories -->
+              <div class="tab-pane fade" id="categories-content" role="tabpanel" aria-labelledby="categories-tab">
+                <div class="card">
+                  <div class="card-header bg-light">
+                    <div class="row align-items-center">
+                      <div class="col-md-8">
+                        <div class="input-group">
+                          <span class="input-group-text"><i class="fas fa-search"></i></span>
+                          <input type="text" class="form-control" placeholder="Rechercher une catégorie..." 
+                            [(ngModel)]="categorieSearchTerm" name="categorieSearchTerm">
+                          <button class="btn btn-outline-secondary" type="button" (click)="categorieSearchTerm = ''">
+                            <i class="fas fa-times"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="col-md-4 mt-2 mt-md-0">
+                        <div class="d-flex justify-content-end">
+                          <button type="button" class="btn btn-sm btn-outline-secondary me-2" (click)="selectAllCategories()">
+                            <i class="fas fa-check-square me-1"></i>Tout
+                          </button>
+                          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="deselectAllCategories()">
+                            <i class="fas fa-square me-1"></i>Aucun
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                    <div *ngIf="filteredCategories.length === 0" class="text-center py-3 text-muted">
+                      <i class="fas fa-info-circle me-2"></i>Aucune catégorie trouvée
+                    </div>
+                    
+                    <!-- Grid des catégories -->
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+                      <div *ngFor="let categorie of paginatedCategories" class="col">
+                        <div class="card h-100" [ngClass]="{'border-danger': isCategorieOverlapping(categorie.idCategorie), 'border-success': !isCategorieOverlapping(categorie.idCategorie)}">
+                          <div class="card-body p-2">
+                            <div class="form-check">
+                              <input 
+                                class="form-check-input" 
+                                type="checkbox" 
+                                [value]="categorie.idCategorie" 
+                                [checked]="isCategorieSelected(categorie.idCategorie)"
+                                (change)="toggleCategorieSelection(categorie.idCategorie)"
+                                [id]="'categorie' + categorie.idCategorie"
+                                [disabled]="isCategorieOverlapping(categorie.idCategorie)">
+                              <label class="form-check-label" [for]="'categorie' + categorie.idCategorie">
+                                {{categorie.nomCategorie}}
+                              </label>
+                              <span class="ms-2">
+                                <span *ngIf="!isCategorieOverlapping(categorie.idCategorie)" class="badge bg-success">
+                                  <i class="fas fa-check-circle me-1"></i>Disponible
+                                </span>
+                                <span *ngIf="isCategorieOverlapping(categorie.idCategorie)" class="badge bg-danger">
+                                  <i class="fas fa-exclamation-circle me-1"></i>Déjà en promotion
+                                </span>
+                              </span>
+                            </div>
+                            <!-- Promotion details if overlapping -->
+                            <div *ngIf="isCategorieOverlapping(categorie.idCategorie)" class="mt-2 small">
+                              <div class="text-danger">
+                                <i class="fas fa-calendar-times me-1"></i>
+                                {{getCategorieOverlappingInfo(categorie.idCategorie).nom}} 
+                                ({{ getCategorieOverlappingInfo(categorie.idCategorie).dateDebut | date:'dd/MM/yyyy' }} - 
+                                {{ getCategorieOverlappingInfo(categorie.idCategorie).dateFin | date:'dd/MM/yyyy' }})
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <small class="text-muted">{{selectedCategorieIds.length}} catégorie(s) sélectionnée(s)</small>
+                      </div>
+                      <div>
+                        <nav aria-label="Page navigation" *ngIf="filteredCategories.length > itemsPerPage">
+                          <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item" [ngClass]="{'disabled': currentCategoriePage === 1}">
+                              <button class="page-link" (click)="prevCategoriePage()">
+                                <i class="fas fa-chevron-left"></i>
+                              </button>
+                            </li>
+                            <li class="page-item disabled">
+                              <span class="page-link">{{currentCategoriePage}} / {{Math.ceil(filteredCategories.length / itemsPerPage)}}</span>
+                            </li>
+                            <li class="page-item" [ngClass]="{'disabled': currentCategoriePage === Math.ceil(filteredCategories.length / itemsPerPage)}">
+                              <button class="page-link" (click)="nextCategoriePage()">
+                                <i class="fas fa-chevron-right"></i>
+                              </button>
+                            </li>
+                          </ul>
+                        </nav>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Avertissement de chevauchement -->
+            <div *ngIf="showOverlappingWarning" class="alert alert-warning mt-3">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <strong>Attention:</strong> Des promotions existantes peuvent se chevaucher avec la période sélectionnée.
+              Les bassins et catégories en conflit ont été désactivés.
+            </div>
+            
+            <!-- Avertissement de sélection vide -->
+            <div *ngIf="selectedBassinIds.length === 0" class="alert alert-warning mt-3">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              Vous devez sélectionner au moins un bassin pour modifier la promotion.
+            </div>
+          </div>
+        
+          <!-- Bouton de Soumission -->
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg" 
+    [disabled]="!promotionForm.form.valid || selectedBassinIds.length === 0">
+  <i class="fas fa-save me-2"></i> Enregistrer les modifications
+</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</app-layout>

@@ -1,0 +1,42 @@
+<app-layout>
+<main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="card-title mb-4">Liste des Catégories</h2>
+  
+        <!-- Bouton pour ajouter une catégorie -->
+        <a routerLink="/admin/add-categorie" class="btn btn-primary mb-3">Ajouter une Catégorie</a>
+  
+        <!-- Tableau des catégories -->
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let categorie of categories">
+                <td>{{ categorie.idCategorie }}</td>
+                <td>{{ categorie.nomCategorie }}</td>
+                <td>{{ categorie.description }}</td>
+                <td>
+                  <a [routerLink]="['/admin/update-categorie', categorie.idCategorie]" class="btn btn-sm btn-success me-2">Modifier</a>
+                  <button class="btn btn-sm btn-danger" (click)="deleteCategorie(categorie.idCategorie)">Supprimer</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+</main>
+</app-layout>

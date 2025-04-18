@@ -1,0 +1,53 @@
+<app-layout pageTitle="Envoyer une invitation">
+  <div class="page-container">
+    <div class="invitation-card">
+      <h2 class="card-title">Inviter un Installateur</h2>
+      <p class="card-subtitle">Entrez l'adresse email de l'installateur pour lui envoyer une invitation.</p>
+
+      <!-- Formulaire -->
+      <form [formGroup]="invitationForm" (ngSubmit)="sendInvitation()" class="invitation-form">
+        <div class="form-field">
+          <label for="email">Adresse email de l'installateur</label>
+          <div class="input-wrapper">
+            <i class="fas fa-envelope"></i>
+            <input
+              type="email"
+              id="email"
+              formControlName="email"
+              placeholder="exemple@domaine.com"
+              [class.error]="invitationForm.get('email')?.invalid && invitationForm.get('email')?.touched"
+            />
+          </div>
+          <!-- Messages d'erreur -->
+          <div class="error-messages">
+            <small *ngIf="invitationForm.get('email')?.hasError('required') && invitationForm.get('email')?.touched">
+              L'email est requis.
+            </small>
+            <small *ngIf="invitationForm.get('email')?.hasError('email') && invitationForm.get('email')?.touched">
+              Veuillez entrer une adresse email valide.
+            </small>
+            <small *ngIf="invitationForm.get('email')?.hasError('pattern') && invitationForm.get('email')?.touched">
+              Email non valide. Utilisez un domaine valide : .com, .com.tn, .fr, .tn.
+            </small>
+          </div>
+        </div>
+
+        <!-- Bouton de soumission -->
+        <button
+          type="submit"
+          class="submit-btn"
+          [disabled]="invitationForm.invalid || isLoading"
+        >
+          <span *ngIf="!isLoading">
+            <i class="fas fa-paper-plane"></i>
+            Envoyer l'invitation
+          </span>
+          <span *ngIf="isLoading" class="spinner">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            Envoi en cours...
+          </span>
+        </button>
+      </form>
+    </div>
+  </div>
+</app-layout>

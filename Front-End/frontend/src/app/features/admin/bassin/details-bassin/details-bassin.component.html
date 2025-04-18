@@ -1,0 +1,297 @@
+<app-layout>
+    <div class="page-container fade-in">
+      <div class="container-fluid px-2 px-md-4">
+
+  <!-- Main Content -->
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg"
+  [ngClass]="{'margin-left-zero': !isSidebarVisible}">
+
+    <nav class="navbar navbar-main navbar-expand-lg px-0 mx-3 shadow-none border-radius-xl">
+      <div class="container-fluid py-1 px-3">
+        <i class="fas fa-bars cursor-pointer" (click)="toggleSidebar()" id="sidebar-toggler"></i>
+      </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="admin-container">
+      <div class="pool-details-card">
+          <!-- Loading State -->
+          <div *ngIf="loading" class="text-center p-5">
+              <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+              </div>
+          </div>
+  
+          <!-- Error State -->
+          <div *ngIf="error" class="alert alert-danger">
+              Une erreur s'est produite lors du chargement des données.
+          </div>
+  
+          <!-- Content when data is loaded -->
+          <ng-container *ngIf="!loading && !error">
+              <div class="pool-header">
+                  <h2>Détails Techniques du Bassin</h2>
+              </div>
+  
+              <!-- No Bassin Found -->
+              <div *ngIf="!bassin" class="alert alert-warning">
+                  Aucun bassin trouvé avec cet ID.
+              </div>
+  
+              <div *ngIf="bassin" class="container">
+                  <div class="pool-details-layout">
+                      <!-- Média et Visualisation -->
+                      <div class="pool-media-section">
+                        <!-- Informations Principales -->
+                        <div class="details-card">
+                          <h4 class="details-section-title">
+                              <i class="fas fa-cube me-2"></i>3D du bassin
+                          </h4>
+                          <!-- 3D Viewer Section -->
+                          <div class="model-3d-container">
+                              <!-- Loader overlay -->
+                              <div *ngIf="isLoading" class="loader-overlay">
+                                  <div class="loader"></div>
+                              </div>
+          
+                              <!-- Model Viewer -->
+                              <model-viewer [src]="convertGithubUrl(bassin.image3DPath)" alt="3D Model" ar camera-controls auto-rotate
+                                  shadow-intensity="1" (load)="onModelLoad()" (error)="onModelError()" #modelViewer>
+                              </model-viewer>
+                          </div>
+          
+                          <!-- AR Controls -->
+                          <div class="ar-controls" *ngIf="isARActive">
+                              <button (click)="zoomIn()" class="btn btn-sm btn-primary">
+                                  <i class="fas fa-search-plus"></i> Zoom In
+                              </button>
+                              <button (click)="zoomOut()" class="btn btn-sm btn-primary">
+                                  <i class="fas fa-search-minus"></i> Zoom Out
+                              </button>
+                              <button (click)="moveUp()" class="btn btn-sm btn-primary">
+                                  <i class="fas fa-arrow-up"></i> Move Up
+                              </button>
+                              <button (click)="moveDown()" class="btn btn-sm btn-primary">
+                                  <i class="fas fa-arrow-down"></i> Move Down
+                              </button>
+                              <button (click)="moveLeft()" class="btn btn-sm btn-primary">
+                                  <i class="fas fa-arrow-left"></i> Move Left
+                              </button>
+                              <button (click)="moveRight()" class="btn btn-sm btn-primary">
+                                  <i class="fas fa-arrow-right"></i> Move Right
+                              </button>
+                          </div>
+          
+                          <!-- AR Mobile Button -->
+                          <button (click)="showARViewer(bassin)" class="btn-professional mt-3">
+                              <i class="fas fa-cube"></i> View on Mobile
+                          </button>
+          </div>
+                          <!-- Image Gallery Section -->
+                          <div *ngIf="imagePreviews && imagePreviews.length > 0" class="image-gallery-container mt-4">
+                            <h4 class="details-section-title">
+                              <i class="fas fa-images me-2"></i>Images du Bassin
+                          </h4>
+                              <div class="main-image-container">
+                                  <button class="nav-arrow left-arrow" (click)="prevImage()">
+                                      <i class="fas fa-chevron-left"></i>
+                                  </button>
+                                  
+                                  <img [src]="imagePreviews[currentImageIndex]" class="main-image" 
+                                       (click)="openImageModal(imagePreviews[currentImageIndex])">
+          
+                                  <button class="nav-arrow right-arrow" (click)="nextImage()">
+                                      <i class="fas fa-chevron-right"></i>
+                                  </button>
+                              </div>
+                              
+                              <div class="gallery-thumbnails">
+                                  <div *ngFor="let preview of imagePreviews; let i = index" 
+                                       class="gallery-thumbnail" 
+                                       [class.active]="i === currentImageIndex"
+                                       (click)="currentImageIndex = i">
+                                      <img [src]="preview" [alt]="'Image ' + (i + 1)">
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+          
+                      <!-- Section Détails -->
+                      <div class="pool-details-section">
+                          <!-- Informations Principales -->
+                          <div class="details-card">
+                              <h4 class="details-section-title">
+                                  <i class="fas fa-info-circle me-2"></i>Informations Principales
+                              </h4>
+                              <div class="detail-item">
+                                  <div class="detail-label">
+                                      <i class="fas fa-swimming-pool"></i>
+                                      Nom du Bassin
+                                  </div>
+                                  <div class="detail-value">{{ bassin.nomBassin }}</div>
+                              </div>
+                              <div class="detail-item">
+                                  <div class="detail-label">
+                                      <i class="fas fa-euro-sign"></i>
+                                      Prix
+                                  </div>
+                                  <div class="detail-value text-success">{{ bassin.prix | currency:'TND' }}</div>
+                              </div>
+                              <div class="detail-item">
+                                  <div class="detail-label">
+                                      <i class="fas fa-industry"></i>
+                                      Matériau
+                                  </div>
+                                  <div class="detail-value">{{ bassin.materiau }}</div>
+                              </div>
+                              <div class="detail-item">
+                                  <div class="detail-label">
+                                      <i class="fas fa-palette"></i>
+                                      Couleur
+                                  </div>
+                                  <div class="detail-value">{{ bassin.couleur }}</div>
+                              </div>
+                              <div class="detail-item">
+                                  <div class="detail-label">
+                                      <i class="fas fa-ruler"></i>
+                                      Dimensions
+                                  </div>
+                                  <div class="detail-value">{{ bassin.dimensions }}</div>
+                              </div>
+                              <div class="detail-item">
+                                  <div class="detail-label">
+                                      <i class="fas fa-boxes"></i>
+                                      Stock
+                                  </div>
+                                  <div class="detail-value" [ngClass]="bassin.stock > 10 ? 'text-success' : 'text-warning'">
+                                      {{ bassin.stock }}
+                                  </div>
+                              </div>
+                              <div class="detail-item">
+                                  <div class="detail-label">
+                                      <i class="fas fa-check-circle"></i>
+                                      Disponibilité
+                                  </div>
+                                  <div class="detail-value">
+                                      <span class="status-badge" [ngClass]="bassin.disponible ? 'status-available' : 'status-unavailable'">
+                                          {{ bassin.disponible ? 'Disponible' : 'Indisponible' }}
+                                      </span>
+                                  </div>
+                              </div>
+                              <div class="detail-item">
+                                  <div class="detail-label">
+                                      <i class="fas fa-tags"></i>
+                                      Catégorie
+                                  </div>
+                                  <div class="detail-value">{{ bassin.categorie!.nomCategorie || 'Non définie' }}</div>
+                              </div>
+                          </div>
+          
+                          <!-- Description -->
+                          <div class="details-card">
+                              <h4 class="details-section-title">
+                                  <i class="fas fa-comment-dots me-2"></i>Description
+                              </h4>
+                              <p class="text-muted">{{ bassin.description }}</p>
+                          </div>
+          
+                          <!-- Actions de Personnalisation -->
+                          <div class="details-card">
+                            <h4 class="details-section-title">
+                                <i class="fas fa-tools me-2"></i>Personnalisation
+                            </h4>
+                            <div class="personalization-actions">
+                                <div *ngIf="!isBassinPersonnalise">
+                                    <a [routerLink]="['/admin/personnalise-bassin', bassin.idBassin]" class="btn-professional">
+                                        <i class="fas fa-sliders-h"></i> Gérer les Options
+                                    </a>
+                                </div>
+                            
+                                <div *ngIf="isBassinPersonnalise">
+                                    <a [routerLink]="['/admin/detail-bassin-personnalise', bassin.idBassin]" class="btn-professional">
+                                        <i class="fas fa-eye"></i> Détails Personnalisés
+                                    </a>
+                                </div>
+                            
+                                <div *ngIf="isBassinPersonnalise">
+                                    <a [routerLink]="['/admin/update-bassin-personnalise', bassin.idBassin]" class="btn-professional">
+                                        <i class="fas fa-sync-alt"></i> Mettre à jour
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                      </div>
+                  </div>
+              </div>
+          </ng-container>
+      </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div class="modal-image" *ngIf="qrCodeImageUrl" (click)="closeQRModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h4>Scanner le QR Code</h4>
+                <span class="close" (click)="closeQRModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <img [src]="qrCodeImageUrl" alt="QR Code for AR view" class="qr-code-image">
+                <p class="qr-instructions">Scannez ce QR Code avec votre appareil mobile pour afficher en Réalité Augmentée</p>
+
+                <button (click)="isARActive = true" class="btn-professional">
+                    Afficher les contrôles AR
+                </button>
+
+                <div class="ar-instructions mt-3">
+                    <h5>Comment interagir avec le modèle 3D :</h5>
+                    <ul>
+                        <li><strong>Rotation:</strong> Touchez et faites glisser avec un doigt.</li>
+                        <li><strong>Zoom:</strong> Pincez avec deux doigts.</li>
+                        <li><strong>Déplacement:</strong> Touchez, maintenez, puis faites glisser avec un doigt.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="modal-image" *ngIf="selectedImage" (click)="closeImageModal()">
+        <div class="image-modal-content">
+            <button class="nav-arrow modal-arrow left-arrow" (click)="prevImage(); $event.stopPropagation()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <img [src]="selectedImage" class="modal-image-content" (click)="$event.stopPropagation()" alt="Image agrandie">
+            
+            <button class="nav-arrow modal-arrow right-arrow" (click)="nextImage(); $event.stopPropagation()">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var sidenav = document.getElementById("sidenav-main");
+      var toggleBtn = document.getElementById("iconSidenav");
+
+      if (toggleBtn) {
+        toggleBtn.addEventListener("click", function () {
+          document.body.classList.toggle("g-sidenav-pinned");
+        });
+      }
+    });
+  </script>
+  <!-- Core JS Files -->
+  <script src="/assets/js/core/popper.min.js"></script>
+  <script src="/assets/js/core/bootstrap.min.js"></script>
+  <script src="/assets/js/plugins/perfect-scrollbar.min.js"></script>
+  <script src="/assets/js/plugins/smooth-scrollbar.min.js"></script>
+  <script src="/assets/js/plugins/chartjs.min.js"></script>
+  <!-- Control Center for Material Dashboard -->
+  <script src="/assets/js/material-dashboard.min.js?v=3.2.0"></script>
+</div>
+</div>
+</app-layout>

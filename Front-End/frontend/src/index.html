@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Frontend</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<!-- H -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+
+
+  />
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+/>
+<script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+<!---Script pour le model 3D-->
+<script type="module" src="https://unpkg.com/@google/model-viewer@latest/dist/model-viewer.min.js"></script>
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+
+<base href="/" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
+<!-- Add the Google Identity Services script -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+</head>
+<body class="mat-typography">
+  <app-root _nghost-ng-c1083370768="" ngSkipHydration>
+  </app-root>
+
+  
+  <script>
+    $(document).ready(function () {
+  // Initialize tooltips
+  $('[data-toggle="tooltip"]').tooltip();
+
+  // Populate products grid
+  function populateProducts(products) {
+    const productsGrid = $('#productsGrid');
+    productsGrid.empty();
+    if (products.length === 0) {
+      $('#noProducts').show();
+    } else {
+      $('#noProducts').hide();
+      products.forEach(product => {
+        const productCard = `
+          <div class="product-card">
+            <div class="card-actions">
+              <div class="favorite-icon" data-toggle="tooltip" title="Ajouter aux favoris">
+                <i class="fas fa-heart"></i>
+              </div>
+              <div class="details-icon" data-toggle="tooltip" title="Voir les détails">
+                <i class="fas fa-expand"></i>
+              </div>
+            </div>
+            <div class="category-badge">${product.category}</div>
+            <div class="product-image">
+              <img src="${product.image}" alt="${product.name}">
+            </div>
+            <div class="product-info">
+              <h3 class="product-name">${product.name}</h3>
+              <div class="product-price">
+                <span class="price-value">${product.price} €</span>
+              </div>
+              <p class="product-description">${product.description}</p>
+            </div>
+            <div class="product-actions">
+              <button class="btn-add-cart" data-toggle="tooltip" title="Ajouter au panier">
+                <i class="fas fa-shopping-cart"></i> Ajouter au panier
+              </button>
+            </div>
+          </div>
+        `;
+        productsGrid.append(productCard);
+      });
+    }
+  }
+
+  // Show error message
+  function showError(message) {
+    $('#errorMessage').text(message);
+    $('#errorAlert').show();
+    setTimeout(() => $('#errorAlert').hide(), 5000);
+  }
+
+  // Show notification
+  function showNotification(message, type = 'success') {
+    const notification = $(`<div class="notification ${type}">${message}</div>`);
+    $('#notificationContainer').append(notification);
+    notification.addClass('show');
+    setTimeout(() => {
+      notification.removeClass('show').addClass('hide');
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+
+  // Event listeners
+  $('#resetFilters').click(() => {
+    $('.custom-checkbox').prop('checked', false);
+    $('#price-range').val(500);
+    $('#priceDisplay').text('500 €');
+    $('#sort-price').val('asc');
+    loadData();
+  });
+
+  $('#price-range').on('input', function () {
+    $('#priceDisplay').text(`${$(this).val()} €`);
+    loadData();
+  });
+
+  $('#sort-price').change(() => loadData());
+
+  // Initial load
+  loadData();
+});
+    </script>
+</body>
+</html>

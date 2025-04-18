@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="76x76" href="/assets/img/apple-icon.png">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <title>Material Dashboard 3 by Creative Tim</title>
+  <!-- Fonts and icons -->
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,900" />
+  <!-- Nucleo Icons -->
+  <link href="/assets/css/nucleo-icons.css" rel="stylesheet" />
+  <link href="/assets/css/nucleo-svg.css" rel="stylesheet" />
+  <!-- Font Awesome Icons -->
+  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+  <!-- Material Icons -->
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <!-- CSS Files -->
+  <link id="pagestyle" href="/assets/css/material-dashboard.css?v=3.2.0" rel="stylesheet" />
+  <style>
+    @media (max-width: 1200px) {
+      .g-sidenav-show .sidenav {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+      }
+
+      .g-sidenav-show.g-sidenav-pinned .sidenav {
+        transform: translateX(0);
+      }
+
+      .sidenav-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1499;
+        display: none;
+      }
+
+      .g-sidenav-show.g-sidenav-pinned .sidenav-overlay {
+        display: block;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .g-sidenav-show .sidenav {
+        transform: translateX(0);
+      }
+
+      #iconNavbarSidenav {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body class="g-sidenav-show bg-gray-100">
+  <!-- Sidebar -->
+  <aside
+    class="sidenav navbar navbar-vertical navbar-expand-xs border-radius-lg fixed-start ms-2 bg-white my-2 vh-100 overflow-y-auto"
+    id="sidenav-main" [ngClass]="{'g-sidenav-hidden': !isSidebarVisible}">
+    <div class="sidenav-header">
+      <i class="fas fa-times p-3 cursor-pointer text-dark opacity-5 position-absolute end-0 top-0 d-xl-none"
+        id="iconSidenav" (click)="toggleSidebar()"></i>
+      <a class="navbar-brand px-4 py-3 m-0" href="/admin/dashboard">
+        <img src="/assets/img/logo-ct-dark.png" class="navbar-brand-img" width="26" height="26" alt="main_logo">
+        <span class="ms-1 text-sm text-dark">Aqua Trésor</span>
+      </a>
+    </div>
+    <hr class="horizontal dark mt-0 mb-2">
+    <div class="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link text-dark" routerLink="/admin/dashboard">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            <span class="nav-link-text ms-1">Dashboard</span>
+          </a>
+        </li>
+        <!-- Autres éléments du menu -->
+      </ul>
+    </div>
+    <div class="sidenav-footer position-absolute w-100 bottom-0">
+      <div class="mx-3">
+        <button class="btn bg-gradient-dark w-100" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg"
+    [ngClass]="{'margin-left-zero': !isSidebarVisible}">
+    <nav class="navbar navbar-main navbar-expand-lg px-0 mx-3 shadow-none border-radius-xl">
+      <div class="container-fluid py-1 px-3">
+        <i class="fas fa-bars cursor-pointer" (click)="toggleSidebar()" id="sidebar-toggler"></i>
+      </div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+          <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="javascript:;">Pages</a></li>
+          <li class="breadcrumb-item text-sm text-dark active">Détails du Bassin</li>
+        </ol>
+      </nav>
+    </nav>
+
+    <!-- Content -->
+    <div class="container-fluid mt-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="card-title mb-4">Détails du Bassin</h2>
+
+          <!-- Loading State -->
+          <div *ngIf="loading" class="text-center p-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+
+          <!-- Error State -->
+          <div *ngIf="error" class="alert alert-danger">
+            Une erreur s'est produite lors du chargement des données.
+          </div>
+
+          <!-- Content when data is loaded -->
+          <ng-container *ngIf="!loading && !error">
+            <!-- Back Button -->
+            <button class="btn btn-secondary mb-3" (click)="goBack()">
+              <i class="fas fa-arrow-left me-2"></i>Retour
+            </button>
+
+            <!-- Bassin Details -->
+            <div *ngIf="bassin" class="row">
+              <!-- Image -->
+              <div class="col-md-4">
+
+                <div class="mt-3" *ngIf="imagePreviews && imagePreviews.length > 0">
+                  <h5 class="text-primary">Images associées :</h5>
+                  <div class="d-flex flex-wrap gap-2">
+                    <div *ngFor="let preview of imagePreviews; let i = index" class="position-relative">
+                      <img [src]="preview" class="img-thumbnail rounded" [alt]="'Image ' + (i + 1)"
+                        style="width: 150px; height: 100px; object-fit: cover;">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+<!------------------------------------->
+              <!-- Details -->
+              <div class="col-md-8">
+                <h3 class="text-primary mb-4">{{ bassin.nomBassin }}</h3>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <p class="mb-2">
+                      <strong>Prix:</strong>
+                      <span class="text-success">{{ bassin.prix | currency:'EUR' }}</span>
+                    </p>
+                    <p class="mb-2">
+                      <strong>Matériau:</strong> {{ bassin.materiau }}
+                    </p>
+                    <p class="mb-2">
+                      <strong>Couleur:</strong> {{ bassin.couleur }}
+                    </p>
+                    <p class="mb-2">
+                      <strong>Dimensions:</strong> {{ bassin.dimensions }}
+                    </p>
+                  </div>
+                  <div class="col-md-6">
+                    <p class="mb-2">
+                      <strong>Disponibilité:</strong>
+                      <span class="badge ms-2" [ngClass]="bassin.disponible ? 'bg-success' : 'bg-danger'">
+                        {{ bassin.disponible ? 'Disponible' : 'Indisponible' }}
+                      </span>
+                    </p>
+                    <p class="mb-2">
+                      <strong>Stock:</strong>
+                      <span [ngClass]="bassin.stock > 10 ? 'text-success' : 'text-warning'">
+                        {{ bassin.stock }}
+                      </span>
+                    </p>
+                    <p class="mb-2">
+                      <strong>Catégorie:</strong>
+                      {{ bassin.categorie!.nomCategorie || 'Non définie' }}
+                    </p>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <h4 class="text-dark mb-3">Description</h4>
+                  <p class="text-muted">{{ bassin.description }}</p>
+                </div>
+
+                <!------------------boutons------------------->
+
+                <div>
+                  <!-- Bouton pour accéder à la forme des options de personnalisation -->
+                  <div *ngIf="!isBassinPersonnalise">
+                    <a [routerLink]="['/admin/personnalise-bassin', bassin.idBassin]" class="btn-options">
+                      <i class="fas fa-sliders-h"></i> <!-- Icône de curseurs pour les options -->
+                      <span>Gérer les options de personnalisation</span> <!-- Texte explicite -->
+                    </a>
+                  </div>
+                
+                  <!-- Bouton pour voir les détails de la personnalisation -->
+                  <div *ngIf="isBassinPersonnalise">
+                    <a [routerLink]="['/admin/detail-bassin-personnalise', bassin.idBassin]" class="btn-details">
+                      <i class="fas fa-eye"></i> <!-- Icône d'œil pour voir les détails -->
+                      <span>Voir les détails de la personnalisation</span> <!-- Texte explicite -->
+                    </a>
+                  </div>
+                
+                  <!-- Bouton pour mettre à jour le bassin personnalisé -->
+                  <div *ngIf="isBassinPersonnalise">
+                    <a [routerLink]="['/admin/update-bassin-personnalise', bassin.idBassin]" class="btn-update">
+                      <i class="fas fa-sync-alt"></i> <!-- Icône de synchronisation pour mettre à jour -->
+                      <span>Mettre à jour la personnalisation</span> <!-- Texte explicite -->
+                    </a>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Image 3D Code -->
+              <div>
+                <!-- Loader overlay -->
+                <div *ngIf="isLoading" class="loader-overlay">
+                  <div class="loader"></div>
+                </div>
+
+                <!-- Model Viewer -->
+                <model-viewer [src]="convertGithubUrl(bassin.image3DPath)" alt="3D Model" ar camera-controls auto-rotate
+                  shadow-intensity="1" (load)="onModelLoad()" (error)="onModelError()" #modelViewer>
+                </model-viewer>
+
+                <!-- Contrôles AR -->
+                <div class="ar-controls" *ngIf="isARActive">
+                  <button (click)="zoomIn()" class="ar-control-button">
+                    <i class="fas fa-search-plus"></i> Zoom In
+                  </button>
+                  <button (click)="zoomOut()" class="ar-control-button">
+                    <i class="fas fa-search-minus"></i> Zoom Out
+                  </button>
+                  <button (click)="moveUp()" class="ar-control-button">
+                    <i class="fas fa-arrow-up"></i> Move Up
+                  </button>
+                  <button (click)="moveDown()" class="ar-control-button">
+                    <i class="fas fa-arrow-down"></i> Move Down
+                  </button>
+                  <button (click)="moveLeft()" class="ar-control-button">
+                    <i class="fas fa-arrow-left"></i> Move Left
+                  </button>
+                  <button (click)="moveRight()" class="ar-control-button">
+                    <i class="fas fa-arrow-right"></i> Move Right
+                  </button>
+                </div>
+
+                <!-- Bouton pour afficher le modèle en AR sur mobile -->
+                <button (click)="showARViewer(bassin)" class="ar-mobile-button">
+                  <i class="fas fa-cube"></i> View on Mobile
+                </button>
+              </div>
+
+              <!-- Modal pour afficher le QR Code -->
+              <div class="modal" *ngIf="qrCodeImageUrl">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h4>Scan QR Code</h4>
+                    <span class="close" (click)="closeQRModal()">&times;</span>
+                  </div>
+                  <div class="modal-body">
+                    <img [src]="qrCodeImageUrl" alt="QR Code for AR view" class="qr-code-image">
+                    <p class="qr-instructions">Scan this QR code with your mobile device to view in AR</p>
+
+                    <!-- Bouton temporaire pour activer les contrôles AR -->
+                    <button (click)="isARActive = true">Afficher les contrôles AR</button>
+
+                    <div class="ar-instructions">
+                      <h5>How to interact with the 3D model:</h5>
+                      <ul>
+                        <li><strong>Rotate:</strong> Touch and drag with one finger.</li>
+                        <li><strong>Zoom:</strong> Use a pinch gesture with two fingers.</li>
+                        <li><strong>Move:</strong> Touch and hold, then drag with one finger.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+
+            </div>
+
+            <!-- No Bassin Found -->
+            <div *ngIf="!bassin" class="alert alert-warning">
+              Aucun bassin trouvé avec cet ID.
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var sidenav = document.getElementById("sidenav-main");
+      var toggleBtn = document.getElementById("iconSidenav");
+
+      if (toggleBtn) {
+        toggleBtn.addEventListener("click", function () {
+          document.body.classList.toggle("g-sidenav-pinned");
+        });
+      }
+    });
+  </script>
+  <!-- Core JS Files -->
+  <script src="/assets/js/core/popper.min.js"></script>
+  <script src="/assets/js/core/bootstrap.min.js"></script>
+  <script src="/assets/js/plugins/perfect-scrollbar.min.js"></script>
+  <script src="/assets/js/plugins/smooth-scrollbar.min.js"></script>
+  <script src="/assets/js/plugins/chartjs.min.js"></script>
+  <!-- Control Center for Material Dashboard -->
+  <script src="/assets/js/material-dashboard.min.js?v=3.2.0"></script>
+</body>
+
+</html>

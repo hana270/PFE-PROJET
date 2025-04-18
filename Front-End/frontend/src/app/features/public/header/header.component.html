@@ -1,0 +1,155 @@
+<div class="top-banner">
+  <div class="container">
+    <div class="banner-content">
+      <div class="contact-info">
+        <span><i class="material-icons">phone</i> +33 1 23 45 67 89</span>
+        <span><i class="material-icons">email</i> <a href="mailto:support@shopangular.com">support-shopangular.com</a></span>
+      </div>
+      <div class="social-links">
+        <a href="#"><i class="material-icons">thumb_up</i></a>
+        <a href="#"><i class="material-icons">public</i></a>
+        <a href="#"><i class="material-icons">photo_camera</i></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header class="header">
+  <div class="container">
+    <div class="header-content">
+      <div class="logo">
+        <a routerLink="/">
+          <img src="https://cdn-icons-png.flaticon.com/512/10912/10912421.png" alt="Logo AquaTresor">
+          <h1>AquaTresor</h1>
+        </a>
+      </div>
+
+      <div class="menu-toggle" (click)="toggleMenu()">
+        <i class="material-icons">menu</i>
+      </div>
+
+      <nav class="navigation" [class.active]="isMenuOpen">
+        <ul>
+          <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Accueil</a></li>
+          <li><a routerLink="/shop" routerLinkActive="active">Shop</a></li>
+          <li><a routerLink="/about" routerLinkActive="active">À propos</a></li>
+          <li><a routerLink="/contact" routerLinkActive="active">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="user-actions">
+        <div class="favorites">
+          <a class="favorites-btn" routerLink="/favorites">
+            <i class="material-icons">favorite</i>
+            <span class="favorites-count" *ngIf="favoritesCount > 0">{{ favoritesCount }}</span>
+          </a>
+        </div>
+        
+        <div class="cart">
+          <a class="cart-btn" (click)="toggleCart($event)">
+            <i class="material-icons">shopping_cart</i>
+            <span class="cart-count" *ngIf="cartItemCount > 0">{{ cartItemCount }}</span>
+          </a>
+        </div>
+      
+        <div class="profile" *ngIf="isAuthenticated && isClient">
+          <div class="profile-btn" (click)="toggleDropdown($event)">
+            <i class="material-icons">person</i>
+            <i class="material-icons arrow">expand_more</i>
+          </div>
+          <ul class="dropdown-menu" [class.active]="isDropdownOpen">
+            <li><a routerLink="/client/edit-profile/"><i class="material-icons">edit</i> Edit Profile</a></li>
+            <li><a routerLink="/orders">Mes commandes</a></li>
+            <li><a (click)="logout()"><i class="material-icons">exit_to_app</i> Logout</a></li>
+          </ul>
+        </div>
+        
+        <div class="auth-buttons" *ngIf="!isAuthenticated">
+          <a routerLink="/login" class="login-btn">Connexion</a>
+          <a routerLink="/register" class="register-btn">Inscription</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="cart-sidebar" [class.active]="isCartOpen">
+  <div class="cart-header">
+    <h2><i class="fas fa-shopping-cart"></i> Votre Panier</h2>
+    <button class="close-btn" (click)="isCartOpen = false">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+<!-- Dans le template du panier (cart sidebar) -->
+<div class="cart-items" *ngIf="cartItems.length > 0; else emptyCart">
+  <div *ngFor="let item of cartItems" class="cart-item">
+   
+    <div class="item-image">
+      <img [src]="getImageUrl(item)" 
+             [alt]="item.nomBassin || item.bassin?.nomBassin || 'Image de bassin'" 
+             (error)="onImageError($event)">
+    </div>
+    
+    <div class="item-details">
+      <h4>{{ item.bassin?.nomBassin || item.nomBassin || (item.isCustomized ? 'Bassin personnalisé' : 'Bassin standard') }}</h4>
+      <p class="item-description">{{ getDisplayDetails(item) }}</p>
+      
+      <div class="item-price-container">
+        <!-- Prix original barré si en promo -->
+        <div class="price-original" *ngIf="item.promotionActive">
+          {{ item.prixOriginal | currency:'TND':'symbol':'1.2-2' }}
+        </div>
+        
+        <div class="price-current-container">
+          <!-- Prix actuel -->
+          <div class="price-current" [class.price-promo]="item.promotionActive">
+            {{ (item.promotionActive ? item.effectivePrice : item.prixOriginal) | currency:'TND':'symbol':'1.2-2' }}
+          </div>
+          
+          <!-- Badge de promotion -->
+          <div class="promotion-badge" *ngIf="item.promotionActive">
+            {{ getReductionPercentage(item) }}
+          </div>
+        </div>
+        
+        <!-- Timer pour les promotions qui expirent bientôt -->
+        <div class="promotion-timer" *ngIf="item.promotionActive && item.bassin?.promotion">
+          <i class="fas fa-clock"></i>
+          Expire dans: {{ getTimeLeft(item.bassin!.promotion!.dateFin) }}
+        </div>
+      </div>
+    
+      <div class="quantity-controls" *ngIf="isCartOpen">
+        <button (click)="decrementQuantity(item)">-</button>
+        <span>{{ item.quantity }}</span>
+        <button (click)="incrementQuantity(item)">+</button>
+      </div>
+    </div>
+    
+    <button class="remove-btn" (click)="removeFromCart(item)">&times;</button>
+  </div>
+</div>
+
+<ng-template #emptyCart>
+  <div class="empty-cart">
+    <p>Votre panier est vide</p>
+   
+  </div>
+</ng-template>
+
+  <div class="cart-empty" *ngIf="cartItems.length === 0">
+    <i class="material-icons">shopping_cart</i>
+    <p>Votre panier est vide</p>
+  </div>
+
+  <div class="cart-footer" *ngIf="cartItems.length > 0">
+    <div class="cart-total">
+      <p>Total:</p>
+      <p class="total-price">{{ getCartTotal() | currency:'TND':'symbol':'1.2-2' }}</p>
+    </div>
+    <button class="checkout-btn" (click)="goToCart()">Passer à la caisse</button>
+  </div>
+</div>
+
+<div class="overlay" [class.active]="isCartOpen" (click)="isCartOpen = false"></div>

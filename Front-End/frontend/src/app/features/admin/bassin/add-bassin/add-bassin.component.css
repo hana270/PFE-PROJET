@@ -1,0 +1,153 @@
+/* Style général */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.card {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Style des images */
+.imagebassin {
+  object-fit: cover;
+  width: 150px;
+  height: 150px;
+}
+
+/* Style du conteneur d'image */
+.imagebassin-container {
+  background-color: #f8f9fa; /* Fond gris clair */
+  border-radius: 10px; /* Coins arrondis */
+  padding: 10px; /* Espacement intérieur */
+  text-align: center; /* Centrer le contenu */
+  border: 1px solid #ddd; /* Bordure grise */
+}
+
+.overlay-text {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-weight: bold;
+  padding: 5px;
+  border-radius: 0 0 10px 10px;
+}
+
+/* Style de l'icône d'ajout d'image */
+.plus-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #007bff; /* Fond bleu */
+  color: white; /* Texte blanc */
+  border-radius: 50%; /* Forme ronde */
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Ombre légère */
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+/* Effet de survol */
+.plus-icon:hover {
+  background-color: #0056b3; /* Bleu plus foncé au survol */
+  transform: scale(1.1); /* Légère augmentation de taille */
+}
+
+/* Effet au clic */
+.plus-icon:active {
+  background-color: #004080; /* Bleu encore plus foncé au clic */
+  transform: scale(1); /* Retour à la taille normale */
+}
+
+/* Style du bouton "Ajouter" */
+.btn-primary {
+  background-color: #007bff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  background-color: #004080;
+  transform: translateY(0);
+}
+
+/* Style des champs de formulaire */
+/* Style des champs de formulaire */
+.form-control, .form-select {
+  border: 1px solid #ced4da; /* Bordure grise */
+  border-radius: 5px; /* Coins légèrement arrondis */
+  padding: 10px; /* Espacement intérieur */
+  font-size: 1rem; /* Taille de police */
+  transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Transition fluide */
+}
+
+/* Effet au focus */
+.form-control:focus, .form-select:focus {
+  border-color: #80bdff; /* Bordure bleue au focus */
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Ombre bleue */
+}
+
+/* Style des labels */
+.form-label {
+  font-weight: bold; /* Texte en gras */
+  color: #495057; /* Couleur du texte */
+  margin-bottom: 5px; /* Espacement sous le label */
+}
+
+/* Style des champs désactivés */
+.form-control:disabled {
+  background-color: #e9ecef; /* Fond gris clair */
+  border-color: #ced4da; /* Bordure grise */
+  color: #6c757d; /* Texte gris */
+}
+
+/* Style spécifique pour le champ de description */
+textarea.form-control {
+  resize: vertical; /* Permet à l'utilisateur de redimensionner verticalement */
+  min-height: 120px; /* Hauteur minimale */
+}
+
+/* Style du bouton "Ajouter" */
+.btn-modifier {
+  background-color: #28a745; /* Vert pour "Ajouter" */
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  padding: 12px 24px;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Effet de survol */
+.btn-modifier:hover {
+  background-color: #218838; /* Vert plus foncé au survol */
+  transform: translateY(-2px); /* Légère élévation */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Ombre portée */
+}
+
+/* Effet au clic */
+.btn-modifier:active {
+  background-color: #1e7e34; /* Vert encore plus foncé au clic */
+  transform: translateY(0); /* Retour à la position initiale */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Ombre plus petite */
+}

@@ -1,0 +1,82 @@
+<app-layout>
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+<!----------------------------------------------------------------------------------------------------
+    ------------------------------Liste des bassins------------------------------
+------------------------------------------------------------------------------------------------------>
+<div class="dashboard-container"> 
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Topbar -->
+    <div class="topbar">
+      <h3>Gestion des Bassins</h3>
+      <a href="/admin/addBassin" class="btn btn-dark">Ajouter un Bassin</a>
+    </div>
+
+    <!-- Liste des Bassins -->
+    <div class="bassin-list">
+      <table class="bassin-table">
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Nom</th>
+            <th>Prix</th>
+            <th>Disponibilité</th>
+            <th>Catégorie</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let bassin of getPaginatedBassins()">
+            <!-- Image du bassin -->
+            <td>
+              <img [src]="bassin.imageStr" alt="Bassin" class="bassin-image" />
+            </td>
+            <!-- Nom du bassin -->
+            <td>{{ bassin.nomBassin }}</td>
+            <!-- Prix du bassin -->
+            <td>{{ bassin.prix }} DT</td>
+            <!-- Disponibilité -->
+            <td>
+              <span class="badge" [ngClass]="bassin.disponible ? 'bg-success' : 'bg-danger'">
+                {{ bassin.disponible ? 'Disponible' : 'Indisponible' }}
+              </span>
+            </td>
+            <!-- Catégorie -->
+            <td>{{ bassin.categorie ? bassin.categorie.nomCategorie : 'Non définie' }}</td>
+            <!-- Actions -->
+            <td class="actions" style="align-items: center; display: flex; gap: 10px;">
+             <!-- Détails -->
+  <a [routerLink]="['/admin/details-bassin', bassin.idBassin]" class="btn-icon" style="text-decoration: none;">
+    <i class="fas fa-eye"></i>
+  </a>
+  
+  <!-- Supprimer -->
+  <button class="btn-icon" (click)="supprimerBassin(bassin)" style="text-decoration: none;">
+    <i class="fas fa-trash"></i>
+  </button>
+  
+  <!-- Modifier -->
+  <a [routerLink]="['/admin/updatebassin', bassin.idBassin]" class="btn-icon" style="text-decoration: none;">
+    <i class="fas fa-edit"></i>
+  </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+     <!-- Pagination -->
+     <div class="pagination">
+      <button (click)="previousPage()" [disabled]="currentPage === 1">Précédent</button>
+      <span>Page {{ currentPage }} sur {{ totalPages }}</span>
+      <button (click)="nextPage()" [disabled]="currentPage === totalPages">Suivant</button>
+    </div>
+  </div>
+</div>
+<!----------------------------------------------------------------------------------------------------
+    ------------------------------------------------------------
+------------------------------------------------------------------------------------------------------>
+
+  </main>
+
+</app-layout>

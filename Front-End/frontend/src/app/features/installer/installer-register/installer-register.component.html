@@ -1,0 +1,56 @@
+<div class="register-container">
+  <div class="register-card">
+    <h2 class="register-title">Bienvenue, Nouvel Installateur</h2>
+    <p class="register-subtitle">Veuillez remplir le formulaire pour créer votre compte.</p>
+
+    <form (ngSubmit)="register()" class="register-form">
+      <!-- Champ Nom d'utilisateur -->
+      <div class="form-group">
+        <label for="username" class="form-label">Nom d'utilisateur</label>
+        <input
+          type="text"
+          id="username"
+          [(ngModel)]="user.username"
+          name="username"
+          class="form-control"
+          placeholder="Entrez votre nom d'utilisateur"
+          required
+        />
+      </div>
+
+      <!-- Champ Mot de passe -->
+      <div class="form-group">
+        <label for="password" class="form-label">Mot de passe</label>
+        <input
+          type="password"
+          id="password"
+          [(ngModel)]="user.password"
+          name="password"
+          class="form-control"
+          placeholder="Entrez votre mot de passe"
+          required
+        />
+      </div>
+
+      <!-- Champ Email -->
+      <div class="form-group">
+        <label for="email" class="form-label">Email</label>
+        <input
+          type="email"
+          id="email"
+          [(ngModel)]="user.email"
+          name="email"
+          class="form-control"
+          placeholder="Entrez votre email"
+          required
+        />
+      </div>
+
+      <!-- Bouton d'inscription -->
+      <button type="submit" class="register-button" [disabled]="isLoading">
+        <span *ngIf="!isLoading">S'inscrire</span>
+        <span *ngIf="isLoading" class="spinner"></span>
+      </button>
+    </form>
+  </div>
+</div>

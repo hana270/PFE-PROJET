@@ -1,0 +1,14 @@
+<div class="toast-container">
+  <div *ngFor="let toast of toasts" 
+       class="toast toast-{{toast.classname.split(' ')[0]}}"
+       (click)="removeToast(toast)">
+    <div class="toast-header">
+      <i class="fas {{toast.icon}}"></i>
+      <strong class="me-auto">{{toast.header}}</strong>
+      <button type="button" class="btn-close" (click)="removeToast(toast); $event.stopPropagation()"></button>
+    </div>
+    <div class="toast-body">
+      {{toast.message}}
+    </div>
+  </div>
+</div>

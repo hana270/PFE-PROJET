@@ -1,0 +1,166 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <h2 class="dialog-title">{{ getDialogTitle() }}</h2>
+    <button class="close-button" (click)="onCancelClick()">
+      <i class="material-icons">close</i>
+    </button>
+  </div>
+  
+  <div class="dialog-content">
+    <!-- Formulaire d'ajustement de stock -->
+    <form [formGroup]="actionForm" *ngIf="data.action === 'ajuster'">
+      <!-- Section raison -->
+      <div class="form-section">
+        <label class="section-label">Motif de l'ajustement</label>
+        <div class="reason-selector">
+          <div class="reason-tabs" *ngFor="let reason of reasons" 
+               [class.active]="actionForm.get('raison')?.value === reason.id"
+               (click)="actionForm.get('raison')?.setValue(reason.id)">
+            <i class="material-icons">{{ reason.icon }}</i>
+            <span>{{ reason.label }}</span>
+          </div>
+        </div>
+        <div class="error-message" *ngIf="actionForm.get('raison')?.hasError('required') && actionForm.get('raison')?.touched">
+          Veuillez sélectionner une raison
+        </div>
+        
+        <!-- Champ pour autre raison -->
+        <div class="form-field animated fadeInDown" *ngIf="actionForm.get('raison')?.value === 'other'">
+          <label>Précisez la raison:</label>
+          <input type="text" formControlName="autreRaison" class="form-input" placeholder="Raison personnalisée">
+          <div class="error-message" *ngIf="actionForm.hasError('autreRaisonRequise')">
+            Veuillez préciser la raison
+          </div>
+        </div>
+      </div>
+      
+      <!-- Section quantité -->
+      <div class="form-section">
+        <label class="section-label">
+          {{ isReasonTypeSubtraction() ? 'Quantité à retirer' : 'Quantité à ajouter' }}
+        </label>
+        <div class="quantity-field">
+          <button type="button" class="quantity-btn" (click)="adjustQuantity(-1)" [disabled]="isReasonTypeSubtraction() && actionForm.get('quantite')?.value <= 0">
+            <i class="material-icons">remove</i>
+          </button>
+          <input type="number" formControlName="quantite" class="quantity-input" min="0">
+          <button type="button" class="quantity-btn" (click)="adjustQuantity(1)">
+            <i class="material-icons">add</i>
+          </button>
+        </div>
+        <div class="error-message" *ngIf="actionForm.get('quantite')?.hasError('required') && actionForm.get('quantite')?.touched">
+          La quantité est requise
+        </div>
+        <div class="error-message" *ngIf="actionForm.get('quantite')?.hasError('min') && actionForm.get('quantite')?.touched">
+          La quantité doit être supérieure à zéro
+        </div>
+        <div class="error-message" *ngIf="actionForm.get('quantite')?.hasError('max') && actionForm.get('quantite')?.touched">
+          La quantité ne peut pas excéder le stock disponible
+        </div>
+        <div class="error-message" *ngIf="actionForm.get('quantite')?.hasError('invalidSubtraction') && actionForm.get('quantite')?.touched">
+          Cette opération entraînerait un stock négatif
+        </div>
+        
+        <!-- Aperçu du stock -->
+        <div class="stock-preview-card">
+          <div class="stock-info">
+            <div class="stock-field">
+              <span class="stock-label">Stock actuel:</span>
+              <span class="stock-value">{{ currentStock }}</span>
+            </div>
+            <div class="stock-separator">
+              <i class="material-icons">{{ isReasonTypeSubtraction() ? 'remove' : 'add' }}</i>
+            </div>
+            <div class="stock-field">
+              <span class="stock-label">Ajustement:</span>
+              <span class="stock-value">{{ actionForm.get('quantite')?.value || 0 }}</span>
+            </div>
+            <div class="stock-separator">
+              <i class="material-icons">trending_flat</i>
+            </div>
+            <div class="stock-field result">
+              <span class="stock-label">Nouveau stock:</span>
+              <span class="stock-value" [ngClass]="getStockStatusClass()">{{ newStock }}</span>
+            </div>
+          </div>
+          
+          <div class="stock-warning" *ngIf="newStock < 5 && newStock >= 0">
+            <i class="material-icons">warning</i>
+            <span>Attention: Le stock sera faible après cet ajustement</span>
+          </div>
+          
+          <div class="stock-error" *ngIf="newStock < 0">
+            <i class="material-icons">error</i>
+            <span>Erreur: Le stock ne peut pas être négatif</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Section commentaire -->
+      <div class="form-section">
+        <label class="section-label">Commentaire (optionnel)</label>
+        <textarea formControlName="commentaire" class="form-textarea" placeholder="Informations supplémentaires..."></textarea>
+        <div class="comment-counter" [ngClass]="{'warning': actionForm.get('commentaire')?.value?.length > 200}">
+          {{ actionForm.get('commentaire')?.value?.length || 0 }}/250
+        </div>
+        <div class="error-message" *ngIf="actionForm.get('commentaire')?.hasError('maxlength')">
+          Le commentaire ne peut pas dépasser 250 caractères
+        </div>
+      </div>
+    </form>
+    
+    <!-- Formulaire de désarchivage -->
+    <form [formGroup]="actionForm" *ngIf="data.action === 'desarchiver'">
+      <div class="form-section">
+        <div class="unarchive-icon">
+          <i class="material-icons">unarchive</i>
+        </div>
+        <p class="info-text">
+          Vous êtes sur le point de réactiver le bassin "<strong>{{ data.bassin.nomBassin }}</strong>".
+        </p>
+        
+        <div class="form-field">
+          <label>Quantité initiale:</label>
+          <div class="quantity-field">
+            <button type="button" class="quantity-btn" (click)="actionForm.get('nouvelleQuantite')?.setValue(actionForm.get('nouvelleQuantite')?.value - 1)" [disabled]="actionForm.get('nouvelleQuantite')?.value <= 1">
+              <i class="material-icons">remove</i>
+            </button>
+            <input type="number" formControlName="nouvelleQuantite" class="quantity-input" min="1">
+            <button type="button" class="quantity-btn" (click)="actionForm.get('nouvelleQuantite')?.setValue(actionForm.get('nouvelleQuantite')?.value + 1)">
+              <i class="material-icons">add</i>
+            </button>
+          </div>
+          <div class="error-message" *ngIf="actionForm.get('nouvelleQuantite')?.hasError('min') && actionForm.get('nouvelleQuantite')?.touched">
+            La quantité doit être au moins 1
+          </div>
+        </div>
+      </div>
+    </form>
+    
+    <!-- Confirmation d'archivage -->
+    <div *ngIf="data.action === 'archiver'" class="confirm-message">
+      <div class="archive-icon">
+        <i class="material-icons">archive</i>
+      </div>
+      <p class="archive-text">Êtes-vous sûr de vouloir archiver le bassin "<strong>{{ data.bassin.nomBassin }}</strong>" ?</p>
+      <p class="archive-info">Cette action va retirer le bassin de la liste des bassins actifs.</p>
+    </div>
+  </div>
+  
+  <div class="dialog-actions">
+    <button type="button" class="btn btn-cancel" (click)="onCancelClick()">
+      <i class="material-icons">close</i>
+      <span>Annuler</span>
+    </button>
+    <button type="button" 
+            [ngClass]="getSubmitButtonColor()"
+            [disabled]="(data.action === 'ajuster' || data.action === 'desarchiver') && actionForm.invalid"
+            (click)="onSubmitClick()" 
+            class="btn">
+      <i class="material-icons">
+        {{ data.action === 'ajuster' ? 'save' : (data.action === 'archiver' ? 'archive' : 'unarchive') }}
+      </i>
+      <span>{{ getSubmitButtonText() }}</span>
+    </button>
+  </div>
+</div>

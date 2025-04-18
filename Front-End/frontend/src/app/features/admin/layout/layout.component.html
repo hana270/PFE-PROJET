@@ -1,0 +1,114 @@
+<div class="layout-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="!isSidebarOpen">
+    <div class="sidebar-header">
+      <h2>
+        <i class="fas fa-water"></i>
+        <span class="Titre" *ngIf="isSidebarOpen || isMobile">Aqua Trésor</span>
+      </h2>
+      <i class="fas fa-times" (click)="toggleSidebar()"></i>
+    </div>
+    <hr class="divider" />
+    <ul class="sidebar-menu">
+      <li>
+        <a routerLink="/admin/dashboard">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/admin/List-users">
+          <i class="fas fa-users"></i>
+          <span>Users</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/admin/list-categories">
+          <i class="fas fa-list-alt"></i>
+          <span>Liste Categories</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/admin/bassin">
+          <i class="fas fa-water"></i>
+          <span>Liste Bassins</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/admin/promotions">
+          <i class="fas fa-tags"></i>
+          <span>Gestion Promotions</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/admin/stocks">
+          <i class="fas fa-boxes"></i>
+          <span>Gestion Stocks</span>
+        </a>
+      </li>
+      <li class="mt-3">
+        <h6>Account Pages</h6>
+      </li>
+      <li>
+        <a routerLink="/admin/edit-profile">
+          <i class="fas fa-user"></i>
+          <span>Profile</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/admin/send-installer-invitation">
+          <i class="fas fa-user-plus"></i>
+          <span>Installateur</span>
+        </a>
+      </li>
+    </ul>
+    <div class="sidebar-footer">
+
+        <span *ngIf="isSidebarOpen"></span>
+
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content" [class.collapsed]="!isSidebarOpen">
+     <!-- Navbar -->
+    <!-- Navbar -->
+<nav class="navbar" [class.collapsed]="!isSidebarOpen">
+  <div class="navbar-left">
+    <button (click)="toggleSidebar()">
+      <i class="fas fa-bars"></i>
+    </button>
+    <h3 style="align-items: center;
+    display: contents;">{{ pageTitle }}</h3>
+  </div>
+  <div class="navbar-right">
+    <div class="search-container" [class.active]="isSearchActive">
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder="Rechercher..." 
+        [(ngModel)]="searchQuery"
+        (input)="onSearchInput()"
+      />
+      <button class="search-btn" (click)="toggleSearch()">
+        <i class="fas fa-search"></i>
+      </button>
+    </div>
+     <!-- Ajouter le composant de notification ici -->
+     <app-notifications></app-notifications>
+     
+    <button class="profile-btn">
+      <i class="fas fa-user-circle"></i>
+    </button>
+    <button class="logout-btn" (click)="logout()">
+      <i class="fas fa-sign-out-alt"></i>
+    </button>
+  </div>
+</nav>
+
+    <!-- Page Content -->
+    <div class="content">
+      <ng-content></ng-content>
+    </div>
+  </div>
+</div>

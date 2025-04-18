@@ -1,0 +1,88 @@
+<div class="favorites-page">
+  <header>
+    <app-header></app-header>
+  </header>
+
+  <div class="main-container container-fluid py-5">
+    <div class="favorites-header">
+      <h1 class="mb-3"><i class="material-icons">favorite</i> Mes Favoris</h1>
+      <p class="text-muted">Retrouvez tous vos bassins préférés</p>
+    </div>
+
+    <!-- Empty favorites message -->
+    <div class="empty-favorites" *ngIf="favorites.length === 0" @fadeIn>
+      <div class="empty-content text-center">
+        <i class="material-icons">favorite_border</i>
+        <h3>Votre liste de favoris est vide</h3>
+        <p>Vous n'avez pas encore ajouté de bassin à vos favoris</p>
+        <button class="btn btn-primary mt-3" (click)="navigateToShop()">
+          <i class="material-icons">shopping_bag</i> Explorer la boutique
+        </button>
+      </div>
+    </div>
+
+    <!-- Favorites grid -->
+    <div class="favorites-grid" *ngIf="favorites.length > 0" @listAnimation>
+      <div class="row">
+        <div *ngFor="let bassin of favorites" class="col-lg-4 col-md-6 mb-4">
+          <div class="favorite-card" 
+               (mouseenter)="setHoveredProduct(bassin.idBassin)" 
+               (mouseleave)="setHoveredProduct(null)"
+               (click)="navigateToProductDetails(bassin)">
+            
+            <!-- Product image -->
+            <div class="favorite-image">
+              <img [src]="bassin.imageStr" alt="{{ bassin.nomBassin }}" onerror="this.src='assets/default-image.webp'">
+              
+              <!-- Actions overlay -->
+              <div class="action-overlay" [class.visible]="hoveredProduct === bassin.idBassin">
+                <button class="btn-view" (click)="navigateToProductDetails(bassin); $event.stopPropagation()">
+                  <i class="material-icons">visibility</i>
+                </button>
+                <button class="btn-cart" (click)="addToCart(bassin, $event)">
+                  <i class="material-icons">shopping_cart</i>
+                </button>
+                <button class="btn-remove" (click)="removeFromFavorites(bassin, $event)">
+                  <i class="material-icons">delete</i>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Product info -->
+            <div class="favorite-info">
+              <h3 class="bassin-name">{{ bassin.nomBassin }}</h3>
+              <p class="bassin-price">{{ bassin.prix | currency:'EUR':'symbol':'1.2-2' }}</p>
+              
+              <div class="bassin-details" *ngIf="bassin.dimensions || bassin.couleur || bassin.materiau">
+                <p *ngIf="bassin.dimensions"><strong>Dimensions:</strong> {{ bassin.dimensions }}</p>
+                <p *ngIf="bassin.couleur"><strong>Couleur:</strong> {{ bassin.couleur }}</p>
+                <p *ngIf="bassin.materiau"><strong>Matériau:</strong> {{ bassin.materiau }}</p>
+              </div>
+              
+              <p class="bassin-description" *ngIf="bassin.description">
+                {{ bassin.description.length > 80 ? (bassin.description | slice:0:80) + '...' : bassin.description }}
+              </p>
+            </div>
+            
+            <!-- Quick actions -->
+            <div class="quick-actions">
+              <button class="btn-add-cart" (click)="addToCart(bassin, $event)">
+                <i class="material-icons">shopping_cart</i> Ajouter au panier
+              </button>
+              <button class="btn-remove-favorite" (click)="removeFromFavorites(bassin, $event)">
+                <i class="material-icons">delete</i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification container -->
+  <div id="notificationContainer"></div>
+
+  <footer>
+    <app-footer></app-footer>
+  </footer>
+</div>

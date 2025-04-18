@@ -1,0 +1,87 @@
+<app-layout pageTitle="Liste des Utilisateurs" (searchQueryChange)="onSearchQueryChange($event)">
+  <div class="container">
+    <h2 class="page-title">Liste des Utilisateurs</h2>
+
+    <!-- Onglets pour Clients et Installateurs -->
+    <mat-tab-group>
+      <!-- Onglet Clients -->
+      <mat-tab label="Clients">
+        <!-- Tableau des clients -->
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Actif</th>
+                <th>Rôles</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let client of filteredClients">
+                <td>{{ client.user_id }}</td>
+                <td>{{ client.username }}</td>
+                <td>{{ client.email }}</td>
+                <td>
+                  <span [ngClass]="{'text-success': client.enabled, 'text-danger': !client.enabled}">
+                    {{ client.enabled ? 'Oui' : 'Non' }}
+                  </span>
+                </td>
+                <td>
+                  <span *ngFor="let role of client.roles" class="badge bg-primary">
+                    {{ role.role }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </mat-tab>
+
+      <!-- Onglet Installateurs -->
+      <mat-tab label="Installateurs">
+        <!-- Tableau des installateurs -->
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Actif</th>
+                <th>Rôles</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let installer of filteredInstallers">
+                <td>{{ installer.user_id }}</td>
+                <td>{{ installer.username }}</td>
+                <td>{{ installer.email }}</td>
+                <td>
+                  <span [ngClass]="{'text-success': installer.enabled, 'text-danger': !installer.enabled}">
+                    {{ installer.enabled ? 'Oui' : 'Non' }}
+                  </span>
+                </td>
+                <td>
+                  <span *ngFor="let role of installer.roles" class="badge bg-primary">
+                    {{ role.role }}
+                  </span>
+                </td>
+                <td>
+                  <button *ngIf="installer.enabled" (click)="deactivateInstaller(installer.user_id)" class="btn btn-danger">
+                    Désactiver
+                  </button>
+                  <button *ngIf="!installer.enabled" (click)="activateInstaller(installer.user_id)" class="btn btn-success">
+                    Activer
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</app-layout>

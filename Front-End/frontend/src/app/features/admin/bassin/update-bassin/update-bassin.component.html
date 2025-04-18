@@ -1,0 +1,164 @@
+<app-layout>
+    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+
+        <div class="container mt-4">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-4">
+
+                    <!-- Formulaire -->
+                    <form (ngSubmit)="updateBassin()">
+                        <!-- Section 1 : Informations générales -->
+                        <div class="mb-5">
+                            <h4 class="mb-4 fw-bold text-uppercase text-secondary">Informations générales</h4>
+                            <div class="row g-4">
+                                <!-- ID Bassin -->
+                                <div class="col-md-6">
+                                    <label for="idBassin" class="form-label fw-bold">ID Bassin</label>
+                                    <input type="text" id="idBassin" [(ngModel)]="currentBassin.idBassin"
+                                        name="idBassin" class="form-control" readonly />
+                                </div>
+                                <!-- Nom Bassin -->
+                                <div class="col-md-6">
+                                    <label for="nomBassin" class="form-label fw-bold">Nom Bassin</label>
+                                    <input type="text" id="nomBassin" [(ngModel)]="currentBassin.nomBassin"
+                                        name="nomBassin" class="form-control" required />
+                                </div>
+                                <!-- Description Bassin -->
+                                <div class="col-md-12">
+                                    <label for="description" class="form-label fw-bold">Description Bassin</label>
+                                    <textarea id="description" [(ngModel)]="currentBassin.description"
+                                        name="description" class="form-control" rows="4" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 2 : Caractéristiques techniques -->
+                        <div class="mb-5">
+                            <h4 class="mb-4 fw-bold text-uppercase text-secondary">Caractéristiques techniques</h4>
+                            <div class="row g-4">
+                                <!-- Matériau -->
+                                <div class="col-md-4">
+                                    <label for="materiau" class="form-label fw-bold">Matériau</label>
+                                    <select id="materiau" [(ngModel)]="currentBassin.materiau" name="materiau"
+                                        class="form-select" required>
+                                        <option *ngFor="let materiau of materiaux" [value]="materiau">{{ materiau }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <!-- Couleur -->
+                                <div class="col-md-4">
+                                    <label for="couleur" class="form-label fw-bold">Couleur</label>
+                                    <select id="couleur" [(ngModel)]="currentBassin.couleur" name="couleur"
+                                        class="form-select" required>
+                                        <option *ngFor="let couleur of couleurs" [value]="couleur">{{ couleur }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <!-- Dimensions -->
+                                <div class="col-md-4">
+                                    <label for="dimensions" class="form-label fw-bold">Dimensions</label>
+                                    <select id="dimensions" class="form-control" [(ngModel)]="currentBassin.dimensions"
+                                        name="dimensions" required>
+                                        <option value="" disabled selected>Choisir une dimension</option>
+                                        <option value="200x150x100 cm">2m x 1.5m x 1m (≈ 3 000L)</option>
+                                        <option value="250x150x100 cm">2.5m x 1.5m x 1m (≈ 3 750L)</option>
+                                        <option value="300x200x100 cm">3m x 2m x 1m (≈ 6 000L)</option>
+                                        <option value="300x200x150 cm">3m x 2m x 1.5m (≈ 9 000L)</option>
+                                        <option value="350x250x150 cm">3.5m x 2.5m x 1.5m (≈ 13 125L)</option>
+                                        <option value="400x250x150 cm">4m x 2.5m x 1.5m (≈ 15 000L)</option>
+                                        <option value="400x250x200 cm">4m x 2.5m x 2m (≈ 20 000L)</option>
+                                        <option value="500x300x200 cm">5m x 3m x 2m (≈ 30 000L)</option>
+                                        <option value="600x350x250 cm">6m x 3.5m x 2.5m (≈ 52 500L)</option>
+                                        <option value="700x400x250 cm">7m x 4m x 2.5m (≈ 70 000L)</option>
+                                        <option value="800x500x300 cm">8m x 5m x 3m (≈ 120 000L)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 3 : Prix et disponibilité -->
+                        <div class="mb-5">
+                            <h4 class="mb-4 fw-bold text-uppercase text-secondary">Prix et disponibilité</h4>
+                            <div class="row g-4">
+                                <!-- Prix -->
+                                <div class="col-md-4">
+                                    <label for="prix" class="form-label fw-bold">Prix</label>
+                                    <input type="number" id="prix" [(ngModel)]="currentBassin.prix" name="prix"
+                                        class="form-control" required />
+                                </div>
+                                <!-- Stock -->
+                                <div class="col-md-4">
+                                    <label for="stock" class="form-label fw-bold">Stock</label>
+                                    <input type="number" id="stock" [(ngModel)]="currentBassin.stock" name="stock"
+                                        class="form-control" required (change)="onStockChange()" />
+                                </div>
+                                <!-- Disponibilité -->
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Disponibilité</label>
+                                    <input type="text" class="form-control"
+                                        [value]="currentBassin.stock > 0 ? 'Disponible' : 'Indisponible'" disabled />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 4 : Catégorie -->
+                        <div class="col-md-6">
+                            <label for="categorie" class="form-label">Catégorie</label>
+                            <select id="categorie" class="form-select" [(ngModel)]="updateCategorieId"
+                                name="idCategorie" required>
+                                <option *ngFor="let categorie of categories" [value]="categorie.idCategorie">
+                                    {{ categorie.nomCategorie }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Section 5 : Galerie d'images -->
+                        <div class="mb-5">
+                            <h4 class="mb-4 fw-bold text-uppercase text-secondary">Galerie d'images</h4>
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div *ngFor="let img of currentBassin.imagesBassin; let i = index"
+                                            class="col-md-3 mb-3">
+                                            <div class="card position-relative image-card" (mouseover)="hover[i] = true"
+                                                (mouseleave)="hover[i] = false">
+                                                <img [src]="imagePreviews[i]" class="card-img-top img-fluid"
+                                                    alt="Image du bassin" />
+                                                <div class="card-body text-center position-absolute top-50 start-50 translate-middle"
+                                                    [ngClass]="{'show-actions': hover[i]}"
+                                                    [style.opacity]="hover[i] ? '1' : '0'"
+                                                    style="transition: opacity 0.3s ease;">
+                                                    <div class="image-actions">
+                                                        <button type="button" class="btn-icon me-2"
+                                                            (click)="triggerFileInput(i)" title="Modifier">
+                                                            <i class="fas fa-edit text-primary"></i>
+                                                        </button>
+                                                        <input type="file" #fileInput hidden
+                                                            (change)="onFileSelected($event, i)" />
+                                                        <button type="button" class="btn-icon"
+                                                            (click)="supprimerImage(img)" title="Supprimer">
+                                                            <i class="fas fa-trash text-danger"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bouton de soumission -->
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-modifier w-100 py-2 fw-bold">
+                                <i class="fas fa-save me-2"></i>Modifier
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</app-layout>

@@ -1,0 +1,625 @@
+/* Base Dialog Styles with Responsive Design */
+.dialog-container {
+  padding: 0;
+  width: 100%;
+  max-width: 500px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  animation: dialogFadeIn 0.3s ease-out;
+}
+
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* HEADER */
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dialog-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background-color: rgba(0, 0, 0, 0.07);
+}
+
+.close-button .material-icons {
+  font-size: 18px;
+  color: #6c757d;
+}
+
+/* CONTENT */
+.dialog-content {
+  padding: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.form-section {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.section-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.section-label::after {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 3px;
+  background-color: #3498db;
+  left: 0;
+  bottom: -5px;
+  border-radius: 3px;
+}
+
+/* REASON SELECTOR - Responsive Grid */
+.reason-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.reason-tabs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 8px;
+  height: 75px;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  justify-content: center;
+}
+
+.reason-tabs .material-icons {
+  font-size: 22px;
+  margin-bottom: 5px;
+  color: #6c757d;
+  transition: all 0.2s ease;
+}
+
+.reason-tabs span {
+  font-size: 11px;
+  text-align: center;
+  color: #495057;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.reason-tabs.active, .reason-tabs:hover {
+  border-color: #3498db;
+  background-color: rgba(52, 152, 219, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.reason-tabs.active .material-icons, .reason-tabs:hover .material-icons {
+  color: #3498db;
+}
+
+/* FORM FIELDS */
+.form-field {
+  margin-bottom: 16px;
+}
+
+.form-field label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #495057;
+  font-size: 13px;
+}
+
+.form-input, 
+.form-select, 
+.form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background-color: #fff;
+}
+
+.form-input:focus, 
+.form-select:focus, 
+.form-textarea:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
+.form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.comment-counter {
+  text-align: right;
+  font-size: 11px;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+.comment-counter.warning {
+  color: #f39c12;
+}
+
+/* QUANTITY FIELD */
+.quantity-field {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  width: 100%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+  background-color: white;
+}
+
+.quantity-input {
+  flex: 1;
+  text-align: center;
+  padding: 10px 8px;
+  font-size: 16px;
+  border: none;
+  margin: 0;
+  max-width: 150px;
+  font-weight: 500;
+  color: #2c3e50;
+  background-color: white;
+}
+
+.quantity-input:focus {
+  outline: none;
+}
+
+.quantity-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background-color: #f8f9fa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quantity-btn:not(:disabled):hover {
+  background-color: #e9ecef;
+}
+
+.quantity-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.quantity-btn .material-icons {
+  font-size: 18px;
+  color: #495057;
+}
+
+/* STOCK PREVIEW */
+.stock-preview-card {
+  margin-top: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+}
+
+.stock-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+  padding-bottom: 16px;
+}
+
+.stock-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px;
+}
+
+.stock-label {
+  font-size: 11px;
+  color: #6c757d;
+  margin-bottom: 4px;
+}
+
+.stock-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.stock-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #adb5bd;
+}
+
+.stock-field.result {
+  padding: 8px 10px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stock-value.stock-normal {
+  color: #28a745;
+}
+
+.stock-value.stock-warning {
+  color: #f39c12;
+}
+
+.stock-value.stock-danger {
+  color: #e74c3c;
+}
+
+.stock-warning, .stock-error {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 6px;
+  margin-top: 12px;
+  font-size: 12px;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.stock-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.stock-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.stock-warning .material-icons, .stock-error .material-icons {
+  margin-right: 8px;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ARCHIVE/UNARCHIVE */
+.confirm-message, .unarchive-icon {
+  text-align: center;
+  padding: 15px;
+}
+
+.archive-icon, .unarchive-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 15px;
+}
+
+.archive-icon .material-icons {
+  font-size: 35px;
+  color: #e74c3c;
+}
+
+.unarchive-icon .material-icons {
+  font-size: 35px;
+  color: #28a745;
+}
+
+.archive-text, .archive-info {
+  margin: 10px 0;
+  text-align: center;
+}
+
+.archive-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.archive-info {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.info-text {
+  text-align: center;
+  color: #495057;
+  margin: 15px 0;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* ERROR MESSAGES */
+.error-message {
+  color: #e74c3c;
+  font-size: 11px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* DIALOG ACTIONS */
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  gap: 10px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn .material-icons {
+  font-size: 16px;
+  margin-right: 6px;
+}
+
+.btn-cancel {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #ced4da;
+}
+
+.btn-cancel:hover {
+  background-color: #e9ecef;
+}
+
+.btn-primary {
+  background-color: #3498db;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+}
+
+.btn-danger {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c0392b;
+}
+
+.btn-success {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #27ae60;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* RESPONSIVE ADJUSTMENTS */
+@media (max-width: 767px) {
+  .dialog-container {
+    max-width: 100%;
+    border-radius: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .dialog-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+  }
+  
+  .reason-selector {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  }
+  
+  .reason-tabs {
+    height: 70px;
+    padding: 8px 6px;
+  }
+  
+  .reason-tabs .material-icons {
+    font-size: 20px;
+  }
+  
+  .reason-tabs span {
+    font-size: 10px;
+  }
+  
+  .stock-info {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .stock-separator {
+    display: none;
+  }
+  
+  .stock-field.result {
+    grid-column: span 2;
+    margin-top: 10px;
+  }
+  
+  .dialog-title {
+    font-size: 16px;
+  }
+}
+
+/* Extra Small Devices - Mobile Phones */
+@media (max-width: 480px) {
+  .dialog-header {
+    padding: 12px;
+  }
+  
+  .dialog-content {
+    padding: 10px;
+  }
+  
+  .btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .reason-selector {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .quantity-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .quantity-input {
+    font-size: 15px;
+  }
+}
+
+
+
+
+
+
+
+/********************/
+/* Add these to your global styles.css or appropriate stylesheet */
+
+/* Full screen dialog for mobile */
+.full-screen-dialog {
+  margin: 0;
+  padding: 0;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  border-radius: 0 !important;
+}
+
+.full-screen-dialog .mat-dialog-container {
+  border-radius: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Media query for better touch targets on mobile */
+@media (max-width: 767px) {
+  .material-icons {
+    font-size: 24px; /* Slightly larger icons for better touch targets */
+  }
+  
+  .btn {
+    min-height: 44px; /* Better touch target size */
+  }
+  
+  .quantity-btn {
+    min-width: 44px; /* Better touch target size */
+    min-height: 44px;
+  }
+  
+  /* Prevent zoom on inputs on mobile */
+  input[type="text"],
+  input[type="number"],
+  textarea {
+    font-size: 16px !important; /* Prevent iOS zoom */
+  }
+}
+
+/* Fix overlay issues */
+.cdk-overlay-pane {
+  max-width: 100vw !important;
+}

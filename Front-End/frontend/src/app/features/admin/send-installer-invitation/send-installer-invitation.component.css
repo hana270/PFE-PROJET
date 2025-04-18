@@ -1,0 +1,117 @@
+.page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height:80vh; /* Prend toute la hauteur de la vue */
+  background-color: #f5f5f5;
+  padding: 2rem;
+
+
+}
+
+.invitation-card {  margin-left: 240px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); /* Ombre plus douce et moderne */
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 450px; /* Largeur maximale pour une meilleure lisibilité */
+  text-align: center; /* Centrer le texte */
+}
+
+.invitation-form {
+  .form-field {
+    margin-bottom: 1.5rem;
+
+    label {
+      display: block;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 0.75rem;
+      font-size: 1rem; /* Taille de police adaptée */
+      text-align: left; /* Aligner le texte à gauche */
+    }
+
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 0.75rem;
+      background-color: #f9f9f9;
+      transition: border-color 0.3s ease;
+
+      &:focus-within {
+        border-color: #007bff; /* Changement de couleur au focus */
+      }
+
+      i {
+        color: #3b444e;
+        margin-right: 0.75rem;
+        font-size: 1.25rem; /* Taille de l'icône */
+      }
+
+      input {
+        flex: 1;
+        border: none;
+        background: none;
+        outline: none;
+        font-size: 1rem; /* Taille de police adaptée */
+        color: #333;
+
+        &::placeholder {
+          color: #999;
+        }
+
+        &.error {
+          border-color: #ff4d4d;
+        }
+      }
+    }
+
+    .error-messages {
+      margin-top: 0.5rem;
+      color: #ff4d4d;
+      font-size: 0.875rem;
+      text-align: left; /* Aligner les messages d'erreur à gauche */
+
+      small {
+        display: block;
+      }
+    }
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background-color: #0056b3;
+    }
+
+    &:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .spinner {
+      margin-left: 0.5rem;
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

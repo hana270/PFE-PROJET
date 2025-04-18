@@ -1,0 +1,109 @@
+<div class="container-xl px-4 mt-4 d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+  <div class="row w-100 justify-content-center">
+    <!-- Carte pour l'image de profil -->
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card h-100 profile-card">
+        <div class="card-header bg-white">
+          <h5 class="card-title mb-0">Photo de profil</h5>
+        </div>
+        <div class="card-body text-center">
+          <img [src]="profileImageUrl || 'assets/default-profile.jpg'" class="img-account-profile rounded-circle mb-3" alt="Profile Image">
+          <div class="small text-muted mb-3">JPG ou PNG, max 5 Mo</div>
+          <input type="file" (change)="onFileSelected($event)" accept="image/*" style="display: none;" #fileInput>
+          <button class="btn btn-primary w-100" (click)="fileInput.click()">Téléverser une nouvelle image</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Carte pour les onglets de navigation -->
+    <div class="col-lg-8 col-md-6">
+      <div class="card h-100 settings-card">
+        <div class="card-header bg-white">
+          <h5 class="card-title mb-0">Paramètres du compte</h5>
+        </div>
+        <div class="card-body">
+          <nav class="nav nav-borders mb-4">
+            <a class="nav-link" [ngClass]="{'active': activeTab === 'email'}" (click)="switchTab('email')">Email</a>
+            <a class="nav-link" [ngClass]="{'active': activeTab === 'password'}" (click)="switchTab('password')">Mot de passe</a>
+          </nav>
+
+          <!-- Formulaire pour la mise à jour de l'email -->
+          <div *ngIf="activeTab === 'email'" class="tab-content">
+            <form [formGroup]="emailForm" (ngSubmit)="onUpdateEmail()">
+              <div class="mb-3">
+                <label class="form-label small mb-1">Email actuel</label>
+                <input class="form-control" type="text" [value]="currentEmail" disabled>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small mb-1">Nouvel email</label>
+                <input class="form-control" type="email" formControlName="newEmail" placeholder="Entrez un nouvel email">
+                <div *ngIf="emailForm.get('newEmail')?.invalid && emailForm.get('newEmail')?.touched" class="text-danger small">
+                  <i class="fa fa-exclamation-circle"></i> Veuillez entrer une adresse email valide.
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small mb-1">Mot de passe actuel</label>
+                <div class="input-group">
+                  <input class="form-control" [type]="showCurrentPassword ? 'text' : 'password'" formControlName="currentPassword" placeholder="Entrez votre mot de passe actuel">
+                  <button class="btn btn-outline-secondary" type="button" (click)="toggleShowCurrentPassword()">
+                    <i class="fa" [ngClass]="{'fa-eye': !showCurrentPassword, 'fa-eye-slash': showCurrentPassword}"></i>
+                  </button>
+                </div>
+                <div *ngIf="emailForm.get('currentPassword')?.invalid && emailForm.get('currentPassword')?.touched" class="text-danger small">
+                  <i class="fa fa-exclamation-circle"></i> Le mot de passe actuel est requis.
+                </div>
+              </div>
+              <button class="btn btn-primary w-100" type="submit">Mettre à jour l'email</button>
+            </form>
+          </div>
+
+          <!-- Formulaire pour la mise à jour du mot de passe -->
+          <div *ngIf="activeTab === 'password'" class="tab-content">
+            <form [formGroup]="passwordForm" (ngSubmit)="onUpdatePassword()">
+              <div class="mb-3">
+                <label class="form-label small mb-1">Mot de passe actuel</label>
+                <div class="input-group">
+                  <input class="form-control" [type]="showCurrentPassword ? 'text' : 'password'" formControlName="currentPassword" placeholder="Entrez votre mot de passe actuel">
+                  <button class="btn btn-outline-secondary" type="button" (click)="toggleShowCurrentPassword()">
+                    <i class="fa" [ngClass]="{'fa-eye': !showCurrentPassword, 'fa-eye-slash': showCurrentPassword}"></i>
+                  </button>
+                </div>
+                <div *ngIf="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched" class="text-danger small">
+                  <i class="fa fa-exclamation-circle"></i> Le mot de passe actuel est requis.
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small mb-1">Nouveau mot de passe</label>
+                <div class="input-group">
+                  <input class="form-control" [type]="showNewPassword ? 'text' : 'password'" formControlName="newPassword" placeholder="Entrez un nouveau mot de passe">
+                  <button class="btn btn-outline-secondary" type="button" (click)="toggleShowNewPassword()">
+                    <i class="fa" [ngClass]="{'fa-eye': !showNewPassword, 'fa-eye-slash': showNewPassword}"></i>
+                  </button>
+                </div>
+                <div *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched" class="text-danger small">
+                  <i class="fa fa-exclamation-circle"></i> Le mot de passe doit contenir au moins 6 caractères.
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small mb-1">Confirmer le mot de passe</label>
+                <div class="input-group">
+                  <input class="form-control" [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" placeholder="Confirmez le nouveau mot de passe">
+                  <button class="btn btn-outline-secondary" type="button" (click)="toggleShowConfirmPassword()">
+                    <i class="fa" [ngClass]="{'fa-eye': !showConfirmPassword, 'fa-eye-slash': showConfirmPassword}"></i>
+                  </button>
+                </div>
+                <div *ngIf="passwordForm.hasError('mismatch')" class="text-danger small">
+                  <i class="fa fa-exclamation-circle"></i> Les mots de passe ne correspondent pas.
+                </div>
+                <div *ngIf="passwordForm.hasError('samePassword')" class="text-danger small">
+                  <i class="fa fa-exclamation-circle"></i> Le nouveau mot de passe doit être différent de l'actuel.
+                </div>
+              </div>
+              <button class="btn btn-primary w-100" type="submit">Mettre à jour le mot de passe</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

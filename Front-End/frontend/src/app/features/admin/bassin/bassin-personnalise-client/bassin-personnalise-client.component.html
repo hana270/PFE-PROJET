@@ -1,0 +1,454 @@
+<app-header></app-header>
+
+<!-- Section principale -->
+<section class="shop-details py-5 bg-light">
+    <div class="container">
+        <div class="row g-5">
+            <!-- Galerie d'images -->
+            <div class="col-lg-6">
+                <div class="product-gallery">
+                    <!-- Image principale avec zoom -->
+                    <div class="main-image mb-4 position-relative">
+                        <img [src]="selectedImage || 'assets/default-image.webp'" alt="{{ bassin?.nomBassin }}"
+                            class="img-fluid rounded-3 shadow-lg" id="mainImage" (click)="toggleZoom()"
+                            [class.zoomed]="isZoomed" />
+                        <div class="zoom-indicator" *ngIf="isZoomed">
+                            <i class="fas fa-search-minus"></i> Zoom activé
+                        </div>
+                    </div>
+
+                    <!-- Miniatures des images -->
+                    <div class="thumbnails d-flex flex-wrap gap-2">
+                        <div *ngFor="let imageUrl of imagePreviews" class="thumbnail-item"
+                            (click)="changeImage(imageUrl)" [class.active]="selectedImage === imageUrl">
+                            <img [src]="imageUrl" alt="{{ bassin?.nomBassin }}" class="img-thumbnail rounded-3" />
+                        </div>
+                    </div>
+                    <!-------------------------->
+                    <!-- Dans la section des boutons innovants -->
+                    <div class="innovative-features d-flex gap-3 mt-4">
+                        <button class="btn btn-dark w-50" (click)="viewIn3D()">
+                            <i class="fas fa-cube me-2"></i> Voir en 3D
+                        </button>
+                        <button class="btn btn-secondary w-50" (click)="viewInAR()">
+                            <i class="fas fa-vr-cardboard me-2"></i> Voir en AR
+                        </button>
+                    </div>
+
+                    <!-- Ajouter cette section pour le model-viewer (peut être dans une modal) -->
+                    <model-viewer *ngIf="safeModelUrl" [src]="safeModelUrl" alt="3D Model" ar camera-controls
+                        auto-rotate shadow-intensity="1" (load)="isLoading = false" (error)="isLoading = false"
+                        #modelViewer>
+                    </model-viewer>
+
+                    <!-- Contrôles AR -->
+                    <div class="ar-controls" *ngIf="isARActive">
+                        <button (click)="zoomIn()" class="ar-control-button">
+                            <i class="fas fa-search-plus"></i> Zoom In
+                        </button>
+                        <button (click)="zoomOut()" class="ar-control-button">
+                            <i class="fas fa-search-minus"></i> Zoom Out
+                        </button>
+                        <!-- Ajouter les autres boutons de contrôle -->
+                    </div>
+
+                    <!-- Modal QR Code -->
+                    <div class="modal" *ngIf="qrCodeImageUrl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4>Scan QR Code</h4>
+                                <span class="close" (click)="closeQRModal()">&times;</span>
+                            </div>
+                            <div class="modal-body">
+                                <img [src]="qrCodeImageUrl" alt="QR Code for AR view" class="qr-code-image">
+                                <p class="qr-instructions">Scan this QR code with your mobile device to view in AR</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-------------------------->
+
+                    <!-- Boutons 3D et AR -->
+                    <div class="innovative-features d-flex gap-3 mt-4">
+                        <button class="btn btn-dark w-50" (click)="viewIn3D()">
+                            <i class="fas fa-cube me-2"></i> Voir en 3D
+                        </button>
+                        <button class="btn btn-secondary w-50" (click)="viewInAR()">
+                            <i class="fas fa-vr-cardboard me-2"></i> Voir en AR
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Détails du produit -->
+            <div class="col-lg-6">
+                <div class="product-details p-4 bg-white rounded-3 shadow-sm">
+                    <!-- Mode normal - Détails du produit -->
+                    <div *ngIf="!isCustomizing" [@fadeInOut]>
+                        <h1 class="display-5 fw-bold mb-3">{{ bassin?.nomBassin }}</h1>
+                        <div class="rating mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="far fa-star text-warning"></i>
+                            <span class="ms-2 text-muted">(5 avis)</span>
+                        </div>
+                        <h2 class="text-success fw-bold mb-4">
+                            {{ bassin?.prix | currency: 'TND':'symbol':'1.2-2' }}
+                        </h2>
+                        <p class="lead text-muted mb-4">{{ bassin?.description }}</p>
+
+                        <!-- Caractéristiques -->
+                        <div class="product-features mb-4">
+                            <h5 class="fw-bold mb-3">Caractéristiques</h5>
+                            <div class="row">
+                                <div class="col-6 mb-2">
+                                    <span class="text-muted">Dimensions:</span>
+                                    <span class="ms-2 fw-bold">{{ bassin?.dimensions || 'Standard' }}</span>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <span class="text-muted">Matériau:</span>
+                                    <span class="ms-2 fw-bold">{{ bassin?.materiau || 'Standard' }}</span>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <span class="text-muted">Couleur:</span>
+                                    <span class="ms-2 fw-bold">{{ bassin?.couleur || 'Standard' }}</span>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <span class="text-muted">Stock:</span>
+                                    <span class="ms-2 fw-bold">{{ bassin?.stock || 0 }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="action-buttons mt-5">
+                            <div class="d-flex gap-3 mb-3">
+                               <!---
+                               <button class="btn btn-primary btn-lg flex-grow-1" (click)="addToCart()">
+                                    <i class="fas fa-cart-plus me-2"></i> Ajouter au panier
+                                </button>
+                               -->
+                                 
+                                <button class="btn btn-outline-danger btn-lg" (click)="addToFavorites()">
+                                    <i class="fas fa-heart me-2"></i> Favoris
+                                </button>
+                            </div>
+                            <button class="btn btn-outline-primary btn-lg w-100" (click)="startCustomization()">
+                                <i class="fas fa-sliders-h me-2"></i> Personnaliser ce bassin
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mode personnalisation -->
+                    <div *ngIf="isCustomizing && !isCustomizationComplete" [@fadeInOut]>
+                        <div class="customization-header d-flex justify-content-between align-items-center mb-4">
+                            <h3 class="fw-bold m-0">Personnalisation</h3>
+                            <button class="btn btn-sm btn-outline-secondary" (click)="cancelCustomization()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <!-- Indicateur d'étapes -->
+                        <div class="progress-steps mb-4">
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar"
+                                    [style.width]="(customizationStep / totalSteps * 100) + '%'"
+                                    [attr.aria-valuenow]="customizationStep" aria-valuemin="0" aria-valuemax="3">
+                                </div>
+                            </div>
+                            <div class="steps-indicator d-flex justify-content-between">
+                                <span class="step-label" [class.active]="customizationStep >= 1">Matériaux</span>
+                                <span class="step-label" [class.active]="customizationStep >= 2">Dimensions</span>
+                                <span class="step-label" [class.active]="customizationStep >= 3">Accessoires</span>
+                                <span class="step-label" [class.active]="customizationStep >= 4">Couleur</span>
+                            </div>
+                        </div>
+
+                        <form [formGroup]="customizationForm" class="customization-wizard">
+                            <!-- Étape 1: Choix du matériau -->
+                            <div *ngIf="customizationStep === 1" [@slideInOut] class="step-content">
+                                <h4 class="step-title mb-3">Choisissez un matériau</h4>
+                                <div class="material-catalog">
+                                    <div *ngFor="let materiau of listeMateriaux" class="material-item"
+                                        [class.selected]="customizationForm.get('materiau')?.value === materiau"
+                                        (click)="selectMaterial(materiau)">
+                                        <div class="material-image-container">
+                                            <img [src]="materiauxImages[materiau] || 'assets/default-material.jpg'"
+                                                alt="{{ materiau }}" class="material-image"
+                                                (error)="handleImageError($event, {imageUrl: materiauxImages[materiau]})" />
+                                            <div class="price-tag">
+                                                <span class="price-value">{{ prixMateriaux[materiau] |
+                                                    currency:'TND':'symbol':'1.2-2' }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="material-name">{{ materiau }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Étape 2: Choix des dimensions -->
+                            <div *ngIf="customizationStep === 2" [@slideInOut] class="step-content">
+                                <h4 class="step-title mb-3">Choisissez une dimension</h4>
+                                <div class="dimension-catalog">
+                                    <div *ngFor="let dimension of listeDimensions" class="dimension-item"
+                                        [class.selected]="customizationForm.get('dimension')?.value === dimension"
+                                        (click)="selectDimension(dimension)">
+                                        <div class="dimension-content">
+                                            <div class="dimension-icon">
+                                                <i class="fas fa-ruler-combined"></i>
+                                            </div>
+                                            <div class="dimension-value">{{ dimension }}</div>
+                                            <div class="dimension-price-tag">
+                                                <span class="dimension-price-value">{{ prixDimensions[dimension] |
+                                                    currency:'TND':'symbol':'1.2-2' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- Étape 3: Choix des accessoires -->
+                            <div *ngIf="customizationStep === 3" [@slideInOut] class="step-content">
+                                <h4 class="step-title mb-3">Choisissez des accessoires</h4>
+                                <div class="accessoire-catalog">
+                                    <div *ngFor="let accessoire of listeAccessoires" class="accessoire-item"
+                                        [class.selected]="isAccessoireSelected(accessoire)"
+                                        (click)="toggleAccessoire(accessoire)">
+                                        <div class="accessoire-image-container">
+                                            <img [src]="accessoire.imageUrl || 'assets/default-accessoire.jpg'"
+                                                alt="{{ accessoire.nomAccessoire }}" class="accessoire-image"
+                                                (error)="handleImageError($event, accessoire)" />
+                                            <div class="accessoire-price-tag">
+                                                <span class="accessoire-price-value">{{ accessoire.prixAccessoire |
+                                                    currency:'TND' }}</span>
+                                            </div>
+                                            <div *ngIf="isAccessoireSelected(accessoire)" class="selection-badge">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                        </div>
+                                        <div class="accessoire-details">
+                                            <div class="accessoire-nom">{{ accessoire.nomAccessoire }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Étape 4: Choix de la couleur -->
+                            <div *ngIf="customizationStep === 4" [@slideInOut] class="step-content">
+                                <h4 class="step-title mb-3">Choisissez une couleur</h4>
+
+                                <div class="color-selection-container">
+                                    <div class="selected-color-preview">
+                                        <div class="current-color" [style.background-color]="selectedColor"></div>
+                                        <div class="color-hex">{{selectedColor}}</div>
+                                    </div>
+
+                                    <div class="color-categories">
+                                        <div class="color-category">
+                                            <h5>Bleus</h5>
+                                            <div class="color-palette">
+                                                <div *ngFor="let color of colorPalette.blues" class="color-square"
+                                                    [style.background-color]="color"
+                                                    [class.selected]="selectedColor === color"
+                                                    (click)="selectColor(color)">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="color-category">
+                                            <h5>Verts</h5>
+                                            <div class="color-palette">
+                                                <div *ngFor="let color of colorPalette.greens" class="color-square"
+                                                    [style.background-color]="color"
+                                                    [class.selected]="selectedColor === color"
+                                                    (click)="selectColor(color)">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="color-category">
+                                            <h5>Rouges</h5>
+                                            <div class="color-palette">
+                                                <div *ngFor="let color of colorPalette.reds" class="color-square"
+                                                    [style.background-color]="color"
+                                                    [class.selected]="selectedColor === color"
+                                                    (click)="selectColor(color)">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="color-category">
+                                            <h5>Gris</h5>
+                                            <div class="color-palette">
+                                                <div *ngFor="let color of colorPalette.grays" class="color-square"
+                                                    [style.background-color]="color"
+                                                    [class.selected]="selectedColor === color"
+                                                    (click)="selectColor(color)">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="color-category">
+                                            <h5>Marrons</h5>
+                                            <div class="color-palette">
+                                                <div *ngFor="let color of colorPalette.browns" class="color-square"
+                                                    [style.background-color]="color"
+                                                    [class.selected]="selectedColor === color"
+                                                    (click)="selectColor(color)">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="color-category">
+                                            <h5>Violets</h5>
+                                            <div class="color-palette">
+                                                <div *ngFor="let color of colorPalette.purples" class="color-square"
+                                                    [style.background-color]="color"
+                                                    [class.selected]="selectedColor === color"
+                                                    (click)="selectColor(color)">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="color-category">
+                                            <h5>Jaunes</h5>
+                                            <div class="color-palette">
+                                                <div *ngFor="let color of colorPalette.yellows" class="color-square"
+                                                    [style.background-color]="color"
+                                                    [class.selected]="selectedColor === color"
+                                                    (click)="selectColor(color)">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="color-category">
+                                            <h5>Cyans</h5>
+                                            <div class="color-palette">
+                                                <div *ngFor="let color of colorPalette.cyans" class="color-square"
+                                                    [style.background-color]="color"
+                                                    [class.selected]="selectedColor === color"
+                                                    (click)="selectColor(color)">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Boutons de navigation -->
+                            <div class="navigation-buttons d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-outline-secondary" (click)="previousStep()">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    {{ customizationStep === 1 ? 'Annuler' : 'Précédent' }}
+                                </button>
+                                <button type="button" class="btn btn-primary" (click)="nextStep()"
+                                    [disabled]="!isStepValid()">
+                                    {{ customizationStep < totalSteps ? 'Suivant' : 'Finaliser' }} <i class="fas"
+                                        [ngClass]="customizationStep < totalSteps ? 'fa-arrow-right' : 'fa-check'"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Résumé de la personnalisation -->
+                    <div *ngIf="isCustomizationComplete" [@fadeInOut] class="customization-summary">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3 class="fw-bold m-0">Résumé de votre bassin personnalisé</h3>
+                            <button class="btn btn-sm btn-outline-secondary" (click)="cancelCustomization()">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+
+                        <div class="summary-card p-4 bg-light rounded mb-4">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <span class="fw-bold">Dimensions:</span>
+                                </div>
+                                <div class="col-6">
+                                    {{ customizationSummary.dimension }} ({{
+                                    prixDimensions[customizationSummary.dimension] | currency:'TND' }})
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <span class="fw-bold">Matériau:</span>
+                                </div>
+                                <div class="col-6">
+                                    {{ customizationSummary.materiau | titlecase }} ({{
+                                    prixMateriaux[customizationSummary.materiau] | currency:'TND' }})
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <span class="fw-bold">Couleur:</span>
+                                </div>
+                                <div class="col-6">
+                                    <span class="color-dot"
+                                        [ngStyle]="getColorDisplay(customizationSummary.couleur)"></span>
+                                    {{ customizationSummary.couleur | titlecase }}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <span class="fw-bold">Accessoires:</span>
+                                </div>
+                                <div class="col-6">
+                                    <ul>
+                                        <li *ngFor="let acc of customizationSummary.accessoires">
+                                            {{ acc.nomAccessoire }} ({{ acc.prixAccessoire | currency:'TND' }})
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="row price-row pt-3 border-top">
+                                <div class="col-6">
+                                    <span class="fs-5 fw-bold">Prix total:</span>
+                                </div>
+                                <div class="col-6">
+                                    <span class="fs-5 fw-bold text-success">
+                                        {{ customizationSummary.prixEstime | currency: 'TND':'symbol':'1.2-2' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-primary btn-lg w-100" (click)="onSubmit()">
+                            <i class="fas fa-shopping-cart me-2"></i> Ajouter au panier
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section des avis -->
+<section class="reviews py-5 bg-white">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <h2 class="fw-bold mb-4">Avis des clients</h2>
+                <div class="review-list">
+                    <div *ngFor="let avis of [1, 2]" class="review-item mb-4 p-4 bg-light rounded-3 shadow-sm">
+                        <div class="review-header d-flex justify-content-between mb-3">
+                            <h5 class="fw-bold">Client {{ avis }}</h5>
+                            <div class="rating">
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="far fa-star text-warning"></i>
+                            </div>
+                        </div>
+                        <p class="text-muted">Super produit, je recommande !</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<app-footer></app-footer>

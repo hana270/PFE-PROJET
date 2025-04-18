@@ -1,0 +1,354 @@
+/* bassin-details.component.css */
+:host {
+    display: block;
+    height: 100vh;
+  }
+  
+  .main-content {
+    margin-left: 17.125rem;
+    transition: margin-left 0.3s ease-in-out;
+  }
+  
+  .card {
+    border: none;
+    box-shadow: 0 0 2rem 0 rgba(136, 152, 170, .15);
+  }
+  
+  .card-title {
+    color: #344767;
+    font-weight: 600;
+  }
+  
+  .text-primary {
+    color: #344767 !important;
+  }
+  
+  .img-fluid {
+    max-height: 400px;
+    object-fit: cover;
+    width: 100%;
+  }
+  
+  @media (max-width: 1200px) {
+    .main-content {
+      margin-left: 0;
+    }
+  
+    .g-sidenav-pinned .main-content {
+      margin-left: 17.125rem;
+    }
+  }
+  
+  .badge {
+    padding: 0.55em 0.9em;
+    font-size: 0.75em;
+  }
+  
+  .text-muted {
+    color: #67748e !important;
+  }
+  
+  .spinner-border {
+    width: 3rem;
+    height: 3rem;
+  }
+  
+  
+  /* bassin-details.component.css */
+  /* ... other styles */
+  
+  /* Styles for hiding sidebar */
+  .g-sidenav-hidden .sidenav {
+    transform: translateX(-100%); /* Hide the sidebar */
+  }
+  
+  .g-sidenav-hidden .main-content {
+    margin-left: 0 !important; /* Reset margin for main content */
+  }
+  
+  /* Optional: Style the toggler icon */
+  #sidebar-toggler {
+    font-size: 1.2rem;
+    margin-right: 1rem; /* Adjust as needed */
+    color: #344767; /* Match your theme color */
+  }
+  
+  /* Media query adjustments (if needed) */
+  @media (min-width: 1200px) {
+    .g-sidenav-hidden .sidenav {
+      transform: translateX(0); /* Show sidebar on larger screens */
+    }
+  
+    .g-sidenav-hidden .main-content {
+      margin-left: 17.125rem !important; /* Restore margin on larger screens */
+    }
+    #sidebar-toggler {
+      display: none; /* Hide the icon on larger screens */
+    }
+  
+  }
+  
+  /* Effet de zoom au survol */
+  .hover-zoom {
+    transition: transform 0.3s ease;
+  }
+  
+  .hover-zoom:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Overlay pour les images */
+  .image-container {
+    position: relative;
+    cursor: pointer;
+  }
+  
+  .image-overlay {
+    transition: opacity 0.3s ease;
+  }
+  
+  .image-container:hover .image-overlay {
+    opacity: 1;
+  }
+  
+  .main-image img {
+    transition: transform 0.3s ease;
+  }
+  
+  .main-image img:hover {
+    transform: scale(1.05);
+  }
+  
+  .associated-images img {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .associated-images img:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  
+  .loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  
+  .loader {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #3498db;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .modal {
+    display: block; /* Assurez-vous que la modale est visible */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    z-index: 1000; /* Assurez-vous qu'elle est au-dessus des autres éléments */
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .modal-content {
+    text-align: center;
+  }
+  
+  .qr-code-image {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  .close {
+    cursor: pointer;
+    float: right;
+    font-size: 24px;
+  }
+  
+  /* Styles pour les boutons de contrôle AR */
+  .ar-control-button {
+    position: absolute;
+    bottom: 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .rotate-left {
+    left: 20px;
+  }
+  
+  .rotate-right {
+    left: 120px;
+  }
+  
+  .reset {
+    left: 220px;
+  }
+  
+  .ar-control-button:hover {
+    background-color: rgba(255, 255, 255, 1);
+  }
+  
+  .ar-instructions {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+  }
+  
+  .ar-instructions h5 {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  .ar-instructions ul {
+    list-style-type: disc;
+    padding-left: 20px;
+  }
+  
+  .ar-instructions li {
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #555;
+  }
+  
+  
+  
+  
+  
+  /* Style de base pour les boutons AR */
+  .ar-control-button {
+    background-color: #4CAF50; /* Couleur de fond verte pour Start AR */
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    margin: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Style pour le bouton Stop AR */
+  .ar-control-button.stop-ar {
+    background-color: #f44336; /* Couleur de fond rouge pour Stop AR */
+  }
+  
+  /* Effet au survol */
+  .ar-control-button:hover {
+    background-color: #45a049; /* Vert plus foncé pour Start AR */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .ar-control-button.stop-ar:hover {
+    background-color: #e53935; /* Rouge plus foncé pour Stop AR */
+  }
+  
+  /* Effet au clic */
+  .ar-control-button:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Icônes FontAwesome dans les boutons */
+  .ar-control-button i {
+    margin-right: 8px;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .ar-control-button {
+      padding: 10px 20px;
+      font-size: 14px;
+    }
+  }
+  
+  
+  
+  
+  /* Style for AR controls */
+  .ar-controls {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+  
+  .ar-control-button {
+    margin: 5px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1000; /* Assurez-vous que les boutons sont au-dessus de la scène AR */
+  
+  }
+  
+  @media (max-width: 768px) {
+    .ar-controls {
+      bottom: 10px;
+      right: 10px;
+    }
+  
+    .ar-control-button {
+      padding: 8px;
+      font-size: 14px;
+      display: block !important;
+  
+    }
+  }
+  
+  .error-message {
+    color: red;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+  }
+  
+  /* Ajout à la fin du fichier bassin-details.component.css */
+  button {
+    display: block !important; /* S'assurer qu'ils sont affichés */
+  }
+  
