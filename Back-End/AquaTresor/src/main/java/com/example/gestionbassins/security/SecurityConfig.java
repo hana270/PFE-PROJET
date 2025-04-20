@@ -91,14 +91,17 @@ public class SecurityConfig {
 	            .requestMatchers("/api/{id}/archiver").hasAuthority("ADMIN")
 	            .requestMatchers("/api/{id}/desarchiver").hasAuthority("ADMIN")
 	            .requestMatchers("/api/{id}/mettre-a-jour-quantite").hasAuthority("ADMIN")
-	            .requestMatchers("/api/non-archives*").hasAuthority("ADMIN")
+	            .requestMatchers("/api/non-archives").hasAuthority("ADMIN")
 	            .requestMatchers("/api/archives").hasAuthority("ADMIN")
 	            .requestMatchers("/api/transactions").hasAuthority("ADMIN")
 	            .requestMatchers("/api/notifier-stock-faible").hasAuthority("ADMIN")
 	           
+	            .requestMatchers("/api/{id}/mettre-sur-commande").permitAll()
+	           
+	            
 	            //Notifications
 	            
-	            .requestMatchers("/api/notifications").hasAuthority("ADMIN")
+	            .requestMatchers("/api/notifications","/api/notifications/").hasAuthority("ADMIN")
 	            
 	            .requestMatchers("/api/notifications/**").hasAuthority("ADMIN")
 	            .requestMatchers("/api/notifications/read-all ").hasAuthority("ADMIN")

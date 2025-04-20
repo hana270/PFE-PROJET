@@ -108,7 +108,7 @@ public class AvisServiceImpl implements AvisService {
             }
 
             User user = userResponse.getBody();
-            avis.setUserId(user.getUser_id());
+            avis.setUserId(user.getUserId());
             avis.setNom(username);
         } else {
             avis.setUserId(null);

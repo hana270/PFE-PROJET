@@ -1,114 +1,123 @@
-<div class="layout-container">
+<div class="layout-container" (click)="closeSidebarOnMobile($event)">
   <!-- Sidebar -->
-  <aside class="sidebar" [class.collapsed]="!isSidebarOpen">
+  <aside class="sidebar" [ngClass]="{'collapsed': !isSidebarOpen, 'mobile-open': isMobile && isSidebarOpen}">
     <div class="sidebar-header">
-      <h2>
-        <i class="fas fa-water"></i>
-        <span class="Titre" *ngIf="isSidebarOpen || isMobile">Aqua Trésor</span>
-      </h2>
-      <i class="fas fa-times" (click)="toggleSidebar()"></i>
+      <h1 class="logo">
+        <i class="material-icons">water_drop</i>
+        <span class="brand-text">Aqua Trésor</span>
+      </h1>
+      <button class="toggle-btn" (click)="toggleSidebar()">
+        <i class="material-icons">{{ isMobile ? 'close' : (isSidebarOpen ? 'chevron_left' : 'menu') }}</i>
+      </button>
     </div>
-    <hr class="divider" />
+    
     <ul class="sidebar-menu">
       <li>
-        <a routerLink="/admin/dashboard">
-          <i class="fas fa-tachometer-alt"></i>
+        <a routerLink="/admin/dashboard" routerLinkActive="active">
+          <i class="material-icons">dashboard</i>
           <span>Dashboard</span>
         </a>
       </li>
       <li>
-        <a routerLink="/admin/List-users">
-          <i class="fas fa-users"></i>
+        <a routerLink="/admin/List-users" routerLinkActive="active">
+          <i class="material-icons">people</i>
           <span>Users</span>
         </a>
       </li>
       <li>
-        <a routerLink="/admin/list-categories">
-          <i class="fas fa-list-alt"></i>
+        <a routerLink="/admin/list-categories" routerLinkActive="active">
+          <i class="material-icons">category</i>
           <span>Liste Categories</span>
         </a>
       </li>
       <li>
-        <a routerLink="/admin/bassin">
-          <i class="fas fa-water"></i>
+        <a routerLink="/admin/bassin" routerLinkActive="active">
+          <i class="material-icons">pool</i>
           <span>Liste Bassins</span>
         </a>
       </li>
       <li>
-        <a routerLink="/admin/promotions">
-          <i class="fas fa-tags"></i>
+        <a routerLink="/admin/promotions" routerLinkActive="active">
+          <i class="material-icons">local_offer</i>
           <span>Gestion Promotions</span>
         </a>
       </li>
       <li>
-        <a routerLink="/admin/stocks">
-          <i class="fas fa-boxes"></i>
+        <a routerLink="/admin/stocks" routerLinkActive="active">
+          <i class="material-icons">inventory</i>
           <span>Gestion Stocks</span>
         </a>
       </li>
-      <li class="mt-3">
-        <h6>Account Pages</h6>
-      </li>
       <li>
-        <a routerLink="/admin/edit-profile">
-          <i class="fas fa-user"></i>
+        <a routerLink="/admin/avis" routerLinkActive="active">
+            <i class="material-icons" style="color: #FFA000;">rate_review</i>
+            <span>Avis</span>
+        </a>
+    </li>
+    </ul>
+    
+    <div class="section-title">Account Pages</div>
+    
+    <ul class="sidebar-menu">
+      <li>
+        <a routerLink="/admin/edit-profile" routerLinkActive="active">
+          <i class="material-icons">person</i>
           <span>Profile</span>
         </a>
       </li>
       <li>
-        <a routerLink="/admin/send-installer-invitation">
-          <i class="fas fa-user-plus"></i>
+        <a routerLink="/admin/send-installer-invitation" routerLinkActive="active">
+          <i class="material-icons">build</i>
           <span>Installateur</span>
         </a>
       </li>
     </ul>
+    
     <div class="sidebar-footer">
-
-        <span *ngIf="isSidebarOpen"></span>
-
-    </div>
-  </aside>
-
-  <!-- Main Content -->
-  <div class="main-content" [class.collapsed]="!isSidebarOpen">
-     <!-- Navbar -->
-    <!-- Navbar -->
-<nav class="navbar" [class.collapsed]="!isSidebarOpen">
-  <div class="navbar-left">
-    <button (click)="toggleSidebar()">
-      <i class="fas fa-bars"></i>
-    </button>
-    <h3 style="align-items: center;
-    display: contents;">{{ pageTitle }}</h3>
-  </div>
-  <div class="navbar-right">
-    <div class="search-container" [class.active]="isSearchActive">
-      <input 
-        type="text" 
-        class="search-input" 
-        placeholder="Rechercher..." 
-        [(ngModel)]="searchQuery"
-        (input)="onSearchInput()"
-      />
-      <button class="search-btn" (click)="toggleSearch()">
-        <i class="fas fa-search"></i>
+      <button class="logout-btn" (click)="logout()">
+        <i class="material-icons">logout</i>
+        <span>Déconnexion</span>
       </button>
     </div>
-     <!-- Ajouter le composant de notification ici -->
-     <app-notifications></app-notifications>
-     
-    <button class="profile-btn">
-      <i class="fas fa-user-circle"></i>
-    </button>
-    <button class="logout-btn" (click)="logout()">
-      <i class="fas fa-sign-out-alt"></i>
-    </button>
-  </div>
-</nav>
-
-    <!-- Page Content -->
+  </aside>
+  
+  <!-- Navbar -->
+  <nav class="navbar" [ngClass]="{'collapsed': !isSidebarOpen}">
+    <div class="navbar-left">
+      <button class="toggle-btn" (click)="toggleSidebar()">
+        <i class="material-icons">menu</i>
+      </button>
+      <h2 class="page-title">{{ pageTitle }}</h2>
+    </div>
+    
+    <div class="navbar-right">
+      <div class="search-container" [ngClass]="{'active': isSearchActive}">
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Rechercher..." 
+          [(ngModel)]="searchQuery" 
+          (input)="onSearchInput()"
+          [ngStyle]="{'display': isSearchActive ? 'block' : 'none'}"
+        >
+        <button class="search-btn" (click)="toggleSearch()">
+          <i class="material-icons">{{ isSearchActive ? 'close' : 'search' }}</i>
+        </button>
+      </div>
+      
+      <!-- Ajouter le composant de notification ici -->
+      <app-notifications></app-notifications>
+      
+      <button class="user-btn">
+        <i class="material-icons">account_circle</i>
+      </button>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <main class="main-content" [ngClass]="{'collapsed': !isSidebarOpen}">
     <div class="content">
       <ng-content></ng-content>
     </div>
-  </div>
+  </main>
 </div>

@@ -67,24 +67,64 @@
       <td>{{ bassin.categorie.nomCategorie || 'Non catégorisé' }}</td>
       <td>{{ bassin.prix | currency:'DT ':'symbol':'1.0-0' }}</td>
       <td>{{ bassin.stock }}</td>
+
       <td>
-        <span class="status-badge" [ngClass]="bassin.stock < 5 ? 'warning' : 'success'">
-          {{ bassin.stock < 5 ? 'Faible' : 'Disponible' }}
-        </span>
+        <div class="status-container">
+          <span class="status-badge" [ngClass]="{
+              'success': bassin.statut === 'DISPONIBLE',
+              'warning': bassin.statut === 'SUR_COMMANDE',
+              'danger': bassin.statut === 'RUPTURE_STOCK' || bassin.archive
+          }">
+            {{ bassin.archive ? 'Rupture de stock (Archivé)' : 
+               (bassin.statut === 'SUR_COMMANDE' ? 'Sur commande' : 
+               (bassin.statut === 'RUPTURE_STOCK' ? 'Rupture de stock' : 'Disponible')) }}
+          </span>
+          
+          <div *ngIf="bassin.statut === 'SUR_COMMANDE' && !bassin.archive" class="fabrication-duration">
+            Fabrication : {{ bassin.dureeFabricationDisplay || 'Entre 3 et 15 jours' }}
+          </div>
+        </div>
       </td>
+
+
       <td class="action-buttons">
         <button class="btn btn-info btn-sm" (click)="viewDetails(bassin.idBassin)" title="Détails">
           <i class="material-icons">visibility</i>
         </button>
-        <button class="btn btn-primary btn-sm" (click)="openStockActionDialog(bassin, 'ajuster')" title="Ajuster">
+        
+        <button class="btn btn-primary btn-sm" 
+                (click)="openStockActionDialog(bassin, 'ajuster')" 
+                title="Ajuster le stock">
           <i class="material-icons">inventory_2</i>
         </button>
-        <button *ngIf="!bassin.archive" class="btn btn-danger btn-sm" (click)="openStockActionDialog(bassin, 'archiver')" title="Archiver">
-          <i class="material-icons">archive</i>
-        </button>
-        <button *ngIf="bassin.archive" class="btn btn-success btn-sm" (click)="openStockActionDialog(bassin, 'desarchiver')" title="Désarchiver">
+        
+        <!-- Bouton Archiver avec feedback immédiat -->
+  <!-- Dans le template HTML -->
+<button *ngIf="!bassin.archive" 
+class="btn btn-danger btn-sm" 
+(click)="handleArchiveAction(bassin)"
+[matTooltip]="bassin.stock !== 0 ? 'Le stock doit être à 0 pour archiver' : 'Gérer le bassin (stock: 0)'"
+matTooltipPosition="above">
+<i class="material-icons">archive</i>
+</button>
+        
+        <button *ngIf="bassin.archive" 
+                class="btn btn-success btn-sm" 
+                (click)="openStockActionDialog(bassin, 'desarchiver')" 
+                title="Désarchiver">
           <i class="material-icons">unarchive</i>
         </button>
+
+
+
+<!-- Dans la colonne Actions -->
+<button *ngIf="bassin.statut === 'SUR_COMMANDE' && !bassin.archive"
+        class="btn btn-warning btn-sm" 
+        (click)="updateFabricationDuration(bassin)"
+        matTooltip="Modifier la durée de fabrication"
+        matTooltipPosition="above">
+    <i class="material-icons">edit_calendar</i>
+</button>
       </td>
     </tr>
   </tbody>

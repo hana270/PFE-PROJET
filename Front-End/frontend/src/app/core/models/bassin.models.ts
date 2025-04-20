@@ -36,6 +36,27 @@ export class Bassin implements BassinBase, BassinMetadata, BassinPromotion {
     imageStr!: string;
     imagesBassin!: ImageBassin[];
 
+    statut: string = 'DISPONIBLE';
+
+    surCommande: boolean = false;
+ // Propriétés pour la durée de fabrication
+ dureeFabrication?: number;
+    dureeFabricationMin?: number = 3; // Valeur par défaut min
+    dureeFabricationMax?: number = 15; // Valeur par défaut max
+
+    get dureeFabricationDisplay(): string {
+        if (this.dureeFabrication) {
+            return `${this.dureeFabrication} jours`;
+        } else if (this.dureeFabricationMin && this.dureeFabricationMax) {
+            if (this.dureeFabricationMin === this.dureeFabricationMax) {
+                return `${this.dureeFabricationMin} jours`;
+            } else {
+                return `Entre ${this.dureeFabricationMin} et ${this.dureeFabricationMax} jours`;
+            }
+        }
+        return 'Entre 3 et 15 jours (par défaut)';
+    }
+
     getFirstImageUrl(): string {
         return this.imagesBassin?.[0]?.imagePath || 'assets/default-image.webp';
     }

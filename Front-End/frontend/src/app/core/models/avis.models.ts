@@ -1,3 +1,4 @@
+// avis.model.ts
 export interface HistoriqueModification {
   dateModification: string;
   ancienneNote: number;
@@ -10,10 +11,13 @@ export interface Avis {
   nom: string;
   message: string;
   note: number;
-  bassin?: any;
+  bassin?: {
+    idBassin: number;
+    nomBassin: string;
+  };
   userId?: number | null;
   dateSoumission: string;
   dateModification: string | null;
-  historiqueModifications: HistoriqueModification[]; 
+  historiqueModifications: HistoriqueModification[];
   showHistorique?: boolean;
 }

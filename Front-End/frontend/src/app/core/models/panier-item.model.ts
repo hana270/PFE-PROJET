@@ -1,5 +1,59 @@
 import { Bassin } from "./bassin.models";
-import { Accessoire } from "./accessoire.models"; 
+import { Accessoire } from "./accessoire.models";
+
+export interface CustomProperties {
+  dimensions?: string;
+  couleur?: string;
+  materiau?: string;
+  accessoires?: Accessoire[];
+  prixEstime?: number;
+  dureeFabrication?: string;
+  imageUrl?: string;
+  isCustomized?: boolean;
+  materiauSelectionne?: string;
+  dimensionSelectionnee?: string;
+  couleurSelectionnee?: string;
+}
+
+export interface PanierItem {
+  id: number;
+  quantity: number;
+  bassin?: Bassin;
+  bassinId?: number;
+  nomBassin?: string;
+  
+  // Customization fields
+  couleurSelectionnee?: string;
+  materiauSelectionne?: string;
+  dimensionSelectionnee?: string;
+  
+  // Product details
+  dimensions?: string | string[];
+  couleur?: string;
+  materiau?: string | string[];
+  imageStr?: string;
+  imageUrl?: string;
+  
+  // Pricing
+  prixOriginal?: number;
+  prixPromo?: number;
+  prix?: number;
+  customPrice?: number;
+  effectivePrice: number;
+  subtotal?: number;
+  
+  // Promotion
+  promotionActive?: boolean;
+  nomPromotion?: string;
+  tauxReduction?: number;
+  
+  // Accessories
+  accessoires?: Accessoire[];
+  
+  // Customization
+  isCustomized?: boolean;
+  customProperties?: CustomProperties;
+}
 
 export interface PanierItemRequest {
   bassinId?: number;
@@ -12,57 +66,8 @@ export interface PanierItemRequest {
 
   userId?: number | null;
   userEmail?: string | null;
-  sessionId?: string | undefined; 
+  sessionId?: string | undefined;
   
   isCustomized?: boolean;
-  customProperties?: {
-    dimensions?: string;
-    couleur?: string;
-    materiau?: string;
-    accessoires?: any[];
-    prixEstime?: number;
-    dureeFabrication?: string;
-    imageUrl?: string; // Add this line
-  };
-}
-
-export interface PanierItem {
-  id: number;
-  quantity: number;
-  bassin?: Bassin;
-  bassinId?: number; 
-  nomBassin?: string;
-  
-  // Add these properties to match the Java entity
-  couleurSelectionnee?: string;
-  materiauSelectionne?: string;
-  dimensionSelectionnee?: string;
-  
-  // Keep existing properties
-  dimensions?: string | string[];
-  couleur?: string;
-  materiau?: string | string[];
-  imageStr?: string;
-  imageUrl?: string;
-  prixOriginal?: number;
-  prixPromo?: number;
-  promotionActive?: boolean;
-  nomPromotion?: string;
-  tauxReduction?: number;
-  effectivePrice: number;
-  subtotal?: number;
-  prix?: number;
-  customPrice?: number;
-  accessoires?: Accessoire[];
-  isCustomized?: boolean;
-  customProperties?: {
-    accessoires?: Accessoire[];
-    isCustomized?: boolean;
-    materiauSelectionne?: string;
-    dimensionSelectionnee?: string;
-    couleurSelectionnee?: string;
-    imageUrl?: string;
-    dureeFabrication?: string;
-    prixEstime?: number;
-  };
+  customProperties?: CustomProperties;
 }

@@ -5,13 +5,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.gestionbassins.dto.BassinDTO;
+import com.example.gestionbassins.dto.TransactionDTO;
+import com.example.gestionbassins.dto.UpdateStockRequest;
 import com.example.gestionbassins.entities.Bassin;
 import com.example.gestionbassins.entities.ImageBassin;
 import com.example.gestionbassins.entities.Transaction;
@@ -40,6 +45,13 @@ import com.example.gestionbassins.service.ImageBassinService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.web.bind.annotation.PutMapping;
+
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.scheduling.annotation.Scheduled;
+import com.example.gestionbassins.repos.TransactionRepository;
+import com.example.gestionbassins.service.NotificationService;
+import com.example.gestionbassins.service.UserServiceClient;
+
 
 
 @RestController
@@ -60,7 +72,13 @@ public class BassinRestController {
     
     @Autowired
     BassinRepository bassinRepository;
+    @Autowired
+    private TransactionRepository transactionRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+    @Autowired
+    private UserServiceClient userServiceClient;
     /*******************Gestion bassin********************/
     
     // Get all events
@@ -239,11 +257,7 @@ public class BassinRestController {
     
     /*******************Gestion Quantité & archive & transaction********************/
 
-    @PostMapping("/{id}/archiver")
-    public Bassin archiverBassin(@PathVariable("id") Long id) {
-        return bassinService.archiverBassin(id);
-    }
-
+   
     @PostMapping("/{id}/desarchiver")
     public Bassin desarchiverBassin(
         @PathVariable("id") Long id, 
@@ -256,9 +270,13 @@ public class BassinRestController {
         @PathVariable("id") Long id, 
         @RequestParam("quantite") int quantite, 
         @RequestParam("raison") String raison) {
-        return bassinService.mettreAJourQuantite(id, quantite, raison);
+        
+        Bassin bassin = bassinService.mettreAJourQuantite(id, quantite, raison);
+        
+     
+        
+        return bassin;
     }
-
 
     @GetMapping("/non-archives")
     public List<Bassin> getBassinsNonArchives() {
@@ -280,20 +298,185 @@ public class BassinRestController {
         bassinService.notifierStockFaible();
     }
    
-    @GetMapping(value = "/export-rapport", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> generateStockReport() {
-        try {
-            // Vous devrez implémenter cette méthode dans votre BassinService
-            byte[] reportBytes = bassinService.generateStockReport();
-            
-            return ResponseEntity
-                .ok()
-                .header("Content-Disposition", "attachment; filename=rapport-stock-" + 
-                        java.time.LocalDate.now() + ".pdf")
-                .body(reportBytes);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+
+    
+    /***********************/
+    
+    private BassinDTO convertToDTO(Bassin bassin) {
+        BassinDTO dto = new BassinDTO();
+        dto.setIdBassin(bassin.getIdBassin());
+        dto.setNomBassin(bassin.getNomBassin());
+        dto.setDescription(bassin.getDescription());
+        dto.setPrix(bassin.getPrix());
+        dto.setMateriau(bassin.getMateriau());
+        dto.setCouleur(bassin.getCouleur());
+        dto.setDimensions(bassin.getDimensions());
+        dto.setDisponible(bassin.isDisponible());
+        dto.setStock(bassin.getStock());
+        dto.setArchive(bassin.isArchive());
+        dto.setImagePath(bassin.getImagePath());
+        
+        if (bassin.getCategorie() != null) {
+            dto.setCategorieId(bassin.getCategorie().getIdCategorie());
         }
-    } 
+        
+        return dto;
+    }
+    
+    @GetMapping("/{id}")
+    public BassinDTO getBassinDetails(@PathVariable Long id) {
+        Bassin bassin = bassinService.getBassin(id);
+        return convertToDTO(bassin);
+    }
+    @PostMapping("/update-stock")
+    public ResponseEntity<?> updateStock(@RequestBody TransactionDTO transactionDTO) {
+        try {
+            Bassin bassin = bassinService.adjustStock(
+                transactionDTO.getBassinId(), 
+                transactionDTO.getQuantite(), 
+                transactionDTO.getRaison(),
+                transactionDTO.getTypeOperation(),
+                transactionDTO.getUtilisateur()
+            );
+            
+            // Archivage automatique si stock = 0
+            if (bassin.getStock() == 0 && !bassin.isArchive()) {
+                bassin = bassinService.archiverBassin(bassin.getIdBassin());
+            }
+            
+            return ResponseEntity.ok(bassin);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+    
+   
+   
+    @GetMapping("/transactions/{bassinId}")
+    public List<Transaction> getBassinTransactions(@PathVariable Long bassinId) {
+        return bassinService.getBassinTransactions(bassinId);
+    }
+
+    @GetMapping(value = "/rapport/bassin/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> generateBassinStockReport(
+            @PathVariable("id") Long id,
+            @RequestParam("startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam("endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
+        
+        byte[] pdfBytes = bassinService.generateBassinStockReport(id, startDate, endDate);
+        
+        return ResponseEntity
+                .ok()
+                .header("Content-Disposition", "attachment; filename=rapport-bassin-" + id + ".pdf")
+                .body(pdfBytes);
+    }
+
+    @GetMapping(value = "/rapport/global", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> generateGlobalStockReport(
+            @RequestParam("startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam("endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
+        
+        byte[] pdfBytes = bassinService.generateGlobalStockReport(startDate, endDate);
+        
+        return ResponseEntity
+                .ok()
+                .header("Content-Disposition", "attachment; filename=rapport-global-stock.pdf")
+                .body(pdfBytes);
+    }
+    
+    @GetMapping(value = "/export-rapport", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> generateStockReport(
+        @RequestParam(value = "categorieId", required = false) Long categorieId,
+        @RequestParam(value = "showArchived", defaultValue = "true") boolean showArchived) {
+        
+        byte[] pdfBytes = bassinService.generateStockReport(categorieId, showArchived);
+        
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=rapport-stock.pdf")
+                .body(pdfBytes);
+    }
+    
+
+    @PostMapping("/{id}/update-status")
+    public ResponseEntity<Bassin> updateBassinStatus(
+        @PathVariable Long id,
+        @RequestBody Map<String, String> statusUpdate) {
+        
+        Bassin bassin = bassinService.getBassinById(id);
+        if (bassin == null) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        String newStatus = statusUpdate.get("statut");
+        if (newStatus != null) {
+            bassin.setStatut(newStatus);
+            bassin = bassinService.updateBassin(bassin);
+            return ResponseEntity.ok(bassin);
+        }
+        
+        return ResponseEntity.badRequest().build();
+    }
+
+    // Dans votre méthode d'archivage
+    @PostMapping("/{id}/archiver")
+    public ResponseEntity<Bassin> archiverBassin(@PathVariable Long id) {
+        Bassin bassin = bassinService.getBassinById(id);
+        if (bassin == null) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        // Vérifier que le stock est à 0
+        if (bassin.getStock() > 0) {
+            return ResponseEntity
+                .badRequest()
+                .body(null); // ou renvoyer un objet d'erreur personnalisé
+        }
+        
+        bassin.setArchive(true);
+        bassin.setStatut("ARCHIVE");
+        bassin = bassinService.updateBassin(bassin);
+        return ResponseEntity.ok(bassin);
+    }
+    
+    @PostMapping("/{id}/mettre-sur-commande")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Bassin> mettreSurCommande(
+            @PathVariable Long id,
+            @RequestParam Integer dureeFabricationJours) {
+        
+        try {
+            Bassin bassin = bassinService.mettreSurCommande(id, dureeFabricationJours);
+            return ResponseEntity.ok(bassin);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().header("X-Error-Message", e.getMessage()).build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().header("X-Error-Message", e.getMessage()).build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().header("X-Error-Message", e.getMessage()).build();
+        }
+    }
+    
+    @PutMapping("/{id}/duree-fabrication")
+    public ResponseEntity<?> updateDureeFabrication(
+        @PathVariable Long id,
+        @RequestParam(required = false) Integer duree,
+        @RequestParam(required = false) Integer dureeMin,
+        @RequestParam(required = false) Integer dureeMax) {
+        
+        try {
+            Bassin bassin;
+            if (duree != null) {
+                bassin = bassinService.updateDureeFabrication(id, duree);
+            } else if (dureeMin != null && dureeMax != null) {
+                bassin = bassinService.updateDureeFabrication(id, dureeMin, dureeMax);
+            } else {
+                // Valeurs par défaut si aucun paramètre fourni
+                bassin = bassinService.updateDureeFabrication(id, 3, 15);
+            }
+            return ResponseEntity.ok(bassin);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
 

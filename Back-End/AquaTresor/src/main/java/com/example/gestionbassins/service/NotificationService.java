@@ -10,6 +10,6 @@ public interface NotificationService {
     void markAllAsRead();
     public void deleteNotification(Long id) ;
     public Notification createNotification(Notification notification);
-    
+    public void sendNotification(String title, String message, String username) ;
     
 }

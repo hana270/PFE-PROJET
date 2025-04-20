@@ -18,12 +18,15 @@ export class AppComponent {
     private authService: AuthService,
     private router: Router,
     private loadingService: LoadingService,
+    private cdRef: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isLoading$ = this.loadingService.isLoading$;
     // Remove the cdr.detectChanges() tap
   }
-
+  ngAfterViewChecked() {
+    this.cdRef.detectChanges();
+  }
   logout(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.authService.logout();

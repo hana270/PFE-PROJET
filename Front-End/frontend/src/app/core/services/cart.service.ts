@@ -14,7 +14,7 @@ import { AuthStateService } from './auth-state.service';
   providedIn: 'root'
 })
 export class CartService {
-  apiUrl = 'http://localhost:8089/aquatresor/api/panier';
+  apiUrl = 'http://localhost:8090/orders/api/panier';
   
   // Configuration
   private readonly CART_EXPIRATION_DAYS = 2;
@@ -315,43 +315,49 @@ export class CartService {
    */
   migrateSessionCartToUser(): Observable<Panier | null> {
     if (!isPlatformBrowser(this.platformId)) {
-      return of(null);
+        return of(null);
     }
 
     const sessionId = localStorage.getItem(this.SESSION_ID_KEY);
     if (!sessionId) {
-      return this.loadUserCart();
+        return this.loadUserCart();
     }
 
-    if (!this.authState || !this.authState.isLoggedIn) {
-      return of(null);
+    if (!this.authState?.isLoggedIn) {
+        return of(null);
     }
     
     this.pendingRequests++;
     return this.http.post<any>(
-      `${this.apiUrl}/migrate`, 
-      null,
-      { headers: this.getHeaders().set('X-Session-ID', sessionId) }
-    ).pipe(
-      map(response => response.panier || response.cart),
-      tap(panier => {
-        localStorage.removeItem(this.SESSION_ID_KEY);
-        
-        // Ensure all items have proper image and detail information
-        if (panier?.items) {
-          panier.items.forEach((item: PanierItem) => this.enrichItemWithDetails(item));
+        `${this.apiUrl}/migrate`, 
+        null,
+        { 
+            headers: this.getHeaders(),
+            observe: 'response'
         }
-        
-        this.panierSubject.next(panier);
-        this.toastService.showSuccess('Votre panier a été récupéré');
-      }),
-      catchError(error => {
-        console.error('Migration error, loading user cart', error);
-        return this.loadUserCart();
-      }),
-      finalize(() => this.pendingRequests--)
+    ).pipe(
+      map(response => {
+        const panier = response.body?.panier || response.body?.cart as Panier;
+        if (panier?.items) {
+            panier.items.forEach((item: PanierItem) => this.enrichItemWithDetails(item));
+        }
+        return panier;
+    }),
+        tap(panier => {
+            if (panier) {
+                localStorage.removeItem(this.SESSION_ID_KEY);
+                this.panierSubject.next(panier);
+                this.toastService.showSuccess('Votre panier a été récupéré');
+            }
+        }),
+        catchError(error => {
+            console.error('Migration error:', error);
+            this.toastService.showError('Erreur lors de la récupération du panier');
+            return this.loadUserCart();
+        }),
+        finalize(() => this.pendingRequests--)
     );
-  }
+}
 
   /**
    * Synchronise le panier local avec le panier serveur après connexion
@@ -433,18 +439,15 @@ export class CartService {
     // Si pas d'item ou déjà tous les détails, ne rien faire
     if (!item) return;
     
-    // Utiliser le bassin fourni ou celui déjà présent dans l'item
     const sourceBassin = bassin || item.bassin;
     
-    // Pour les bassins standards
     if (!item.isCustomized && sourceBassin) {
-      // Enrichir avec le nom et l'ID si manquants
-      if (!item.nomBassin && sourceBassin.nomBassin) {
-        item.nomBassin = sourceBassin.nomBassin;
-      }
+        if (!item.nomBassin && sourceBassin.nomBassin) {
+            item.nomBassin = sourceBassin.nomBassin;
+        }
       
-      if (!item.bassinId && sourceBassin.idBassin) {
-        item.bassinId = sourceBassin.idBassin;
+        if (!item.bassinId && sourceBassin.idBassin) {
+          item.bassinId = sourceBassin.idBassin;
       }
       
       // Enrichir avec les attributs standards
@@ -467,16 +470,14 @@ export class CartService {
     }
     // Pour les bassins personnalisés
     else if (item.isCustomized) {
-      // S'assurer que les propriétés customisées sont bien définies
       if (!item.customProperties) {
-        item.customProperties = {};
+          item.customProperties = {};
       }
       
-      // Mapper les propriétés du bassin personnalisé vers l'item
+      // Ensure all custom properties are properly set
       if (item.customProperties.couleurSelectionnee) {
-        item.couleur = item.customProperties.couleurSelectionnee;
+          item.couleur = item.customProperties.couleurSelectionnee;
       }
-      
       if (item.customProperties.materiauSelectionne) {
         item.materiau = item.customProperties.materiauSelectionne;
       }
@@ -544,20 +545,26 @@ calculateEffectivePrice(item: PanierItem): void {
     };
   }
 
-  private getHeaders(): HttpHeaders {
-    let headers = new HttpHeaders();
-    
-    if (this.authState.currentToken) {
-      headers = headers.set('Authorization', `Bearer ${this.authState.currentToken}`);
-    }
-    
-    const sessionId = this.getOrCreateSessionId();
-    if (!this.authState.isLoggedIn && sessionId) {
-      headers = headers.set('X-Session-ID', sessionId);
-    }
-    
-    return headers;
+// Update your getHeaders() method in CartService
+private getHeaders(): HttpHeaders {
+  let headers = new HttpHeaders({
+    'Content-Type': 'application/json'
+  });
+
+  // Ajout conditionnel du token JWT
+  const token = this.authState.currentToken;
+  if (token) {
+    headers = headers.set('Authorization', `Bearer ${token}`);
   }
+
+  // Ajout du session ID pour les utilisateurs non connectés
+  const sessionId = this.getOrCreateSessionId();
+  if (!this.authState.isLoggedIn && sessionId) {
+    headers = headers.set('X-Session-ID', sessionId);
+  }
+
+  return headers;
+}
 
   private getOrCreateSessionId(): string {
     if (!isPlatformBrowser(this.platformId)) {

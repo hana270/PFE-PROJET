@@ -2,10 +2,12 @@ import { PanierItem } from './panier-item.model';
 
 export interface Panier {
   id: number;
-  userId?: number | null; // Changed to accept null
+  userId?: number | null;
   sessionId?: string | null;
   items: PanierItem[];
   totalPrice: number;
+  lastUpdated?: Date;
 }
-// Réexportez explicitement PanierItem si nécessaire
-export type { PanierItem } from './panier-item.model';
+
+// Export the PanierItem type if needed elsewhere
+export type { PanierItem };

@@ -5,6 +5,7 @@ import com.example.gestionbassins.repos.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -39,4 +40,13 @@ public class NotificationServiceImpl implements NotificationService {
     	  }
     	  return notificationRepository.save(notification);
     	}
+    public void sendNotification(String title, String message, String username) {
+        Notification notification = new Notification();
+        notification.setTitle(title); // Utilise setTitle
+        notification.setMessage(message);
+        notification.setDate(new Date());
+        notification.setRead(false);
+        notification.setUsername(username); // Utilise setUsername
+        notificationRepository.save(notification);
+    }
 }

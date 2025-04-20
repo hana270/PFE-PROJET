@@ -921,3 +921,159 @@ color: rgb(4, 63, 24);
 .cdk-overlay-pane {
   max-width: 100vw !important;
 }
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+  
+  &.success {
+    background-color: #28a745;
+  }
+  
+  &.warning {
+    background-color: #ffc107;
+    color: #212529;
+  }
+  
+  &.danger {
+    background-color: #dc3545;
+  }
+}
+
+.small-text {
+  font-size: 10px;
+  display: block;
+  margin-top: 2px;
+}
+
+/* Style pour la boîte de dialogue de durée de fabrication */
+.swal-custom-container {
+  padding: 15px;
+  max-width: 100%;
+}
+
+.swal-custom-container .bassin-info {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.swal-custom-container .bassin-info h4 {
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.swal-custom-container .duration-options {
+  margin-top: 20px;
+}
+
+.swal-custom-container .form-group {
+  margin-bottom: 15px;
+}
+
+.swal-custom-container label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #34495e;
+}
+
+.swal-custom-container .form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.swal-custom-container .duration-input {
+  margin-top: 15px;
+}
+
+.swal-custom-container .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -10px;
+}
+
+.swal-custom-container .col-md-6 {
+  flex: 0 0 50%;
+  max-width: 50%;
+  padding: 0 10px;
+}
+
+/* Style pour l'affichage dans le tableau */
+.status-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 120px;
+}
+
+.status-badge.success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.warning {
+  background-color: #fff8e1;
+  color: #ff8f00;
+}
+
+.status-badge.danger {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .swal-custom-container .col-md-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  .swal-custom-container .row {
+    margin: 0;
+  }
+}.status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 120px;
+}
+
+.fabrication-duration {
+  font-size: 11px;
+  color: #666;
+  text-align: center;
+  padding: 2px 0;
+}
+
+.status-badge.success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.warning {
+  background-color: #fff8e1;
+  color: #ff8f00;
+}
+
+.status-badge.danger {
+  background-color: #ffebee;
+  color: #c62828;
+}

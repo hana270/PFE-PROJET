@@ -1,88 +1,181 @@
 <app-layout pageTitle="Gestion des Avis">
-  <!-- Indicateur de chargement -->
-  <div *ngIf="isLoading" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Chargement...</span>
+  <div class="container-fluid py-4 avis-container">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 page-header">
+      <h1 class="h3 mb-3 mb-md-0 text-gray-800">
+        <i class="fas fa-comments me-2"></i>Gestion des avis clients
+      </h1>
+      <span class="badge bg-primary rounded-pill">{{ avisList.length }} avis</span>
     </div>
-  </div>
 
-  <!-- Message si aucun avis n'est disponible -->
-  <div *ngIf="!isLoading && avisList.length === 0" class="alert alert-info text-center">
-    Aucun avis disponible pour le moment.
-  </div>
-
-  <!-- Liste des avis -->
-  <div *ngIf="!isLoading && avisList.length > 0" class="container-fluid p-3">
-    <h2 class="mb-4">Liste des avis clients</h2>
-    <p class="text-muted">{{ avisList.length }} avis</p>
-
-    <!-- Filtres et recherche -->
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <input type="text" class="form-control" placeholder="Rechercher un avis..." [(ngModel)]="searchQuery" (input)="onSearchInput()">
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoading" class="text-center py-5 loading-indicator">
+      <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Chargement...</span>
       </div>
-      <div class="col-md-3">
-        <select class="form-select" [(ngModel)]="selectedRating" (change)="filterAvis()">
-          <option value="">Toutes les notes</option>
-          <option value="5">⭐⭐⭐⭐⭐</option>
-          <option value="4">⭐⭐⭐⭐</option>
-          <option value="3">⭐⭐⭐</option>
-          <option value="2">⭐⭐</option>
-          <option value="1">⭐</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <button class="btn btn-outline-secondary w-100" (click)="resetFilters()">
-          <i class="fas fa-sync-alt"></i> Réinitialiser
-        </button>
+      <p class="mt-3">Chargement des avis en cours...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && avisList.length === 0" class="card shadow empty-state">
+      <div class="card-body text-center py-5">
+        <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+        <h3 class="h5 text-muted">Aucun avis disponible</h3>
+        <p class="text-muted">Aucun client n'a encore soumis d'avis.</p>
       </div>
     </div>
 
-    <!-- Tableau des avis -->
-    <div class="table-responsive">
-      <table class="table table-striped table-hover">
-        <thead class="table-light">
-          <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Utilisateur</th>
-            <th scope="col">Bassin</th>
-            <th scope="col">Date</th>
-            <th scope="col">Note</th>
-            <th scope="col">Commentaire</th>
-            <th scope="col">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let avis of filteredAvis">
-            <td>{{ avis.idAvis }}</td>
-            <td>{{ avis.nom || 'Anonyme' }}</td>
-            <td>
-              <a [routerLink]="['/admin/details-bassin', avis.bassin.idBassin]" class="text-primary">
-                {{ avis.bassin.nomBassin || 'Non spécifié' }}
-              </a>
-            </td>
-            <td>{{ avis.dateSoumission | date:'dd/MM/yyyy' }}</td>
-            <td>
-              <span class="star-rating">
-                <i *ngFor="let star of [1, 2, 3, 4, 5]" class="fas fa-star" [ngClass]="{'text-warning': star <= avis.note, 'text-secondary': star > avis.note}"></i>
-              </span>
-            </td>
-            <td>
-              {{ avis.message.length > 30 ? (avis.message | slice:0:30) + '...' : avis.message }}
-            </td>
-            <td>
-              <!-- Bouton pour voir les détails de l'avis -->
-              <button class="btn btn-sm btn-info me-2" (click)="viewAvisDetails(avis)">
-                <i class="fas fa-eye"></i> Voir
-              </button>
-              <!-- Bouton pour supprimer l'avis -->
-              <button class="btn btn-sm btn-danger" (click)="deleteAvis(avis.idAvis)">
-                <i class="fas fa-trash"></i> Supprimer
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Content -->
+    <div *ngIf="!isLoading && avisList.length > 0" class="card shadow">
+      <div class="card-header py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+        <h6 class="m-0 font-weight-bold text-primary">Liste des avis</h6>
+        
+        <!-- Filters -->
+        <div class="mt-2 mt-md-0 d-flex flex-column flex-md-row gap-2 filter-section">
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" placeholder="Rechercher..." 
+                   [(ngModel)]="searchQuery" (input)="filterAvis()">
+          </div>
+          
+          <select class="form-select" [(ngModel)]="selectedRating" (change)="filterAvis()">
+            <option value="">Toutes les notes</option>
+            <option *ngFor="let i of [5,4,3,2,1]" [value]="i">
+              {{ i }} {{ i === 1 ? 'étoile' : 'étoiles' }}
+            </option>
+          </select>
+          
+          <button class="btn btn-outline-secondary" (click)="resetFilters()" title="Réinitialiser">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover table-striped table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th scope="col" (click)="sortAvis('idAvis')" [class.asc]="currentSort.field === 'idAvis' && currentSort.direction === 'asc'"
+                    [class.desc]="currentSort.field === 'idAvis' && currentSort.direction === 'desc'" class="sortable">
+                  ID
+                </th>
+                <th scope="col" (click)="sortAvis('nom')" [class.asc]="currentSort.field === 'nom' && currentSort.direction === 'asc'"
+                    [class.desc]="currentSort.field === 'nom' && currentSort.direction === 'desc'" class="sortable">
+                  Client
+                </th>
+                <th scope="col">Bassin</th>
+                <th scope="col" (click)="sortAvis('dateSoumission')" [class.asc]="currentSort.field === 'dateSoumission' && currentSort.direction === 'asc'"
+                    [class.desc]="currentSort.field === 'dateSoumission' && currentSort.direction === 'desc'" class="sortable">
+                  Date
+                </th>
+                <th scope="col" (click)="sortAvis('note')" [class.asc]="currentSort.field === 'note' && currentSort.direction === 'asc'"
+                    [class.desc]="currentSort.field === 'note' && currentSort.direction === 'desc'" class="sortable">
+                  Note
+                </th>
+                <th scope="col">Commentaire</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let avisItem of filteredAvis">
+                <tr>
+                  <td>{{ avisItem.idAvis }}</td>
+                  <td>{{ avisItem.nom || 'Anonyme' }}</td>
+                  <td>
+                    <span *ngIf="avisItem.bassin" class="badge bg-info text-dark">
+                      {{ avisItem.bassin.nomBassin }}
+                    </span>
+                    <span *ngIf="!avisItem.bassin" class="text-muted">-</span>
+                  </td>
+                  <td>
+                    <span class="d-block">{{ formatDate(avisItem.dateSoumission) }}</span>
+                    <small *ngIf="avisItem.dateModification" class="text-muted">
+                      Modifié: {{ formatDate(avisItem.dateModification) }}
+                    </small>
+                  </td>
+                  <td>
+                    <div class="star-rating">
+                      <i *ngFor="let star of [1, 2, 3, 4, 5]" 
+                         class="fas fa-star" [class.text-warning]="star <= avisItem.note" [class.text-muted]="star > avisItem.note"></i>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="comment-preview">
+                      {{ truncateText(avisItem.message, 50) }}
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex gap-2 action-buttons">
+                      <button class="btn btn-sm btn-primary" (click)="viewAvisDetails(avisItem)" title="Voir détails">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      
+                      <button *ngIf="avisItem.historiqueModifications?.length" 
+                              class="btn btn-sm btn-info" 
+                              (click)="toggleHistorique(avisItem)"
+                              title="Historique des modifications">
+                        <i class="fas fa-history"></i>
+                      </button>
+                      
+                      <button class="btn btn-sm btn-danger" (click)="deleteAvis(avisItem.idAvis)" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                
+                <!-- Historique row -->
+                <tr *ngIf="avisItem.showHistorique && avisItem.historiqueModifications?.length" class="bg-light history-row">
+                  <td colspan="7">
+                    <div class="p-3 history-container">
+                      <h6 class="mb-3">
+                        <i class="fas fa-history me-2"></i>Historique des modifications
+                      </h6>
+                      
+                      <div class="table-responsive">
+                        <table class="table table-sm table-bordered history-table">
+                          <thead>
+                            <tr>
+                              <th>Date</th>
+                              <th>Ancien nom</th>
+                              <th>Ancienne note</th>
+                              <th>Ancien message</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr *ngFor="let modif of avisItem.historiqueModifications">
+                              <td>{{ formatDate(modif.dateModification) }}</td>
+                              <td>{{ modif.ancienNom || 'Anonyme' }}</td>
+                              <td>
+                                <div class="star-rating">
+                                  <i *ngFor="let star of [1, 2, 3, 4, 5]" 
+                                     class="fas fa-star" [class.text-warning]="star <= modif.ancienneNote" [class.text-muted]="star > modif.ancienneNote"></i>
+                                </div>
+                              </td>
+                              <td>{{ modif.ancienMessage }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Empty filter result -->
+        <div *ngIf="filteredAvis.length === 0 && avisList.length > 0" class="text-center py-5 empty-state">
+          <i class="fas fa-search fa-3x text-muted mb-3"></i>
+          <h4 class="h5 text-muted">Aucun résultat trouvé</h4>
+          <p class="text-muted">Aucun avis ne correspond à vos critères de recherche.</p>
+          <button class="btn btn-primary" (click)="resetFilters()">
+            <i class="fas fa-sync-alt me-2"></i>Réinitialiser les filtres
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </app-layout>

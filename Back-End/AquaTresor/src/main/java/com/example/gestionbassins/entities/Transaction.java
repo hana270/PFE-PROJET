@@ -14,10 +14,17 @@ public class Transaction {
     private Long idTransaction;
 
     @ManyToOne
-    @JoinColumn(name = "bassin_id_bassin")
+    @JoinColumn(name = "bassin_id")
     private Bassin bassin;
 
     private int quantite;
-    private String raison; // Ex: "Vente hors site", "Réapprovisionnement"
+    private String typeOperation;
+    private String raison;
     private Date dateTransaction;
+    
+    @Column(name = "user_id")
+    private Long userId;
+    
+    @Transient
+    private User user;
 }

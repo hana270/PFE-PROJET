@@ -1,6 +1,7 @@
 package com.example.gestionbassins.entities;
 
 import java.math.BigDecimal;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -96,6 +97,8 @@ public class Bassin implements BassinBase, BassinMetadata, BassinPromotionInfo {
     @Column(name = "taux_reduction", nullable = true)
     private Double tauxReduction;
     
+    @Column(name = "statut")
+    private String statut = "DISPONIBLE"; 
     
     // Constructeur
     public Bassin(String nomBassin, String description, double prix, String materiau, 
@@ -224,4 +227,83 @@ public class Bassin implements BassinBase, BassinMetadata, BassinPromotionInfo {
         }
         return prix;
     }
+    
+    
+    
+    
+    
+    @Column(name = "sur_commande")
+    private Boolean surCommande = false;
+    
+
+    // Getters et setters
+    public boolean isSurCommande() {
+        return surCommande;
+    }
+
+    public void setSurCommande(boolean surCommande) {
+        this.surCommande = surCommande;
+    }
+
+    public Integer getDureeFabricationJours() {
+        return dureeFabricationJours;
+    }
+
+    /************/
+ // Supprimer dateDisponibilitePrevue et modifier la gestion de la durée
+    @Column(name = "duree_fabrication_jours")
+    private Integer dureeFabricationJours;
+
+    @Column(name = "duree_fabrication_jours_min")
+    private Integer dureeFabricationJoursMin = 3; // Valeur par défaut
+
+    @Column(name = "duree_fabrication_jours_max")
+    private Integer dureeFabricationJoursMax = 15; // Valeur par défaut
+
+    public String getDureeFabricationDisplay() {
+        if (dureeFabricationJours != null) {
+            return dureeFabricationJours + " jours";
+        } else if (dureeFabricationJoursMin != null && dureeFabricationJoursMax != null) {
+            if (dureeFabricationJoursMin.equals(dureeFabricationJoursMax)) {
+                return dureeFabricationJoursMin + " jours";
+            }
+            return "Entre " + dureeFabricationJoursMin + " et " + dureeFabricationJoursMax + " jours";
+        }
+        return "Entre 3 et 15 jours (par défaut)";
+    }
+    // Getters et setters
+    public Integer getDureeFabricationJoursMin() {
+        return dureeFabricationJoursMin;
+    }
+
+    public void setDureeFabricationJoursMin(Integer dureeMin) {
+        this.dureeFabricationJoursMin = dureeMin;
+        // Validation pour s'assurer que min <= max
+        if (dureeFabricationJoursMax != null && dureeMin != null && dureeMin > dureeFabricationJoursMax) {
+            this.dureeFabricationJoursMax = dureeMin;
+        }
+    }
+
+    public Integer getDureeFabricationJoursMax() {
+        return dureeFabricationJoursMax;
+    }
+
+    public void setDureeFabricationJoursMax(Integer dureeMax) {
+        this.dureeFabricationJoursMax = dureeMax;
+        // Validation pour s'assurer que min <= max
+        if (dureeFabricationJoursMin != null && dureeMax != null && dureeMax < dureeFabricationJoursMin) {
+            this.dureeFabricationJoursMin = dureeMax;
+        }
+    }
+
+    // Méthode pour obtenir la durée moyenne
+    public Integer getDureeFabricationMoyenne() {
+        if (dureeFabricationJoursMin == null || dureeFabricationJoursMax == null) {
+            return null;
+        }
+        return (dureeFabricationJoursMin + dureeFabricationJoursMax) / 2;
+    }
+
+
+
 }

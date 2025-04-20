@@ -1,21 +1,12 @@
+// bassins-microservice/src/main/java/com/example/gestionbassins/dto/BassinDTO.java
 package com.example.gestionbassins.dto;
 
-import java.util.List;
-import com.example.gestionbassins.entities.Bassin;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import jakarta.persistence.Entity;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-
+import java.util.List;
 
 @Data
 public class BassinDTO {
-	private Long idBassin;
+    private Long idBassin;
     private String nomBassin;
     private String description;
     private Double prix;
@@ -24,10 +15,11 @@ public class BassinDTO {
     private String dimensions;
     private boolean disponible;
     private int stock;
-   private String imagePath;
+    private Long promotionId; // Ajouté
+    private String imagePath;
     private List<String> imagesBassin;
     private boolean promotionActive;
     private Double prixPromo;
-    
-    
+    private boolean archive;
+    private Long categorieId;
 }

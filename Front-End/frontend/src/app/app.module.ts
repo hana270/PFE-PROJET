@@ -66,7 +66,8 @@ import { UpdateProfileComponent } from './features/client/update-profile/update-
 import { UpdateProfilComponent } from './features/installer/update-profil/update-profil.component';
 import { BassinImagePipe } from './pipes/bassin-image.pipe';
 import { AuthService } from './core/authentication/auth.service';
-
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { TruncatePipe } from './pipes/truncate.pipe';
 
 export function tokenGetter() {
   return localStorage.getItem('jwt');
@@ -122,12 +123,13 @@ export function tokenGetter() {
     AvisComponent,
     UpdateProfileComponent,
     UpdateProfilComponent,
-    
+    TruncatePipe,
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'my-angular-app' }),
     AppRoutingModule,
     HttpClientModule,
+    MatTooltipModule,
     FormsModule,
     ReactiveFormsModule,
     CommonModule,
@@ -139,6 +141,7 @@ export function tokenGetter() {
     MatSnackBarModule,
     SocialLoginModule,
     BassinImagePipe,
+
     JwtModule.forRoot({
       config: {
         tokenGetter: tokenGetter,

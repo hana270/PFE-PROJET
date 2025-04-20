@@ -4,7 +4,7 @@ import { Bassin } from '../models/bassin.models';
 import { Categorie } from '../models/categorie.models';
 import { ImageBassin } from '../models/image.models';
 
-import { catchError, map, Observable ,of} from 'rxjs';
+import { catchError, map, Observable ,of, switchMap, throwError} from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AuthService } from '../authentication/auth.service';
 import { CategorieWrapper } from '../models/CategorieWrapper.models';
@@ -31,15 +31,6 @@ export class BassinService {
 
 
   constructor(private http: HttpClient, private authService: AuthService) { }
-
-
-  //la liste des bassins
-  listeBassin(): Observable<Bassin[]> {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${this.authService.getToken()}`
-    });
-    return this.http.get<Bassin[]>(this.apiURL + "/all", { headers: headers });
-  }
 
   // Charger les images pour un bassin spécifique
   chargerImagesPourBassin(bassin: Bassin): Bassin {
@@ -339,18 +330,6 @@ getBaseImageUrl(): string {
     return maintenant >= debut && maintenant <= fin;
   }
 
-  //archive
-  // Récupérer les bassins non archivés
-getBassinsNonArchives(): Observable<Bassin[]> {
-  return this.http.get<Bassin[]>(`${this.apiURL}/non-archives`);
-}
-
-  // Récupérer les bassins archivés
-  getBassinsArchives(): Observable<Bassin[]> {
-    return this.http.get<Bassin[]>(`${this.apiURL}/archives`);
-  }
-
-  //archive
   // Récupérer les notifications
 getNotifications(): Observable<any[]> {
   const headers = new HttpHeaders({
@@ -360,26 +339,93 @@ getNotifications(): Observable<any[]> {
 }
 
 mettreAJourQuantite(id: number, quantite: number, raison: string): Observable<any> {
-  const headers = new HttpHeaders({
-    'Authorization': `Bearer ${this.authService.getToken()}`
-  });
-  
-  let params = new HttpParams()
-    .set('quantite', quantite.toString())
-    .set('raison', raison);
-  
-  return this.http.post<Bassin>(
-    `${this.apiURL}/${id}/mettre-a-jour-quantite`, 
-    null, 
-    { headers: headers, params: params }
+  return this.http.post(`${this.apiURL}/${id}/mettre-a-jour-quantite`, null, {
+    params: {
+      quantite: quantite.toString(),
+      raison: raison
+    }
+  }).pipe(
+    catchError(error => {
+      if (error.error instanceof ErrorEvent) {
+        // Erreur côté client
+        return throwError('Une erreur est survenue lors de la mise à jour du stock');
+      } else {
+        // Erreur côté serveur
+        return throwError(error.error.message || 'Erreur lors de la mise à jour du stock');
+      }
+    })
   );
 }
+
+
+// Dans bassin.service.ts
+syncBassinStatus(bassin: Bassin): Bassin {
+  // Synchronisation forcée statut/stock
+  if (bassin.stock === 0) {
+      bassin.statut = 'SUR_COMMANDE';
+  } else {
+      bassin.statut = 'DISPONIBLE';
+  }
+  return bassin;
+}
+
+// Modifier les méthodes existantes pour utiliser cette synchro
+listeBassin(): Observable<Bassin[]> {
+const headers = this.getHeaders();
+return this.http.get<Bassin[]>(this.apiURL + "/all", { headers }).pipe(
+  map(bassins => bassins.map(bassin => this.syncBassinStatus(bassin)))
+);
+}
+
+getBassinsNonArchives(): Observable<Bassin[]> {
+return this.http.get<Bassin[]>(`${this.apiURL}/non-archives`).pipe(
+  map(bassins => bassins.map(bassin => this.syncBassinStatus(bassin)))
+);
+}
+
+getBassinsArchives(): Observable<Bassin[]> {
+return this.http.get<Bassin[]>(`${this.apiURL}/archives`).pipe(
+  map(bassins => bassins.map(bassin => this.syncBassinStatus(bassin)))
+);
+}
+
 archiverBassin(id: number): Observable<Bassin> {
   const headers = new HttpHeaders({
     'Authorization': `Bearer ${this.authService.getToken()}`
   });
-  return this.http.post<Bassin>(`${this.apiURL}/${id}/archiver`, {}, { headers: headers });
+  
+  return this.http.get<Bassin>(`${this.apiURL}/getbyid/${id}`, { headers }).pipe(
+    switchMap(bassin => {
+      // Vérifier si le stock est à 0
+      if (bassin.stock !== 0) {
+        return throwError(() => new Error('Le stock doit être à 0 pour archiver un bassin'));
+      }
+      // Procéder à l'archivage si le stock est à 0
+      return this.http.post<Bassin>(`${this.apiURL}/${id}/archiver`, {}, { headers });
+    })
+  );
 }
+
+// Ajouter une méthode pour mettre à jour le statut d'un bassin
+updateBassinStatus(id: number, newStatus: string): Observable<Bassin> {
+  const headers = new HttpHeaders({
+    'Authorization': `Bearer ${this.authService.getToken()}`
+  });
+  
+  return this.http.post<Bassin>(
+    `${this.apiURL}/${id}/update-status`, 
+    { statut: newStatus }, 
+    { headers }
+  );
+}
+
+canArchiveBassin(bassin: Bassin): boolean {
+  return bassin.stock === 0;
+}
+
+/**
+Fin
+*/
 
 desarchiverBassin(id: number, nouvelleQuantite: number): Observable<Bassin> {
   const headers = new HttpHeaders({
@@ -495,6 +541,33 @@ listeBassinsAvecPromotions(): Observable<Bassin[]> {
   );
 }
 
+mettreSurCommande(id: number, dureeJours: number): Observable<Bassin> {
+  const headers = new HttpHeaders({
+      'Authorization': `Bearer ${this.authService.getToken()}`
+  });
+  
+  return this.http.post<Bassin>(
+      `${this.apiURL}/${id}/mettre-sur-commande`, 
+      null,
+      { 
+          headers: headers,
+          params: new HttpParams().set('dureeFabricationJours', dureeJours.toString())
+      }
+  );
+}
 
-
+updateDureeFabrication(id: number, duree: number): Observable<Bassin>;
+updateDureeFabrication(id: number, dureeMin: number, dureeMax: number): Observable<Bassin>;
+updateDureeFabrication(id: number, dureeOrMin: number, dureeMax?: number): Observable<Bassin> {
+    let params = new HttpParams();
+    
+    if (dureeMax !== undefined) {
+        params = params.set('dureeMin', dureeOrMin.toString())
+                       .set('dureeMax', dureeMax.toString());
+    } else {
+        params = params.set('duree', dureeOrMin.toString());
+    }
+    
+    return this.http.put<Bassin>(`${this.apiURL}/${id}/duree-fabrication`, null, { params });
+}
 }
