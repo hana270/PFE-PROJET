@@ -365,7 +365,7 @@ updateFabricationDuration(bassin: Bassin): void {
           <div id="single-duration" class="duration-input">
             <label>Durée (jours)</label>
             <input id="swal-input1" type="number" min="1" class="form-control" 
-                   placeholder="Ex: 5" value="${bassin.dureeFabrication || bassin.dureeFabricationMin || 5}">
+                   placeholder="Ex: 5" value="${bassin.dureeFabricationJours || bassin.dureeFabricationJoursMin || 5}">
           </div>
           
           <div id="range-duration" class="duration-input" style="display:none">
@@ -373,12 +373,12 @@ updateFabricationDuration(bassin: Bassin): void {
               <div class="col-md-6">
                 <label>Durée min (jours)</label>
                 <input id="swal-input-min" type="number" min="1" class="form-control" 
-                       placeholder="Ex: 3" value="${bassin.dureeFabricationMin || 3}">
+                       placeholder="Ex: 3" value="${bassin.dureeFabricationJoursMin || 3}">
               </div>
               <div class="col-md-6">
                 <label>Durée max (jours)</label>
                 <input id="swal-input-max" type="number" min="1" class="form-control" 
-                       placeholder="Ex: 15" value="${bassin.dureeFabricationMax || 15}">
+                       placeholder="Ex: 15" value="${bassin.dureeFabricationJoursMax || 15}">
               </div>
             </div>
           </div>
@@ -405,7 +405,7 @@ updateFabricationDuration(bassin: Bassin): void {
       });
 
       // Initialisation selon la durée actuelle
-      if (bassin.dureeFabricationMin !== bassin.dureeFabricationMax) {
+      if (bassin.dureeFabricationJoursMin !== bassin.dureeFabricationJoursMax) {
         durationType.value = 'range';
         singleDiv.style.display = 'none';
         rangeDiv.style.display = 'block';

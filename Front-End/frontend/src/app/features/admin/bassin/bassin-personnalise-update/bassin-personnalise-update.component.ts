@@ -21,6 +21,12 @@ export class BassinPersonnaliseUpdateComponent {
     dimensions: [],
     accessoires: [],
     dureeFabrication: 0,
+    prixEstime: 0,
+    isCustomized: false,
+    nomBassin: '',
+    prix: 0,
+    imagesBassin: [],
+    firstImageUrl: ''
   };
 
   // Propriété pour stocker l'ID du bassin

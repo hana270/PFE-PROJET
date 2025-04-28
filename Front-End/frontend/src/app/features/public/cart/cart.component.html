@@ -36,6 +36,7 @@
   <!-- Contenu du panier -->
   <div *ngIf="!isLoading && cartItems.length > 0" class="cart-content">
     <div class="cart-items">
+      <!-- En-tête de la liste -->
       <div class="cart-header d-none d-md-flex">
         <div class="header-item">Produit</div>
         <div class="header-item text-center">Prix</div>
@@ -43,6 +44,7 @@
         <div class="header-item text-end">Total</div>
       </div>
 
+      <!-- Articles du panier -->
       <div *ngFor="let item of cartItems" class="cart-item">
         <div class="item-main">
           <div class="item-image">
@@ -56,116 +58,213 @@
           </div>
           
           <div class="item-details">
+            <!-- Nom et badges -->
             <div class="item-name-wrapper">
               <h3 class="item-name">
                 {{ getItemName(item) }}
+                <!-- Badge statut -->
+                <span class="badge">
+                  {{ getStatusDisplay(item) }}
+                </span>
+                <!-- Badge personnalisé -->
+                <span *ngIf="item.isCustomized" class="badge bg-info">Personnalisé</span>
+                <!-- Badge promotion -->
                 <span *ngIf="item.promotionActive" class="badge bg-danger ms-2">
                   PROMO -{{ getDiscountPercentage(item) }}%
                 </span>
               </h3>
+              <button (click)="removeFromCart(item)" class="btn-remove d-none d-md-block">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
             
-           <!-- Modifier la section des prix pour éviter les sauts de mise en page -->
-<div class="item-price d-none d-md-block" [class.promo-active]="item.promotionActive">
-  <div *ngIf="item.promotionActive" class="original-price">
-    {{ item.prixOriginal | currency:'TND':'symbol':'1.2-2' }}
-  </div>
-  
-  <div class="current-price">
-    {{ getEffectivePrice(item) | currency:'TND':'symbol':'1.2-2' }}
-    <span *ngIf="item.promotionActive" class="discount-badge">
-      -{{ getDiscountPercentage(item) }}%
-    </span>
-  </div>
-  
-  <div *ngIf="item.promotionActive && item.bassin?.promotion?.dateFin" class="promo-timer">
-    <i class="fas fa-clock"></i>
-    <span>Expire dans: {{ getTimeLeft(item.bassin!.promotion!.dateFin) }}</span>
-  </div>
-</div>
+            <!-- Catégorie du bassin -->
+            <div class="item-category" *ngIf="item.bassin?.categorie ||  item.bassin?.categorie?.nomCategorie">
+              <span class="category-label">Catégorie:</span>
+              <span class="category-value">{{ item.bassin?.categorie?.nomCategorie }}</span>
+            </div>
+            
+            <!-- Description du produit -->
+            <div class="item-description" *ngIf="getItemDescription(item)">
+              <p>{{ getItemDescription(item) }}</p>
+            </div>
 
+            <!-- Détails du produit -->
             <div class="product-details">
               <!-- Produit standard -->
-              <div *ngIf="!item.isCustomized && item.bassin">
-                <div class="detail-row" *ngIf="item.bassin.dimensions">
+              <div *ngIf="!item.isCustomized">
+                <div class="detail-row" *ngIf="item.bassin?.dimensions">
                   <span class="detail-label">Dimensions:</span>
-                  <span class="detail-value">{{ formatDimensions(item.bassin.dimensions) }}</span>
+                  <span class="detail-value">{{ formatDimensions(item.bassin!.dimensions) }}</span>
                 </div>
                 
-                <div class="detail-row" *ngIf="item.bassin.materiau">
+                <div class="detail-row" *ngIf="item.bassin?.materiau">
                   <span class="detail-label">Matériau:</span>
-                  <span class="detail-value">{{ formatMateriaux(item.bassin.materiau) }}</span>
+                  <span class="detail-value">{{ formatMateriaux(item.bassin!.materiau) }}</span>
                 </div>
                 
-                <div class="detail-row" *ngIf="item.bassin.stock !== undefined">
+                <div class="detail-row" *ngIf="item.bassin?.couleur">
+                  <span class="detail-label">Couleur:</span>
+                  <span class="detail-value">
+                    {{ item.bassin!.couleur }}
+                    <span class="color-preview" 
+                          [style.background-color]="getColorPreview(item.bassin!.couleur)"
+                          [title]="item.bassin!.couleur"></span>
+                  </span>
+                </div>
+                
+                <div class="detail-row" *ngIf="item.bassin?.stock !== undefined">
                   <span class="detail-label">Stock:</span>
-                  <span class="detail-value">{{ item.bassin.stock }} disponible(s)</span>
+                  <span class="detail-value">{{ item.bassin!.stock }} disponible(s)</span>
+                </div>
+                
+                <div class="detail-row fabrication-time" *ngIf="item.bassin?.surCommande">
+                  <span class="detail-label">Délai de fabrication:</span>
+                  <span class="detail-value">
+                    <i class="fas fa-clock me-1"></i>
+                    {{ item.bassin?.dureeFabricationDisplay || '2-3 semaines' }}
+                  </span>
                 </div>
               </div>
 
               <!-- Produit personnalisé -->
-              <div *ngIf="item.isCustomized && item.customProperties">
-                <div class="detail-row" *ngIf="item.customProperties.dimensionSelectionnee">
+              <div *ngIf="item.isCustomized && item.customization">
+                <div class="detail-row" *ngIf="item.customization.dimensionSelectionnee">
                   <span class="detail-label">Dimensions:</span>
-                  <span class="detail-value">{{ item.customProperties.dimensionSelectionnee }}</span>
+                  <span class="detail-value">{{ item.customization.dimensionSelectionnee }}</span>
+                  <span class="price-addition" *ngIf="item.customization.prixDimension">
+                    +{{ item.customization.prixDimension | currency:'TND':'symbol':'1.2-2' }}
+                  </span>
                 </div>
                 
-                <div class="detail-row" *ngIf="item.customProperties.materiauSelectionne">
+                <div class="detail-row" *ngIf="item.customization.materiauSelectionne">
                   <span class="detail-label">Matériau:</span>
-                  <span class="detail-value">{{ item.customProperties.materiauSelectionne }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="item-price-mobile d-md-none">
-              <div class="price-section">
-                <div *ngIf="item.promotionActive" class="original-price">
-                  {{ item.prixOriginal | currency:'TND':'symbol':'1.2-2' }}
+                  <span class="detail-value">{{ item.customization.materiauSelectionne }}</span>
+                  <span class="price-addition" *ngIf="item.customization.prixMateriau">
+                    +{{ item.customization.prixMateriau | currency:'TND':'symbol':'1.2-2' }}
+                  </span>
                 </div>
                 
-                <div class="current-price" [class.promo-price]="item.promotionActive">
-                  {{ getEffectivePrice(item) | currency:'TND':'symbol':'1.2-2' }}
+                <div class="detail-row" *ngIf="item.customization.couleurSelectionnee">
+                  <span class="detail-label">Couleur:</span>
+                  <span class="detail-value">
+                    {{ item.customization.couleurSelectionnee }}
+                    <span class="color-preview" 
+                          [style.background-color]="getColorPreview(item.customization.couleurSelectionnee)"
+                          [title]="item.customization.couleurSelectionnee"></span>
+                  </span>
+                </div>
+                
+                <div class="detail-row fabrication-time" *ngIf="item.customization.dureeFabrication">
+                  <span class="detail-label">Délai de fabrication:</span>
+                  <span class="detail-value">
+                    <i class="fas fa-clock me-1"></i>
+                    {{ item.customization.dureeFabrication }} jours
+                  </span>
+                </div>
+              </div>
+              
+              <!-- Accessoires -->
+              <div *ngIf="item.accessoires && item.accessoires.length > 0" class="accessories-section">
+                <div class="detail-row">
+                  <span class="detail-label">Accessoires:</span>
+                  <span class="detail-value">{{ item.accessoires.length }} accessoire(s)</span>
+                  <span class="price-addition">
+                    +{{ getTotalAccessoriesPrice(item) | currency:'TND':'symbol':'1.2-2' }}
+                  </span>
+                </div>
+                
+                <div class="accessories-list">
+                  <div *ngFor="let acc of item.accessoires" class="accessory-item">
+                    <span class="accessory-name">{{ acc.nomAccessoire }}</span>
+                    <span class="accessory-price">{{ acc.prixAccessoire | currency:'TND':'symbol':'1.2-2' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Prix Mobile -->
+            <div class="item-price-mobile d-md-none">
+              <div class="price-breakdown">
+                <div class="price-row base-price">
+                  <span>Prix de base:</span>
+                  <span>{{ item.prixOriginal | currency:'TND':'symbol':'1.2-2' }}</span>
+                </div>
+                
+                <div *ngIf="item.isCustomized" class="price-row">
+                  <span>Suppléments:</span>
+                  <span>{{ calculateSupplements(item) | currency:'TND':'symbol':'1.2-2' }}</span>
+                </div>
+                
+                <div *ngIf="item.promotionActive" class="price-row discount">
+                  <span>Réduction:</span>
+                  <span>-{{ calculateDiscount(item) | currency:'TND':'symbol':'1.2-2' }}</span>
+                </div>
+                
+                <div class="price-row final-price">
+                  <span>Prix unitaire:</span>
+                  <span>{{ getEffectivePrice(item) | currency:'TND':'symbol':'1.2-2' }}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="item-price d-none d-md-block">
-          <div class="price-section">
-            <div *ngIf="item.promotionActive" class="original-price">
-              {{ item.prixOriginal | currency:'TND':'symbol':'1.2-2' }}
+        <!-- Prix (desktop) -->
+        <div class="item-price d-none d-md-block" [class.promo-active]="item.promotionActive">
+          <div class="price-breakdown">
+            <div class="price-row base-price">
+              <span>Prix de base:</span>
+              <span>{{ item.prixOriginal | currency:'TND':'symbol':'1.2-2' }}</span>
             </div>
             
-            <div class="current-price" [class.promo-price]="item.promotionActive">
-              {{ getEffectivePrice(item) | currency:'TND':'symbol':'1.2-2' }}
+            <div *ngIf="item.isCustomized" class="price-row">
+              <span>Suppléments:</span>
+              <span>{{ calculateSupplements(item) | currency:'TND':'symbol':'1.2-2' }}</span>
             </div>
             
-            <div *ngIf="item.promotionActive && item.bassin?.promotion?.dateFin" class="promo-timer">
-              <i class="fas fa-clock"></i>
-              <span>Expire dans: {{ getTimeLeft(item.bassin!.promotion!.dateFin) }}</span>
+            <div *ngIf="item.promotionActive" class="price-row discount">
+              <span>Réduction:</span>
+              <span>-{{ calculateDiscount(item) | currency:'TND':'symbol':'1.2-2' }}</span>
             </div>
+            
+            <div class="price-row final-price">
+              <span>Prix unitaire:</span>
+              <span>{{ getEffectivePrice(item) | currency:'TND':'symbol':'1.2-2' }}</span>
+            </div>
+          </div>
+          
+          <div *ngIf="item.promotionActive && item.bassin?.promotion?.dateFin" class="promo-timer">
+            <i class="fas fa-clock"></i>
+            <span>Expire dans: {{ getTimeLeft(item.bassin!.promotion!.dateFin) }}</span>
           </div>
         </div>
 
+        <!-- Contrôles de quantité -->
         <div class="item-quantity">
           <div class="quantity-controls">
             <button (click)="decrementQuantity(item)" [disabled]="item.quantity <= 1" class="btn btn-outline-secondary">
               <i class="fas fa-minus"></i>
             </button>
-            <input type="number" [(ngModel)]="item.quantity" min="1" [max]="item.bassin?.stock || null"
-                   (change)="updateQuantity(item, item.quantity)" class="form-control quantity-input">
-            <button (click)="incrementQuantity(item)" class="btn btn-outline-secondary">
+            <input type="number" [(ngModel)]="item.quantity" min="1" 
+                  [max]="getMaxQuantity(item)"
+                  (change)="updateQuantity(item, item.quantity)" 
+                  class="form-control quantity-input">
+            <button (click)="incrementQuantity(item)" 
+                    [disabled]="!canIncrementQuantity(item)"
+                    class="btn btn-outline-secondary">
               <i class="fas fa-plus"></i>
             </button>
           </div>
         </div>
 
+        <!-- Sous-total -->
         <div class="item-subtotal">
           {{ calculateSubtotal(item) | currency:'TND':'symbol':'1.2-2' }}
         </div>
       </div>
 
+      <!-- Actions du panier -->
       <div class="cart-actions">
         <button (click)="goToShop()" class="btn btn-outline-primary">
           <i class="fas fa-arrow-left me-2"></i>Continuer vos achats
@@ -177,6 +276,7 @@
       </div>
     </div>
 
+    <!-- Résumé du panier -->
     <div class="cart-summary">
       <div class="summary-card">
         <h3 class="summary-title">
@@ -193,10 +293,14 @@
             <span>Réduction</span>
             <span class="text-danger">-{{ discount | currency:'TND':'symbol':'1.2-2' }}</span>
           </div>
-          
           <div class="summary-row">
             <span>TVA ({{ vatRate * 100 }}%)</span>
             <span>{{ vatAmount | currency:'TND':'symbol':'1.2-2' }}</span>
+          </div>
+
+          <div class="summary-row" *ngIf="hasCustomItems()">
+            <span>Délai de fabrication estimé</span>
+            <span>{{ getEstimatedDeliveryTime() }}</span>
           </div>
           
           <div class="summary-row total">
@@ -204,14 +308,19 @@
             <span>{{ total | currency:'TND':'symbol':'1.2-2' }}</span>
           </div>
 
-      
-          <button (click)="proceedToCheckout()" class="btn btn-success btn-checkout">
+          <!-- Bouton de paiement -->
+          <button *ngIf="isAuthenticated" (click)="proceedToCheckout()" class="btn btn-success btn-checkout">
             <i class="fas fa-lock me-2"></i>Procéder au paiement
+          </button>
+
+          <!-- Bouton de connexion -->
+          <button *ngIf="!isAuthenticated" (click)="redirectToLogin()" class="btn btn-primary btn-checkout">
+            <i class="fas fa-sign-in-alt me-2"></i>Connectez-vous pour commander
           </button>
 
           <div class="secure-payment">
             <div class="secure-payment-text">
-              <i class="fas fa-shield-alt"></i>
+              <i class="fas fa-shield-alt me-1"></i>
               <span>Paiement sécurisé</span>
             </div>
             <div class="payment-methods">
@@ -221,10 +330,7 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
+ </div></div></div></div>
 
 <footer>
   <app-footer></app-footer>

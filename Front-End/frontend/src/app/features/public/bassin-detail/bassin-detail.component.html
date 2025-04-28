@@ -1,648 +1,753 @@
 <html>
-    <head>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    </head>
-    <body>
+
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
 
 
-<!-- Afficher le spinner de chargement -->
-<div *ngIf="isLoading" class="loading-overlay">
-  <div class="spinner-border text-primary" role="status">
-    <span class="visually-hidden">Loading...</span>
+  <!-- Afficher le spinner de chargement -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
   </div>
-</div>
 
-<!-- Afficher le contenu seulement quand le chargement est terminé -->
-<div *ngIf="!isLoading">
-  <app-header></app-header>
+  <!-- Afficher le contenu seulement quand le chargement est terminé -->
+  <div *ngIf="!isLoading">
+    <app-header></app-header>
 
-  <!-- Section principale -->
-  <section class="shop-details py-5 bg-light">
-    <div class="container">
-      <div class="row g-5">
-        <!-- Galerie d'images -->
-        <div class="col-lg-6">
-          <div class="product-gallery bg-white p-4 rounded-3 shadow-sm h-100">
-            <!-- Image principale avec zoom -->
-            <div class="main-image mb-4 position-relative">
-              <img [src]="selectedImage || 'assets/default-image.webp'" [alt]="bassin?.nomBassin"
-                class="img-fluid rounded-3" (click)="toggleZoom()"
-                [class.zoomed]="isZoomed" />
-              <div class="zoom-indicator" *ngIf="isZoomed">
-                <i class="fas fa-search-minus"></i> Zoom activé
+    <!-- Section principale -->
+    <section class="shop-details py-5 bg-light">
+      <div class="container">
+        <div class="row g-5">
+          <!-- Galerie d'images -->
+          <div class="col-lg-6">
+            <div class="product-gallery bg-white p-4 rounded-3 shadow-sm h-100">
+              <!-- Image principale avec zoom -->
+              <div class="main-image mb-4 position-relative">
+                <img [src]="selectedImage || 'assets/default-image.webp'" [alt]="bassin?.nomBassin"
+                  class="img-fluid rounded-3" (click)="toggleZoom()" [class.zoomed]="isZoomed" />
+                <div class="zoom-indicator" *ngIf="isZoomed">
+                  <i class="fas fa-search-minus"></i> Zoom activé
+                </div>
               </div>
-            </div>
 
-            <!-- Miniatures des images -->
-            <div class="thumbnails d-flex flex-wrap gap-2 mb-4">
-              <div *ngFor="let imageUrl of imagePreviews" class="thumbnail-item"
-                (click)="changeImage(imageUrl)" [class.active]="selectedImage === imageUrl">
-                <img [src]="imageUrl" [alt]="bassin?.nomBassin" class="img-thumbnail rounded-3" />
+              <!-- Miniatures des images -->
+              <div class="thumbnails d-flex flex-wrap gap-2 mb-4">
+                <div *ngFor="let imageUrl of imagePreviews" class="thumbnail-item" (click)="changeImage(imageUrl)"
+                  [class.active]="selectedImage === imageUrl">
+                  <img [src]="imageUrl" [alt]="bassin?.nomBassin" class="img-thumbnail rounded-3" />
+                </div>
               </div>
-            </div>
 
-            <!-- Boutons 3D et AR -->
-            <div class="innovative-features d-flex gap-3 mt-4">
-              <button class="btn btn-dark w-50" (click)="viewIn3D()">
-                <i class="fas fa-cube me-2"></i> Voir en 3D
-              </button>
-              <button class="btn btn-secondary w-50" (click)="viewInAR()">
-                <i class="fas fa-vr-cardboard me-2"></i> Voir en AR
-              </button>
+              <!-- Boutons 3D et AR -->
+              <div class="innovative-features d-flex gap-3 mt-4">
+                <button class="btn btn-dark w-50" (click)="viewIn3D()">
+                  <i class="fas fa-cube me-2"></i> Voir en 3D
+                </button>
+                <button class="btn btn-secondary w-50" (click)="viewInAR()">
+                  <i class="fas fa-vr-cardboard me-2"></i> Voir en AR
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Détails du produit -->
-        <div class="col-lg-6">
-          <!-- Mode normal - Détails du produit -->
-          <div *ngIf="!isCustomizing" [@fadeInOut] class="product-details p-4 bg-white rounded-3 shadow-sm mb-4">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-              <h1 class="display-5 fw-bold">{{ bassin?.nomBassin }}</h1>
-              <span *ngIf="hasActivePromotion(bassin)" class="badge bg-danger ms-2">
-                PROMO -{{ getTauxReductionFormatted(bassin) }}%
-              </span>
-            </div>
-
-            <div class="stars mb-3">
-              <span *ngFor="let star of [1,2,3,4,5]">
-                <i class="fas fa-star" [ngClass]="{'text-warning': star <= calculateAverageRating(), 'text-muted': star > calculateAverageRating()}"></i>
-              </span>
-              <span class="ms-2">({{ calculateAverageRating() | number:'1.1-1' }}/5 sur {{ avisList.length }} avis)</span>
-            </div>
-
-            <!-- Price Display -->
-            <div class="price-display mb-4">
-              <div class="d-flex align-items-center flex-wrap gap-2">
-                <span class="current-price fs-2 fw-bold" [class.text-danger]="hasActivePromotion(bassin)">
-                  {{ getPrixAvecPromotion(bassin) | currency:'TND':'symbol':'1.2-2' }}
+          <!-- Détails du produit -->
+          <div class="col-lg-6">
+            <!-- Mode normal - Détails du produit -->
+            <div *ngIf="!isCustomizing" [@fadeInOut] class="product-details p-4 bg-white rounded-3 shadow-sm mb-4">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <h1 class="display-5 fw-bold">{{ bassin?.nomBassin }}</h1>
+                <span *ngIf="hasActivePromotion(bassin)" class="badge bg-danger ms-2">
+                  PROMO -{{ getTauxReductionFormatted(bassin) }}%
                 </span>
-                
-                <div *ngIf="hasActivePromotion(bassin)" class="d-flex align-items-center gap-2">
-                  <span class="original-price text-muted">
-                    {{ getPrixOriginal(bassin) | currency:'TND':'symbol':'1.2-2' }}
-                  </span>
-                  
-                  <span class="badge bg-danger ms-2 promotion-badge">
-                    <i class="fas fa-tag me-1"></i>
-                    ÉCONOMISEZ {{ getTauxReductionFormatted(bassin) }}%
-                  </span>
-                </div>
               </div>
 
-              <div *ngIf="bassin?.promotionActive && timeLeftForPromo" class="promotion-timer mt-3">
-                <div class="d-flex align-items-center gap-2">
-                  <i class="fas fa-clock text-warning"></i>
-                  <span class="text-muted small">Offre spéciale se termine dans:</span>
-                  <span class="fw-bold text-dark">
-                    <span *ngIf="timeLeftForPromo.days > 0">{{ timeLeftForPromo.days }}j </span>
-                    {{ timeLeftForPromo.hours }}h {{ timeLeftForPromo.minutes }}m
+              <div class="stars mb-3">
+                <span *ngFor="let star of [1,2,3,4,5]">
+                  <i class="fas fa-star"
+                    [ngClass]="{'text-warning': star <= calculateAverageRating(), 'text-muted': star > calculateAverageRating()}"></i>
+                </span>
+                <span class="ms-2">({{ calculateAverageRating() | number:'1.1-1' }}/5 sur {{ avisList.length }}
+                  avis)</span>
+              </div>
+
+              <!-- Price Display -->
+              <div class="price-display mb-4">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                  <span class="current-price fs-2 fw-bold" [class.text-danger]="hasActivePromotion(bassin)">
+                    {{ getPrixAvecPromotion(bassin) | currency:'TND':'symbol':'1.2-2' }}
                   </span>
+
+                  <div *ngIf="hasActivePromotion(bassin)" class="d-flex align-items-center gap-2">
+                    <span class="original-price text-muted">
+                      {{ getPrixOriginal(bassin) | currency:'TND':'symbol':'1.2-2' }}
+                    </span>
+
+                    <span class="badge bg-danger ms-2 promotion-badge">
+                      <i class="fas fa-tag me-1"></i>
+                      ÉCONOMISEZ {{ getTauxReductionFormatted(bassin) }}%
+                    </span>
+                  </div>
                 </div>
-                
-                <div class="progress mt-2" style="height: 6px;">
-                  <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated" 
+
+                <div *ngIf="bassin?.promotionActive && timeLeftForPromo" class="promotion-timer mt-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="fas fa-clock text-warning"></i>
+                    <span class="text-muted small">Offre spéciale se termine dans:</span>
+                    <span class="fw-bold text-dark">
+                      <span *ngIf="timeLeftForPromo.days > 0">{{ timeLeftForPromo.days }}j </span>
+                      {{ timeLeftForPromo.hours }}h {{ timeLeftForPromo.minutes }}m
+                    </span>
+                  </div>
+
+                  <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated"
                       [style.width.%]="calculatePromotionProgress()"></div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <p class="lead text-muted mb-4">{{ bassin?.description }}</p>
+              <p class="lead text-muted mb-4">{{ bassin?.description }}</p>
 
-            <!-- Caractéristiques -->
-            <div class="product-features p-3 mb-4 bg-light rounded-3">
-              <h5 class="fw-bold mb-3">Caractéristiques</h5>
-              <div class="row">
-                <div class="col-6 mb-2">
-                  <span class="text-muted">Dimensions:</span>
-                  <span class="ms-2 fw-bold">{{ bassin?.dimensions || 'Standard' }}</span>
-                </div>
-                <div class="col-6 mb-2">
-                  <span class="text-muted">Matériau:</span>
-                  <span class="ms-2 fw-bold">{{ bassin?.materiau || 'Standard' }}</span>
-                </div>
-                <div class="col-6 mb-2">
-                  <span class="text-muted">Couleur:</span>
-                  <span class="ms-2 fw-bold">{{ bassin?.couleur || 'Standard' }}</span>
-                </div>
-                <div class="col-6 mb-2">
-                  <span class="text-muted">Stock:</span>
-                  <span class="ms-2 fw-bold">{{ bassin?.stock || 0 }} disponible(s)</span>
+              <!-- Caractéristiques -->
+              <div class="product-features p-3 mb-4 bg-light rounded-3">
+                <h5 class="fw-bold mb-3">Caractéristiques</h5>
+                <div class="row">
+                  <div class="col-6 mb-2">
+                    <span class="text-muted">Dimensions:</span>
+                    <span class="ms-2 fw-bold">{{ bassin?.dimensions || 'Standard' }}</span>
+                  </div>
+                  <div class="col-6 mb-2">
+                    <span class="text-muted">Matériau:</span>
+                    <span class="ms-2 fw-bold">{{ bassin?.materiau || 'Standard' }}</span>
+                  </div>
+                  <div class="col-6 mb-2">
+                    <span class="text-muted">Couleur:</span>
+                    <span class="ms-2 fw-bold">{{ bassin?.couleur || 'Standard' }}</span>
+                  </div>
+                  <div class="col-6 mb-2">
+                    <span class="text-muted">Stock:</span>
+                    <span class="ms-2 fw-bold">{{ bassin?.stock || 0 }} disponible(s)</span>
+                  </div>
+
+
+                  <!-- Statut et durée de fabrication -->
+                  <div class="mb-3">
+                    <span style="color:black" class="badge" [ngClass]="{
+          'bg-success': bassin?.statut === 'DISPONIBLE',
+          'bg-warning text-dark': bassin?.statut === 'SUR_COMMANDE'
+        }">
+                      {{ bassin?.statut }}
+                    </span>
+
+                    <!-- Affichage de la durée de fabrication -->
+
+
+                    <span *ngIf="bassin?.surCommande" class="ms-2" style="color:black">
+                      <i class="fas fa-clock me-1"></i>
+                      Durée de fabrication : {{ bassin?.dureeFabricationDisplay }}
+                    </span>
+                  </div>
+
+
+
+
                 </div>
               </div>
-            </div>
 
-            <!-- Sélecteur de quantité -->
-            <div class="quantity-selector mb-4">
-              <label class="form-label fw-bold">Quantité</label>
-              <div class="input-group" style="max-width: 150px;">
-                <button class="btn btn-outline-secondary" type="button" (click)="decrementQuantity()">-</button>
-                <input type="number" class="form-control text-center" [(ngModel)]="quantity" 
-                    min="1" [max]="bassin?.stock ?? null">
-                <button class="btn btn-outline-secondary" type="button" (click)="incrementQuantity()">+</button>
+              <!-- Sélecteur de quantité -->
+              <div class="quantity-selector mb-4">
+                <label class="form-label fw-bold">Quantité</label>
+                <div class="input-group" style="max-width: 150px;">
+                  <button class="btn btn-outline-secondary" type="button" (click)="decrementQuantity()">-</button>
+                  <input type="number" class="form-control text-center" [(ngModel)]="quantity" min="1"
+                    [max]="bassin?.stock ?? null">
+                  <button class="btn btn-outline-secondary" type="button" (click)="incrementQuantity()">+</button>
+                </div>
               </div>
-            </div>
 
-            <!-- Boutons d'action -->
-            <div class="action-buttons mt-5">
-              <div class="d-flex gap-3 mb-3">
-                <button class="btn btn-primary btn-lg flex-grow-1" (click)="addToCart()"
-                        [disabled]="!bassin?.disponible || (bassin?.stock ?? 0) <= 0">
-                  <i class="fas fa-cart-plus me-2"></i> 
-                  {{ (!bassin?.disponible || (bassin?.stock ?? 0) <= 0) ? 'Indisponible' : 'Ajouter au panier' }}
+              <!-- Boutons d'action -->
+              <div class="action-buttons mt-5">
+                <div class="d-flex gap-3 mb-3">
+
+
+                  <button class="btn btn-primary btn-lg flex-grow-1 add-to-cart-button" (click)="addToCart()"
+                    [disabled]="!bassin?.disponible || (bassin?.statut === 'DISPONIBLE' && (bassin?.stock ?? 0) <= 0 || isLoading)">
+                    <span *ngIf="!isLoading">
+                      <i class="fas fa-cart-plus me-2"></i>
+                      {{ (!bassin?.disponible || (bassin?.statut === 'DISPONIBLE' && (bassin?.stock ?? 0) <= 0)
+                        ? 'Indisponible' : 'Ajouter au panier' ) }} </span>
+
+                  </button>
+
+                  <button class="btn btn-outline-danger btn-lg" (click)="addToFavorites()">
+                    <i class="fas fa-heart me-2"></i> Favoris
+                  </button>
+                </div>
+                <!-- Afficher le bouton de personnalisation seulement si le bassin a des options -->
+                <!-- Bouton pour personnaliser -->
+                <button *ngIf="bassin?.hasCustomizationOptions" class="btn btn-outline-primary btn-lg w-100"
+                  (click)="startCustomization()">
+                  <i class="fas fa-sliders-h me-2"></i> Personnaliser ce bassin
                 </button>
-                <button class="btn btn-outline-danger btn-lg" (click)="addToFavorites()">
-                  <i class="fas fa-heart me-2"></i> Favoris
+              </div>
+            </div>
+
+            <!-- Mode personnalisation -->
+            <div *ngIf="isCustomizing && !isCustomizationComplete" [@fadeInOut]
+              class="customization-container p-4 bg-white rounded-3 shadow-sm mb-4">
+              <div class="customization-header d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold m-0">Personnalisation</h3>
+                <button class="btn btn-sm btn-outline-secondary" (click)="cancelCustomization()">
+                  <i class="fas fa-times"></i>
                 </button>
               </div>
-              <button class="btn btn-outline-primary btn-lg w-100" (click)="startCustomization()">
-                <i class="fas fa-sliders-h me-2"></i> Personnaliser ce bassin
-              </button>
-            </div>
-          </div>
 
-          <!-- Mode personnalisation -->
-          <div *ngIf="isCustomizing && !isCustomizationComplete" [@fadeInOut] class="customization-container p-4 bg-white rounded-3 shadow-sm mb-4">
-            <div class="customization-header d-flex justify-content-between align-items-center mb-4">
-              <h3 class="fw-bold m-0">Personnalisation</h3>
-              <button class="btn btn-sm btn-outline-secondary" (click)="cancelCustomization()">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
+              <!-- Indicateur d'étapes -->
+              <div class="progress-steps mb-4">
 
-            <!-- Indicateur d'étapes -->
-            <div class="progress-steps mb-4">
-              <div class="progress mb-2">
-                <div [style.width]="stableWidth"></div>
-                <div class="progress-bar" role="progressbar"
-                    [style.width]="(customizationStep / totalSteps * 100) + '%'"
-                    [attr.aria-valuenow]="customizationStep" aria-valuemin="0" aria-valuemax="3">
+                <div class="progress mb-2" style="height: 6px;">
+                  <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated"
+                    [style.width]="stableWidth"></div>
+                </div>
+
+
+
+                <div class="steps-indicator d-flex justify-content-between">
+                  <span class="step-label" [class.active]="customizationStep >= 1">Matériaux</span>
+                  <span class="step-label" [class.active]="customizationStep >= 2">Dimensions</span>
+                  <span class="step-label" [class.active]="customizationStep >= 3">Accessoires</span>
+                  <span class="step-label" [class.active]="customizationStep >= 4">Couleur</span>
                 </div>
               </div>
 
-
-
-              <div class="steps-indicator d-flex justify-content-between">
-                <span class="step-label" [class.active]="customizationStep >= 1">Matériaux</span>
-                <span class="step-label" [class.active]="customizationStep >= 2">Dimensions</span>
-                <span class="step-label" [class.active]="customizationStep >= 3">Accessoires</span>
-                <span class="step-label" [class.active]="customizationStep >= 4">Couleur</span>
-              </div>
-            </div>
-
-            <form [formGroup]="customizationForm" class="customization-wizard">
-              <!-- Étape 1: Choix du matériau -->
-              <div *ngIf="customizationStep === 1" [@slideInOut] class="step-content">
-                <h4 class="step-title mb-3">Choisissez un matériau</h4>
-                <!-- Ajoutez ce message d'erreur -->
-                <div *ngIf="showMaterialError" class="alert alert-danger">
-                  Veuillez sélectionner un matériau avant de continuer.
-                </div>
-                <div class="material-catalog">
-                  <div *ngFor="let materiau of listeMateriaux" class="material-item"
+              <form [formGroup]="customizationForm" class="customization-wizard">
+                <!-- Étape 1: Choix du matériau -->
+                <div *ngIf="customizationStep === 1" [@slideInOut] class="step-content">
+                  <h4 class="step-title mb-3">Choisissez un matériau</h4>
+                  <!-- Ajoutez ce message d'erreur -->
+                  <div *ngIf="showMaterialError" class="alert alert-danger">
+                    Veuillez sélectionner un matériau avant de continuer.
+                  </div>
+                  <div class="material-catalog">
+                    <div *ngFor="let materiau of listeMateriaux" class="material-item"
                       [class.selected]="customizationForm.get('materiau')?.value === materiau"
                       (click)="selectMaterial(materiau)">
-                    <div class="material-image-container">
-                     <img [src]="materiauxImages[materiau]" 
-     (error)="handleImageError($event, { imageUrl: materiauxImages[materiau] })" />
-                      <div class="price-tag">
-                        <span class="price-value">{{ prixMateriaux[materiau] | currency:'TND':'symbol':'1.2-2' }}</span>
+                      <div class="material-image-container">
+                        <img [src]="materiauxImages[materiau]"
+                          (error)="handleImageError($event, { imageUrl: materiauxImages[materiau] })" />
+                        <div class="price-tag">
+                          <span class="price-value">{{ prixMateriaux[materiau] | currency:'TND':'symbol':'1.2-2'
+                            }}</span>
+                        </div>
                       </div>
+                      <div class="material-name">{{ materiau }}</div>
                     </div>
-                    <div class="material-name">{{ materiau }}</div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Étape 2: Choix des dimensions -->
-              <div *ngIf="customizationStep === 2" [@slideInOut] class="step-content">
-                <h4 class="step-title mb-3">Choisissez une dimension</h4>
-                <div class="dimension-catalog">
-                  <div *ngFor="let dimension of listeDimensions" class="dimension-item"
+                <!-- Étape 2: Choix des dimensions -->
+                <div *ngIf="customizationStep === 2" [@slideInOut] class="step-content">
+                  <h4 class="step-title mb-3">Choisissez une dimension</h4>
+                  <div class="dimension-catalog">
+                    <div *ngFor="let dimension of listeDimensions" class="dimension-item"
                       [class.selected]="customizationForm.get('dimension')?.value === dimension"
                       (click)="selectDimension(dimension)">
-                    <div class="dimension-content">
-                      <div class="dimension-icon">
-                        <i class="fas fa-ruler-combined"></i>
-                      </div>
-                      <div class="dimension-value">{{ dimension }}</div>
-                      <div class="dimension-price-tag">
-                        <span class="dimension-price-value">{{ prixDimensions[dimension] | currency:'TND':'symbol':'1.2-2' }}</span>
+                      <div class="dimension-content">
+                        <div class="dimension-icon">
+                          <i class="fas fa-ruler-combined"></i>
+                        </div>
+                        <div class="dimension-value">{{ dimension }}</div>
+                        <div class="dimension-price-tag">
+                          <span class="dimension-price-value">{{ prixDimensions[dimension] |
+                            currency:'TND':'symbol':'1.2-2' }}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Étape 3: Choix des accessoires -->
-              <div *ngIf="customizationStep === 3" [@slideInOut] class="step-content">
-                <h4 class="step-title mb-3">Choisissez des accessoires</h4>
-                <div class="accessoire-catalog">
-                  <div *ngFor="let accessoire of listeAccessoires" class="accessoire-item"
-                      [class.selected]="isAccessoireSelected(accessoire)"
-                      (click)="toggleAccessoire(accessoire)">
-                    <div class="accessoire-image-container">
-                      <img [src]="accessoire.imageUrl || 'assets/default-accessoire.jpg'"
+                <!-- Étape 3: Choix des accessoires -->
+                <div *ngIf="customizationStep === 3" [@slideInOut] class="step-content">
+                  <h4 class="step-title mb-3">Choisissez des accessoires</h4>
+                  <div class="accessoire-catalog">
+                    <div *ngFor="let accessoire of listeAccessoires" class="accessoire-item"
+                      [class.selected]="isAccessoireSelected(accessoire)" (click)="toggleAccessoire(accessoire)">
+                      <div class="accessoire-image-container">
+                        <img [src]="accessoire.imageUrl || 'assets/default-accessoire.jpg'"
                           alt="{{ accessoire.nomAccessoire }}" class="accessoire-image"
                           (error)="handleImageError($event, accessoire)" />
-                      <div class="accessoire-price-tag">
-                        <span class="accessoire-price-value">{{ accessoire.prixAccessoire | currency:'TND' }}</span>
+                        <div class="accessoire-price-tag">
+                          <span class="accessoire-price-value">{{ accessoire.prixAccessoire | currency:'TND' }}</span>
+                        </div>
+                        <div *ngIf="isAccessoireSelected(accessoire)" class="selection-badge">
+                          <i class="fas fa-check"></i>
+                        </div>
                       </div>
-                      <div *ngIf="isAccessoireSelected(accessoire)" class="selection-badge">
-                        <i class="fas fa-check"></i>
+                      <div class="accessoire-details">
+                        <div class="accessoire-nom">{{ accessoire.nomAccessoire }}</div>
                       </div>
-                    </div>
-                    <div class="accessoire-details">
-                      <div class="accessoire-nom">{{ accessoire.nomAccessoire }}</div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Étape 4: Choix de la couleur -->
-              <div *ngIf="customizationStep === 4" [@slideInOut] class="step-content">
-                <h4 class="step-title mb-3">Choisissez une couleur</h4>
+                <!-- Étape 4: Choix de la couleur -->
+                <div *ngIf="customizationStep === 4" [@slideInOut] class="step-content">
+                  <h4 class="step-title mb-3">Choisissez une couleur</h4>
 
-                <div class="color-selection-container">
-                  <div class="selected-color-preview">
-                    <div class="current-color" [style.background-color]="selectedColor"></div>
-                    <div class="color-hex">{{selectedColor}}</div>
-                  </div>
-
-                  <div class="color-categories">
-                    <div class="color-category">
-                      <h5>Bleus</h5>
-                      <div class="color-palette">
-                        <div *ngFor="let color of colorPalette.blues" class="color-square"
-                            [style.background-color]="color"
-                            [class.selected]="selectedColor === color"
-                            (click)="selectColor(color)">
-                        </div>
-                      </div>
+                  <div class="color-selection-container">
+                    <div class="selected-color-preview">
+                      <div class="current-color" [style.background-color]="selectedColor"></div>
+                      <div class="color-hex">{{selectedColor}}</div>
                     </div>
 
-                    <div class="color-category">
-                      <h5>Verts</h5>
-                      <div class="color-palette">
-                        <div *ngFor="let color of colorPalette.greens" class="color-square"
-                            [style.background-color]="color"
-                            [class.selected]="selectedColor === color"
+                    <div class="color-categories">
+                      <div class="color-category">
+                        <h5>Bleus</h5>
+                        <div class="color-palette">
+                          <div *ngFor="let color of colorPalette!.blues" class="color-square"
+                            [style.background-color]="color" [class.selected]="selectedColor === color"
                             (click)="selectColor(color)">
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div class="color-category">
-                      <h5>Rouges</h5>
-                      <div class="color-palette">
-                        <div *ngFor="let color of colorPalette.reds" class="color-square"
-                            [style.background-color]="color"
-                            [class.selected]="selectedColor === color"
+                      <div class="color-category">
+                        <h5>Verts</h5>
+                        <div class="color-palette">
+                          <div *ngFor="let color of colorPalette.greens" class="color-square"
+                            [style.background-color]="color" [class.selected]="selectedColor === color"
                             (click)="selectColor(color)">
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div class="color-category">
-                      <h5>Gris</h5>
-                      <div class="color-palette">
-                        <div *ngFor="let color of colorPalette.grays" class="color-square"
-                            [style.background-color]="color"
-                            [class.selected]="selectedColor === color"
+                      <div class="color-category">
+                        <h5>Rouges</h5>
+                        <div class="color-palette">
+                          <div *ngFor="let color of colorPalette.reds" class="color-square"
+                            [style.background-color]="color" [class.selected]="selectedColor === color"
                             (click)="selectColor(color)">
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div class="color-category">
-                      <h5>Marrons</h5>
-                      <div class="color-palette">
-                        <div *ngFor="let color of colorPalette.browns" class="color-square"
-                            [style.background-color]="color"
-                            [class.selected]="selectedColor === color"
+                      <div class="color-category">
+                        <h5>Gris</h5>
+                        <div class="color-palette">
+                          <div *ngFor="let color of colorPalette.grays" class="color-square"
+                            [style.background-color]="color" [class.selected]="selectedColor === color"
                             (click)="selectColor(color)">
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div class="color-category">
-                      <h5>Violets</h5>
-                      <div class="color-palette">
-                        <div *ngFor="let color of colorPalette.purples" class="color-square"
-                            [style.background-color]="color"
-                            [class.selected]="selectedColor === color"
+                      <div class="color-category">
+                        <h5>Marrons</h5>
+                        <div class="color-palette">
+                          <div *ngFor="let color of colorPalette.browns" class="color-square"
+                            [style.background-color]="color" [class.selected]="selectedColor === color"
                             (click)="selectColor(color)">
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div class="color-category">
-                      <h5>Jaunes</h5>
-                      <div class="color-palette">
-                        <div *ngFor="let color of colorPalette.yellows" class="color-square"
-                            [style.background-color]="color"
-                            [class.selected]="selectedColor === color"
+                      <div class="color-category">
+                        <h5>Violets</h5>
+                        <div class="color-palette">
+                          <div *ngFor="let color of colorPalette.purples" class="color-square"
+                            [style.background-color]="color" [class.selected]="selectedColor === color"
                             (click)="selectColor(color)">
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div class="color-category">
-                      <h5>Cyans</h5>
-                      <div class="color-palette">
-                        <div *ngFor="let color of colorPalette.cyans" class="color-square"
-                            [style.background-color]="color"
-                            [class.selected]="selectedColor === color"
+                      <div class="color-category">
+                        <h5>Jaunes</h5>
+                        <div class="color-palette">
+                          <div *ngFor="let color of colorPalette.yellows" class="color-square"
+                            [style.background-color]="color" [class.selected]="selectedColor === color"
                             (click)="selectColor(color)">
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="color-category">
+                        <h5>Cyans</h5>
+                        <div class="color-palette">
+                          <div *ngFor="let color of colorPalette.cyans" class="color-square"
+                            [style.background-color]="color" [class.selected]="selectedColor === color"
+                            (click)="selectColor(color)">
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
+
+                <!-- Boutons de navigation -->
+                <div class="navigation-buttons d-flex justify-content-between mt-4">
+                  <button type="button" class="btn btn-outline-secondary" (click)="previousStep()">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    {{ customizationStep === 1 ? 'Annuler' : 'Précédent' }}
+                  </button>
+
+                  <button type="button" class="btn btn-primary" (click)="nextStep()"
+                    [disabled]="customizationStep === 1 && !customizationForm.get('materiau')?.value"
+                    [ngClass]="{'btn-secondary': customizationStep === 1 && !customizationForm.get('materiau')?.value}">
+                    {{ customizationStep < totalSteps ? 'Suivant' : 'Finaliser' }} <i class="fas"
+                      [ngClass]="customizationStep < totalSteps ? 'fa-arrow-right' : 'fa-check'"></i>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Résumé de la personnalisation -->
+            <div *ngIf="isCustomizationComplete" [@fadeInOut]
+              class="customization-summary p-4 bg-white rounded-3 shadow-sm mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold m-0">Résumé de votre bassin personnalisé</h3>
+                <button class="btn btn-sm btn-outline-secondary" (click)="editCustomization()">
+                  <i class="fas fa-edit me-1"></i> Modifier
+                </button>
               </div>
 
-              <!-- Boutons de navigation -->
-              <div class="navigation-buttons d-flex justify-content-between mt-4">
-                <button type="button" class="btn btn-outline-secondary" (click)="previousStep()">
-                  <i class="fas fa-arrow-left me-2"></i>
-                  {{ customizationStep === 1 ? 'Annuler' : 'Précédent' }}
-                </button>
-              
-                <button type="button" class="btn btn-primary" (click)="nextStep()"
-                  [disabled]="customizationStep === 1 && !customizationForm.get('materiau')?.value"
-                  [ngClass]="{'btn-secondary': customizationStep === 1 && !customizationForm.get('materiau')?.value}">
-                  {{ customizationStep < totalSteps ? 'Suivant' : 'Finaliser' }} 
-                  <i class="fas" [ngClass]="customizationStep < totalSteps ? 'fa-arrow-right' : 'fa-check'"></i>
-                </button>
+              <div class="summary-card p-4 bg-light rounded mb-4">
+                <!-- Dimensions -->
+                <div class="row mb-3">
+                  <div class="col-6">
+                    <span class="fw-bold">Dimensions:</span>
+                  </div>
+                  <div class="col-6">
+                    {{ customizationSummary.dimension }}
+                    <span class="text-success">(+{{ prixDimensions[customizationSummary.dimension] | currency:'TND'
+                      }})</span>
+                  </div>
+                </div>
+
+                <!-- Matériau -->
+                <div class="row mb-3">
+                  <div class="col-6">
+                    <span class="fw-bold">Matériau:</span>
+                  </div>
+                  <div class="col-6">
+                    {{ customizationSummary.materiau }}
+                    <span class="text-success">(+{{ prixMateriaux[customizationSummary.materiau] | currency:'TND'
+                      }})</span>
+                  </div>
+                </div>
+
+                <!-- Couleur -->
+                <div class="row mb-3">
+                  <div class="col-6">
+                    <span class="fw-bold">Couleur:</span>
+                  </div>
+                  <div class="col-6">
+                    <span class="color-dot" [ngStyle]="{'background-color': customizationSummary.couleur}"></span>
+                    {{ customizationSummary.couleur }}
+                  </div>
+                </div>
+
+                <!-- Accessoires -->
+                <div class="row mb-3"
+                  *ngIf="customizationSummary.accessoires && customizationSummary.accessoires.length > 0">
+                  <div class="col-6">
+                    <span class="fw-bold">Accessoires ({{ customizationSummary.accessoires.length }}):</span>
+                  </div>
+                  <div class="col-6">
+                    <ul class="list-unstyled">
+                      <li *ngFor="let acc of customizationSummary.accessoires" class="mb-1">
+                        {{ acc.nomAccessoire }}
+                        <span class="text-success">(+{{ acc.prixAccessoire | currency:'TND' }})</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="row mb-3"
+                  *ngIf="!customizationSummary.accessoires || customizationSummary.accessoires.length === 0">
+                  <div class="col-6">
+                    <span class="fw-bold">Accessoires:</span>
+                  </div>
+                  <div class="col-6">
+                    Aucun accessoire sélectionné
+                  </div>
+                </div>
+
+                <!-- Duree de Fabrication -->
+                <div class="row mb-3">
+                  <div class="col-6">
+                    <span class="fw-bold">Durée de fabrication estimée:</span>
+                  </div>
+                  <div class="col-6">
+                    {{ customizationSummary.dureeFabrication }} jours
+                    (environ {{ (customizationSummary.dureeFabrication / 7) | number:'1.0-0' }} semaines)
+                  </div>
+
+                  <div class="fabrication-time">
+                    <i class="material-icons">schedule</i>
+                    Délai de fabrication: {{ getFabricationTime() }}
+                  </div>
+
+                </div>
+
+                <!-- Prix de base -->
+                <div class="row pt-3 border-top">
+                  <div class="col-6">
+                    <span class="fw-bold">Prix de base:</span>
+                  </div>
+                  <div class="col-6">
+                    {{ bassin?.prix | currency:'TND' }}
+                  </div>
+                </div>
+                <!-- Ajoutez cette section pour la quantité -->
+                <div class="row mb-3">
+                  <div class="col-6">
+                    <span class="fw-bold">Quantité:</span>
+                  </div>
+                  <div class="col-6">
+                    <div class="quantity-selector d-flex align-items-center">
+                      <button class="btn btn-sm btn-outline-secondary" (click)="decreaseQuantity()"
+                        [disabled]="quantity <= 1">
+                        <i class="fas fa-minus"></i>
+                      </button>
+                      <input type="number" class="form-control mx-2 text-center" [(ngModel)]="quantity" min="1"
+                        style="width: 60px;">
+                      <button class="btn btn-sm btn-outline-secondary" (click)="increaseQuantity()">
+                        <i class="fas fa-plus"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Prix total -->
+                <div class="row price-row pt-3 border-top">
+                  <div class="col-6">
+                    <span class="fs-5 fw-bold">Prix total:</span>
+                  </div>
+                  <div class="col-6">
+                    <span class="fs-5 fw-bold text-success">
+                      {{ customizationSummary.prixEstime * quantity | currency:'TND':'symbol':'1.2-2' }}
+                      <small class="text-muted d-block">({{ quantity }} x {{ customizationSummary.prixEstime |
+                        currency:'TND':'symbol':'1.2-2' }})</small>
+                    </span>
+                  </div>
+                </div>
+
               </div>
-            </form>
+
+
+              <!-- Bouton d'ajout pour les bassins personnalisés -->
+              <div *ngIf="isCustomizationComplete" class="mt-4">
+                <button class="btn btn-primary btn-lg w-100 add-custom-to-cart" (click)="addCustomToCart()"
+                  [disabled]="isLoading">
+                  <span *ngIf="!isLoading">
+                    <i class="fas fa-cart-plus me-2"></i> Ajouter au panier
+                  </span>
+                  <span *ngIf="isLoading">
+                    <i class="fas fa-spinner fa-spin me-2"></i> Traitement...
+                  </span>
+                </button>
+
+                <!-- Reste du code inchangé -->
+              </div>
+            </div>
+            <div *ngIf="isLoading" class="loading-overlay">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+    </section>
 
-          <!-- Résumé de la personnalisation -->
-          <div *ngIf="isCustomizationComplete" [@fadeInOut] class="customization-summary p-4 bg-white rounded-3 shadow-sm mb-4">
+    <!-- Section des avis -->
+    <section class="reviews py-5 bg-white">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-              <h3 class="fw-bold m-0">Résumé de votre bassin personnalisé</h3>
-              <button class="btn btn-sm btn-outline-secondary" (click)="editCustomization()">
-                <i class="fas fa-edit me-1"></i> Modifier
+              <h2 class="fw-bold">Avis des clients</h2>
+              <div class="average-rating">
+                <span class="fw-bold">Note moyenne :</span>
+                <div class="stars">
+                  <span *ngFor="let star of [1,2,3,4,5]">
+                    <i class="fas fa-star"
+                      [ngClass]="{'text-warning': star <= calculateAverageRating(), 'text-muted': star > calculateAverageRating()}"></i>
+                  </span>
+                  <span class="ms-2">({{ calculateAverageRating() | number:'1.1-1' }}/5 sur {{ avisList.length }}
+                    avis)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Liste des avis -->
+            <div class="review-list">
+              <div *ngFor="let avis of paginatedAvis" class="review-card mb-4 p-4 border rounded shadow-sm">
+                <div class="review-header d-flex justify-content-between mb-3">
+                  <div>
+                    <h5 class="fw-bold mb-1">{{ avis.nom }}</h5>
+                    <div class="stars">
+                      <span *ngFor="let star of [1,2,3,4,5]">
+                        <i class="fas fa-star"
+                          [ngClass]="{'text-warning': star <= avis.note, 'text-muted': star > avis.note}"></i>
+                      </span>
+                      <span class="ms-2 text-muted">{{ getRatingLabel(avis.note) }}</span>
+                    </div>
+                  </div>
+                  <div class="text-muted small">
+                    {{ avis.dateSoumission| date:'dd/MM/yyyy' }}
+                  </div>
+                </div>
+
+                <div class="review-body">
+                  <p>{{ avis.message }}</p>
+                </div>
+
+                <!-- Historique des modifications (visible seulement pour l'auteur) -->
+                <div *ngIf="isCurrentUserAuthor(avis) && avis.historiqueModifications.length > 0"
+                  class="review-history mt-3">
+                  <button class="btn btn-sm btn-outline-secondary" (click)="toggleHistorique(avis)">
+                    <i class="fas fa-history me-1"></i>
+                    Historique des modifications ({{avis.historiqueModifications.length}})
+                  </button>
+
+                  <div *ngIf="avis.showHistorique" class="history-list mt-2 p-3 bg-light rounded">
+                    <h6 class="fw-bold mb-3">Historique des modifications :</h6>
+                    <div *ngFor="let modif of avis.historiqueModifications"
+                      class="history-item mb-2 pb-2 border-bottom">
+                      <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Modifié le {{ modif.dateModification | date:'dd/MM/yyyy à HH:mm' }}</span>
+                        <span>Note précédente : {{ modif.ancienneNote }}/5</span>
+                      </div>
+                      <p class="mb-1"><strong>Message précédent :</strong></p>
+                      <p class="mb-0">{{ modif.ancienMessage }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Boutons d'action (visible seulement pour l'auteur) -->
+                <div *ngIf="isCurrentUserAuthor(avis)" class="review-actions mt-3 pt-2 border-top">
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="editAvis(avis)">
+                    <i class="fas fa-edit me-1"></i> Modifier
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteAvis(avis.idAvis)">
+                    <i class="fas fa-trash me-1"></i> Supprimer
+                  </button>
+                </div>
+              </div>
+
+              <!-- Message si aucun avis -->
+              <div *ngIf="avisList.length === 0" class="text-center py-5 bg-white rounded-3 shadow-sm">
+                <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                <h5 class="fw-bold">Aucun avis pour ce produit</h5>
+                <p>Soyez le premier à laisser un avis !</p>
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination d-flex justify-content-center mt-4">
+              <button class="btn btn-outline-primary me-2" (click)="previousPage()" [disabled]="currentPage === 1">
+                <i class="fas fa-arrow-left me-1"></i> Précédent
+              </button>
+              <span class="mx-2">Page {{ currentPage }} sur {{ totalPages }}</span>
+              <button class="btn btn-outline-primary ms-2" (click)="nextPage()" [disabled]="currentPage === totalPages">
+                Suivant <i class="fas fa-arrow-right ms-1"></i>
               </button>
             </div>
 
-            <div class="summary-card p-4 bg-light rounded mb-4">
-              <!-- Dimensions -->
-              <div class="row mb-3">
-                <div class="col-6">
-                  <span class="fw-bold">Dimensions:</span>
-                </div>
-                <div class="col-6">
-                  {{ customizationSummary.dimension }} 
-                  <span class="text-success">(+{{ prixDimensions[customizationSummary.dimension] | currency:'TND' }})</span>
-                </div>
-              </div>
-              
-              <!-- Matériau -->
-              <div class="row mb-3">
-                <div class="col-6">
-                  <span class="fw-bold">Matériau:</span>
-                </div>
-                <div class="col-6">
-                  {{ customizationSummary.materiau }}
-                  <span class="text-success">(+{{ prixMateriaux[customizationSummary.materiau] | currency:'TND' }})</span>
-                </div>
-              </div>
-              
-              <!-- Couleur -->
-              <div class="row mb-3">
-                <div class="col-6">
-                  <span class="fw-bold">Couleur:</span>
-                </div>
-                <div class="col-6">
-                  <span class="color-dot" [ngStyle]="{'background-color': customizationSummary.couleur}"></span>
-                  {{ customizationSummary.couleur }}
-                </div>
-              </div>
-              
-              <!-- Accessoires -->
-              <div class="row mb-3" *ngIf="customizationSummary.accessoires.length > 0">
-                <div class="col-6">
-                  <span class="fw-bold">Accessoires:</span>
-                </div>
-                <div class="col-6">
-                  <ul class="list-unstyled">
-                    <li *ngFor="let acc of customizationSummary.accessoires" class="mb-1">
-                      {{ acc.nomAccessoire }} 
-                      <span class="text-success">(+{{ acc.prixAccessoire | currency:'TND' }})</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              
-              <!-- Prix de base -->
-              <div class="row pt-3 border-top">
-                <div class="col-6">
-                  <span class="fw-bold">Prix de base:</span>
-                </div>
-                <div class="col-6">
-                  {{ bassin?.prix | currency:'TND' }}
-                </div>
-              </div>
-              
-              <!-- Prix total -->
-              <div class="row price-row pt-3 border-top">
-                <div class="col-6">
-                  <span class="fs-5 fw-bold">Prix total:</span>
-                </div>
-                <div class="col-6">
-                  <span class="fs-5 fw-bold text-success">
-                    {{ customizationSummary.prixEstime | currency:'TND':'symbol':'1.2-2' }}
-                  </span>
-                </div>
-              </div>
-            </div>
+            <!-- Formulaire d'ajout/modification d'avis -->
+            <div class="add-review mt-5 p-4 rounded-3 bg-white shadow-sm">
+              <h3 class="fw-bold mb-4 text-primary">{{ editingAvis ? 'Modifier votre avis' : 'Laisser un avis' }}</h3>
 
-            <button type="button" class="btn btn-primary btn-lg w-100" (click)="onSubmit()">
-              <i class="fas fa-shopping-cart me-2"></i> Ajouter au panier
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Section des avis -->
-  <section class="reviews py-5 bg-white">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-12">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold">Avis des clients</h2>
-            <div class="average-rating">
-              <span class="fw-bold">Note moyenne :</span>
-              <div class="stars">
-                <span *ngFor="let star of [1,2,3,4,5]">
-                  <i class="fas fa-star" [ngClass]="{'text-warning': star <= calculateAverageRating(), 'text-muted': star > calculateAverageRating()}"></i>
-                </span>
-                <span class="ms-2">({{ calculateAverageRating() | number:'1.1-1' }}/5 sur {{ avisList.length }} avis)</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Liste des avis -->
-          <div class="review-list">
-            <div *ngFor="let avis of paginatedAvis" class="review-card mb-4 p-4 border rounded shadow-sm">
-              <div class="review-header d-flex justify-content-between mb-3">
-                <div>
-                  <h5 class="fw-bold mb-1">{{ avis.nom }}</h5>
-                  <div class="stars">
-                    <span *ngFor="let star of [1,2,3,4,5]">
-                      <i class="fas fa-star" [ngClass]="{'text-warning': star <= avis.note, 'text-muted': star > avis.note}"></i>
-                    </span>
-                    <span class="ms-2 text-muted">{{ getRatingLabel(avis.note) }}</span>
+              <form *ngIf="isLoggedIn && isClient()" [formGroup]="avisForm"
+                (ngSubmit)="editingAvis ? updateAvis() : onSubmitAvis()">
+                <!-- Champ nom avec style amélioré -->
+                <div class="mb-3">
+                  <label for="nom" class="form-label fw-bold">Votre nom d'affichage</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" class="form-control" id="nom" formControlName="nom" [value]="username" readonly>
                   </div>
+                  <small class="text-muted">Ce nom ne peut pas être modifié</small>
                 </div>
-                <div class="text-muted small">
-                  {{ avis.dateSoumission| date:'dd/MM/yyyy' }}
-                </div>
-              </div>
-              
-              <div class="review-body">
-                <p>{{ avis.message }}</p>
-              </div>
 
-              <!-- Historique des modifications (visible seulement pour l'auteur) -->
-              <div *ngIf="isCurrentUserAuthor(avis) && avis.historiqueModifications.length > 0" class="review-history mt-3">
-                <button class="btn btn-sm btn-outline-secondary" (click)="toggleHistorique(avis)">
-                  <i class="fas fa-history me-1"></i>
-                  Historique des modifications ({{avis.historiqueModifications.length}})
-                </button>
-                
-                <div *ngIf="avis.showHistorique" class="history-list mt-2 p-3 bg-light rounded">
-                  <h6 class="fw-bold mb-3">Historique des modifications :</h6>
-                  <div *ngFor="let modif of avis.historiqueModifications" class="history-item mb-2 pb-2 border-bottom">
-                    <div class="d-flex justify-content-between small text-muted mb-1">
-                      <span>Modifié le {{ modif.dateModification | date:'dd/MM/yyyy à HH:mm' }}</span>
-                      <span>Note précédente : {{ modif.ancienneNote }}/5</span>
+                <!-- Champ note avec style amélioré -->
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Votre note</label>
+                  <div class="star-rating d-flex align-items-center">
+                    <div class="stars me-3">
+                      <span *ngFor="let star of [1,2,3,4,5]" (click)="avisForm.get('note')?.setValue(star)">
+                        <i class="fas fa-star fa-2x cursor-pointer"
+                          [ngClass]="{'text-warning': star <= avisForm.get('note')?.value, 'text-muted': star > avisForm.get('note')?.value}"></i>
+                      </span>
                     </div>
-                    <p class="mb-1"><strong>Message précédent :</strong></p>
-                    <p class="mb-0">{{ modif.ancienMessage }}</p>
+                    <span class="badge bg-primary rounded-pill">{{ getRatingLabel(avisForm.get('note')?.value) }}</span>
+                  </div>
+                  <input type="hidden" formControlName="note">
+                </div>
+
+                <!-- Champ message avec style amélioré -->
+                <div class="mb-3">
+                  <label for="message" class="form-label fw-bold">Votre expérience</label>
+                  <textarea class="form-control" id="message" formControlName="message" rows="4"
+                    placeholder="Décrivez en détail votre expérience avec ce produit..."></textarea>
+                  <div class="d-flex justify-content-between mt-1">
+                    <div *ngIf="avisForm.get('message')?.invalid && avisForm.get('message')?.touched"
+                      class="text-danger small">
+                      Le message doit contenir entre 10 et 500 caractères.
+                    </div>
+                    <div class="text-muted small ms-auto">
+                      {{ avisForm.get('message')?.value?.length || 0 }}/500
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Boutons d'action (visible seulement pour l'auteur) -->
-              <div *ngIf="isCurrentUserAuthor(avis)" class="review-actions mt-3 pt-2 border-top">
-                <button class="btn btn-sm btn-outline-primary me-2" (click)="editAvis(avis)">
-                  <i class="fas fa-edit me-1"></i> Modifier
-                </button>
-                <button class="btn btn-sm btn-outline-danger" (click)="deleteAvis(avis.idAvis)">
-                  <i class="fas fa-trash me-1"></i> Supprimer
-                </button>
-              </div>
-            </div>
-
-            <!-- Message si aucun avis -->
-            <div *ngIf="avisList.length === 0" class="text-center py-5 bg-white rounded-3 shadow-sm">
-              <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
-              <h5 class="fw-bold">Aucun avis pour ce produit</h5>
-              <p>Soyez le premier à laisser un avis !</p>
-            </div>
-          </div>
-
-          <!-- Pagination -->
-          <div class="pagination d-flex justify-content-center mt-4">
-            <button class="btn btn-outline-primary me-2" (click)="previousPage()" [disabled]="currentPage === 1">
-              <i class="fas fa-arrow-left me-1"></i> Précédent
-            </button>
-            <span class="mx-2">Page {{ currentPage }} sur {{ totalPages }}</span>
-            <button class="btn btn-outline-primary ms-2" (click)="nextPage()" [disabled]="currentPage === totalPages">
-              Suivant <i class="fas fa-arrow-right ms-1"></i>
-            </button>
-          </div>
-
-          <!-- Formulaire d'ajout/modification d'avis -->
-          <div class="add-review mt-5 p-4 rounded-3 bg-white shadow-sm">
-            <h3 class="fw-bold mb-4 text-primary">{{ editingAvis ? 'Modifier votre avis' : 'Laisser un avis' }}</h3>
-            
-            <form *ngIf="isLoggedIn && isClient()" [formGroup]="avisForm" (ngSubmit)="editingAvis ? updateAvis() : onSubmitAvis()">
-              <!-- Champ nom avec style amélioré -->
-              <div class="mb-3">
-                <label for="nom" class="form-label fw-bold">Votre nom d'affichage</label>
-                <div class="input-group">
-                  <span class="input-group-text"><i class="fas fa-user"></i></span>
-                  <input type="text" class="form-control" id="nom" formControlName="nom"
-                        [value]="username" readonly>
+                <!-- Boutons avec style amélioré -->
+                <div class="d-flex gap-3 mt-4">
+                  <button type="submit" class="btn btn-primary px-4 py-2 flex-grow-1" [disabled]="avisForm.invalid">
+                    <i class="fas me-2" [ngClass]="editingAvis ? 'fa-save' : 'fa-paper-plane'"></i>
+                    {{ editingAvis ? 'Enregistrer les modifications' : 'Publier mon avis' }}
+                  </button>
+                  <button *ngIf="editingAvis" type="button" class="btn btn-outline-secondary px-3"
+                    (click)="cancelEdit()">
+                    <i class="fas fa-times me-1"></i> Annuler
+                  </button>
                 </div>
-                <small class="text-muted">Ce nom ne peut pas être modifié</small>
+              </form>
+
+              <!-- Message pour les non-connectés -->
+              <div *ngIf="!isLoggedIn || !isClient()" class="alert alert-info mt-3">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-info-circle me-3 fa-2x"></i>
+                  <div>
+                    <h5 class="alert-heading mb-1">Connectez-vous pour laisser un avis</h5>
+                    <p class="mb-0">Votre feedback est important pour nous et les autres clients.</p>
+                  </div>
+                </div>
+                <div class="d-flex gap-2 mt-3">
+                  <button class="btn btn-primary px-4" (click)="router.navigate(['/login'])">
+                    <i class="fas fa-sign-in-alt me-2"></i> Connexion
+                  </button>
+                  <button class="btn btn-outline-primary px-4" (click)="router.navigate(['/signup'])">
+                    <i class="fas fa-user-plus me-2"></i> Inscription
+                  </button>
+                </div>
               </div>
-              
-              <!-- Champ note avec style amélioré -->
-              <div class="mb-3">
-                <label class="form-label fw-bold">Votre note</label>
-        <div class="star-rating d-flex align-items-center">
-          <div class="stars me-3">
-            <span *ngFor="let star of [1,2,3,4,5]" (click)="avisForm.get('note')?.setValue(star)">
-              <i class="fas fa-star fa-2x cursor-pointer" 
-                 [ngClass]="{'text-warning': star <= avisForm.get('note')?.value, 'text-muted': star > avisForm.get('note')?.value}"></i>
-            </span>
-          </div>
-          <span class="badge bg-primary rounded-pill">{{ getRatingLabel(avisForm.get('note')?.value) }}</span>
-        </div>
-        <input type="hidden" formControlName="note">
-      </div>
-      
-      <!-- Champ message avec style amélioré -->
-      <div class="mb-3">
-        <label for="message" class="form-label fw-bold">Votre expérience</label>
-        <textarea class="form-control" id="message" formControlName="message" rows="4"
-                  placeholder="Décrivez en détail votre expérience avec ce produit..."></textarea>
-        <div class="d-flex justify-content-between mt-1">
-          <div *ngIf="avisForm.get('message')?.invalid && avisForm.get('message')?.touched" class="text-danger small">
-            Le message doit contenir entre 10 et 500 caractères.
-          </div>
-          <div class="text-muted small ms-auto">
-            {{ avisForm.get('message')?.value?.length || 0 }}/500
+            </div>
+
+
           </div>
         </div>
       </div>
-      
-      <!-- Boutons avec style amélioré -->
-      <div class="d-flex gap-3 mt-4">
-        <button type="submit" class="btn btn-primary px-4 py-2 flex-grow-1" [disabled]="avisForm.invalid">
-          <i class="fas me-2" [ngClass]="editingAvis ? 'fa-save' : 'fa-paper-plane'"></i> 
-          {{ editingAvis ? 'Enregistrer les modifications' : 'Publier mon avis' }}
-        </button>
-        <button *ngIf="editingAvis" type="button" class="btn btn-outline-secondary px-3" (click)="cancelEdit()">
-          <i class="fas fa-times me-1"></i> Annuler
-        </button>
-      </div>
-    </form>
-  
-    <!-- Message pour les non-connectés -->
-    <div *ngIf="!isLoggedIn || !isClient()" class="alert alert-info mt-3">
-      <div class="d-flex align-items-center">
-        <i class="fas fa-info-circle me-3 fa-2x"></i>
-        <div>
-          <h5 class="alert-heading mb-1">Connectez-vous pour laisser un avis</h5>
-          <p class="mb-0">Votre feedback est important pour nous et les autres clients.</p>
-        </div>
-      </div>
-      <div class="d-flex gap-2 mt-3">
-        <button class="btn btn-primary px-4" (click)="router.navigate(['/login'])">
-          <i class="fas fa-sign-in-alt me-2"></i> Connexion
-        </button>
-        <button class="btn btn-outline-primary px-4" (click)="router.navigate(['/signup'])">
-          <i class="fas fa-user-plus me-2"></i> Inscription
-        </button>
-      </div>
-    </div>
+    </section>
   </div>
 
-          
-        </div>
-      </div>
-    </div>
-  </section>
-</div>
+  <app-footer></app-footer>
 
-<app-footer></app-footer>
+</body>
 
-</body></html>
+</html>

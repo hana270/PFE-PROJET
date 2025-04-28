@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 
 import { Bassin } from '../models/bassin.models';
 import { Categorie } from '../models/categorie.models';
@@ -29,13 +29,27 @@ export class BassinService {
   apiURL: string = 'http://localhost:8089/aquatresor/api';
   apiURLCategorie: string = 'http://localhost:8089/aquatresor/api/categories';
 
+  private authService: AuthService | null = null;
+  
+  constructor(private http: HttpClient, private injector: Injector) { }
 
-  constructor(private http: HttpClient, private authService: AuthService) { }
+  private getAuthService(): AuthService {
+    if (!this.authService) {
+      this.authService = this.injector.get(AuthService);
+    }
+    return this.authService;
+  }
 
+  
   // Charger les images pour un bassin spécifique
   chargerImagesPourBassin(bassin: Bassin): Bassin {
     if (bassin.imagesBassin && bassin.imagesBassin.length > 0) {
-      bassin.imageStr = `${this.apiURL}/imagesBassin/getFS/${bassin.imagesBassin[0].imagePath}`;
+      // Utilisez directement l'URL de l'image si elle est déjà complète
+      if (bassin.imagesBassin[0].imagePath.startsWith('http')) {
+        bassin.imageStr = bassin.imagesBassin[0].imagePath;
+      } else {
+        bassin.imageStr = `${this.apiURL}/imagesBassin/getFS/${bassin.imagesBassin[0].imagePath}`;
+      }
     } else {
       bassin.imageStr = 'assets/default-image.webp';
     }
@@ -45,7 +59,7 @@ export class BassinService {
   // consulter un bassin
   consulterBassin(id: number): Observable<Bassin> {
     const url = `${this.apiURL}/getbyid/${id}`;
-    let jwt = this.authService.getToken();
+    let jwt = this.getAuthService().getToken();
     jwt = "Bearer " + jwt;
     let httpHeaders = new HttpHeaders({ "Authorization": jwt });
     return this.http.get<Bassin>(url, { headers: httpHeaders }).pipe(
@@ -90,7 +104,7 @@ export class BassinService {
   // supprimer bassin
   supprimerBassin(id: number): Observable<void> {
     const url = `${this.apiURL}/deletebassin/${id}`;
-    let jwt = this.authService.getToken();
+    let jwt = this.getAuthService().getToken();
     jwt = "Bearer " + jwt;
     let httpHeaders = new HttpHeaders({ "Authorization": jwt });
     return this.http.delete<void>(url, { headers: httpHeaders });
@@ -98,7 +112,7 @@ export class BassinService {
 
   // update un bassin
   updateBassin(b: Bassin): Observable<Bassin> {
-    let jwt = this.authService.getToken();
+    let jwt = this.getAuthService().getToken();
     jwt = "Bearer " + jwt;
     let httpHeaders = new HttpHeaders({ "Authorization": jwt });
     const url = `${this.apiURL}/updatebassin/${b.idBassin}`; // Include ID if needed
@@ -162,7 +176,7 @@ export class BassinService {
 
   supprimerImage(id: number): Observable<void> {
     const url = `${this.apiURL}/imagesBassin/delete/${id}`;
-    let jwt = this.authService.getToken();
+    let jwt = this.getAuthService().getToken();
     jwt = "Bearer " + jwt;
     let httpHeaders = new HttpHeaders({ "Authorization": jwt });
     return this.http.delete<void>(url, { headers: httpHeaders });
@@ -176,13 +190,14 @@ export class BassinService {
 
   // Méthode pour générer les en-têtes avec le token JWT
   private getHeaders(): HttpHeaders {
-    const token = this.authService.getToken();
+    const token = this.getAuthService().getToken();
     return new HttpHeaders({
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     });
   }
 
+  
   //Bassin Personnalisé
   // Ajoutez cette méthode pour ajouter un bassin personnalisé
   ajouterBassinPersonnalise(formData: FormData, idBassin: number): Observable<BassinPersonnalise> {
@@ -225,11 +240,22 @@ getBaseImageUrl(): string {
     const headers = this.getHeaders();
     return this.http.delete<BassinPersonnalise>(`${this.apiURL}/bassinpersonnalise/supprimerBassinPersonnalise/${idBassinPersonnalise}`);
   }
-
+/*****
+ * 
+ * 
+ * 
+ * 
+ */
   //Récupère l'id de bassin personnalise en entrant dans l'url l'id de bassin
   getBassinPersonnaliseByBassinId(idBassin: number): Observable<any> {
     return this.http.get<any>(`${this.apiURL}/bassinpersonnalise/getBassinPersonnaliseByBassin/${idBassin}`);
   }
+/*******
+ * 
+ * 
+ * 
+ * 
+ */
 
   // Mettre à jour un bassin personnalisé
   mettreAJourBassinPersonnalise(idBassinPersonnalise: number, formData: FormData): Observable<BassinPersonnalise> {
@@ -333,7 +359,7 @@ getBaseImageUrl(): string {
   // Récupérer les notifications
 getNotifications(): Observable<any[]> {
   const headers = new HttpHeaders({
-    Authorization: `Bearer ${this.authService.getToken()}`
+    Authorization: `Bearer ${this.getAuthService().getToken()}`
   });
   return this.http.get<any[]>(`${this.apiURL}/notifications`, { headers: headers });
 }
@@ -360,13 +386,25 @@ mettreAJourQuantite(id: number, quantite: number, raison: string): Observable<an
 
 // Dans bassin.service.ts
 syncBassinStatus(bassin: Bassin): Bassin {
-  // Synchronisation forcée statut/stock
+  // Synchronisation statut/stock
   if (bassin.stock === 0) {
-      bassin.statut = 'SUR_COMMANDE';
+    bassin.statut = 'SUR_COMMANDE';
+    bassin.disponible = false; // Marquer comme indisponible si stock = 0
   } else {
-      bassin.statut = 'DISPONIBLE';
+    bassin.statut = 'DISPONIBLE';
+    bassin.disponible = true;
   }
   return bassin;
+}
+
+getAvailabilityStatus(bassin: Bassin): string {
+  if (bassin.statut === 'SUR_COMMANDE') {
+    return 'Sur Commande';
+  } else if (bassin.statut === 'DISPONIBLE') {
+    return 'Disponible';
+  } else {
+    return 'Indisponible';
+  }
 }
 
 // Modifier les méthodes existantes pour utiliser cette synchro
@@ -391,7 +429,7 @@ return this.http.get<Bassin[]>(`${this.apiURL}/archives`).pipe(
 
 archiverBassin(id: number): Observable<Bassin> {
   const headers = new HttpHeaders({
-    'Authorization': `Bearer ${this.authService.getToken()}`
+    'Authorization': `Bearer ${this.getAuthService().getToken()}`
   });
   
   return this.http.get<Bassin>(`${this.apiURL}/getbyid/${id}`, { headers }).pipe(
@@ -409,7 +447,7 @@ archiverBassin(id: number): Observable<Bassin> {
 // Ajouter une méthode pour mettre à jour le statut d'un bassin
 updateBassinStatus(id: number, newStatus: string): Observable<Bassin> {
   const headers = new HttpHeaders({
-    'Authorization': `Bearer ${this.authService.getToken()}`
+    'Authorization': `Bearer ${this.getAuthService().getToken()}`
   });
   
   return this.http.post<Bassin>(
@@ -429,7 +467,7 @@ Fin
 
 desarchiverBassin(id: number, nouvelleQuantite: number): Observable<Bassin> {
   const headers = new HttpHeaders({
-    'Authorization': `Bearer ${this.authService.getToken()}`
+    'Authorization': `Bearer ${this.getAuthService().getToken()}`
   });
   
   let params = new HttpParams()
@@ -452,14 +490,14 @@ generateStockReport(): Observable<Blob> {
   // Obtenir toutes les catégories
 getAllCategories(): Observable<any[]> {
   const headers = new HttpHeaders({
-    Authorization: `Bearer ${this.authService.getToken()}`,
+    Authorization: `Bearer ${this.getAuthService().getToken()}`,
   });
   return this.http.get<any[]>(`${this.apiURL}/categories`, { headers: headers });
 }
 
 getAllBassins(): Observable<Bassin[]> {
   const headers = new HttpHeaders({
-    Authorization: `Bearer ${this.authService.getToken()}`,
+    Authorization: `Bearer ${this.getAuthService().getToken()}`,
   });
   return this.http.get<Bassin[]>(`${this.apiURL}/all`, { headers: headers });
 }
@@ -468,7 +506,7 @@ getAllBassins(): Observable<Bassin[]> {
 // Liste des bassins avec gestion des promotions
 listeBassinClient(): Observable<Bassin[]> {
   const headers = new HttpHeaders({
-    Authorization: `Bearer ${this.authService.getToken()}`,
+    Authorization: `Bearer ${this.getAuthService().getToken()}`,
   });
   return this.http.get<Bassin[]>(`${this.apiURL}/all`, { headers: headers }).pipe(
     map(bassins => {
@@ -490,7 +528,7 @@ listeBassinClient(): Observable<Bassin[]> {
 listeBassinsAvecPromotions(): Observable<Bassin[]> {
   return this.http.get<any[]>(`${this.apiURL}/promotions/bassins?includePromotions=true`, {
     headers: {
-      Authorization: `Bearer ${this.authService.getToken()}`,
+      Authorization: `Bearer ${this.getAuthService().getToken()}`,
     }
   }).pipe(
     map(data => {
@@ -543,7 +581,7 @@ listeBassinsAvecPromotions(): Observable<Bassin[]> {
 
 mettreSurCommande(id: number, dureeJours: number): Observable<Bassin> {
   const headers = new HttpHeaders({
-      'Authorization': `Bearer ${this.authService.getToken()}`
+      'Authorization': `Bearer ${this.getAuthService().getToken()}`
   });
   
   return this.http.post<Bassin>(
@@ -570,4 +608,21 @@ updateDureeFabrication(id: number, dureeOrMin: number, dureeMax?: number): Obser
     
     return this.http.put<Bassin>(`${this.apiURL}/${id}/duree-fabrication`, null, { params });
 }
+
+getBassinDetails(id: number): Observable<Bassin> {
+  return this.http.get<Bassin>(`${this.apiURL}/getbyid/${id}`).pipe(
+    map(bassin => {
+      // Charger l'image principale
+      if (bassin.imagesBassin && bassin.imagesBassin.length > 0) {
+        bassin.imagePath = `${this.apiURL}/imagesBassin/getFS/${bassin.imagesBassin[0].imagePath}`;
+      }
+      return bassin;
+    }),
+    catchError(error => {
+      console.error('Error fetching bassin details', error);
+      return throwError(() => new Error('Could not load bassin details'));
+    })
+  );
+}
+
 }

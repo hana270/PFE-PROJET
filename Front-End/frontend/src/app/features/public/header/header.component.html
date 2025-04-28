@@ -3,7 +3,8 @@
     <div class="banner-content">
       <div class="contact-info">
         <span><i class="material-icons">phone</i> +33 1 23 45 67 89</span>
-        <span><i class="material-icons">email</i> <a href="mailto:support@shopangular.com">support-shopangular.com</a></span>
+        <span><i class="material-icons">email</i> <a
+            href="mailto:support@aquatresor.com">support-aquatresor.com</a></span>
       </div>
       <div class="social-links">
         <a href="#"><i class="material-icons">thumb_up</i></a>
@@ -19,7 +20,7 @@
     <div class="header-content">
       <div class="logo">
         <a routerLink="/">
-          <img src="https://cdn-icons-png.flaticon.com/512/10912/10912421.png" alt="Logo AquaTresor">
+          <img src="assets/logo.png" alt="Logo AquaTresor">
           <h1>AquaTresor</h1>
         </a>
       </div>
@@ -31,7 +32,7 @@
       <nav class="navigation" [class.active]="isMenuOpen">
         <ul>
           <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Accueil</a></li>
-          <li><a routerLink="/shop" routerLinkActive="active">Shop</a></li>
+          <li><a routerLink="/shop" routerLinkActive="active">Boutique</a></li>
           <li><a routerLink="/about" routerLinkActive="active">À propos</a></li>
           <li><a routerLink="/contact" routerLinkActive="active">Contact</a></li>
         </ul>
@@ -39,21 +40,21 @@
 
       <div class="user-actions">
         <div class="favorites">
-          <a class="favorites-btn" routerLink="/favorites">
+          <a class="favorites-btn" routerLink="/favorites" title="Favoris">
             <i class="material-icons">favorite</i>
             <span class="favorites-count" *ngIf="favoritesCount > 0">{{ favoritesCount }}</span>
           </a>
         </div>
-        
+
         <div class="cart">
-          <a class="cart-btn" (click)="toggleCart($event)">
+          <a class="cart-btn" (click)="toggleCart($event)" title="Panier">
             <i class="material-icons">shopping_cart</i>
             <span class="cart-count" *ngIf="cartItemCount > 0">{{ cartItemCount }}</span>
           </a>
         </div>
-      
-        <div class="profile" *ngIf="isAuthenticated && isClient">
-          <div class="profile-btn" (click)="toggleDropdown($event)">
+
+        <div class="profile" *ngIf="isAuthenticated">
+          <div class="profile-btn" (click)="toggleDropdown($event)" title="Mon compte">
             <i class="material-icons">person</i>
             <i class="material-icons arrow">expand_more</i>
           </div>
@@ -63,7 +64,7 @@
             <li><a (click)="logout()"><i class="material-icons">exit_to_app</i> Logout</a></li>
           </ul>
         </div>
-        
+
         <div class="auth-buttons" *ngIf="!isAuthenticated">
           <a routerLink="/login" class="login-btn">Connexion</a>
           <a routerLink="/register" class="register-btn">Inscription</a>
@@ -73,83 +74,233 @@
   </div>
 </header>
 
+<!-- Panier latéral -->
 <div class="cart-sidebar" [class.active]="isCartOpen">
+  <!-- En-tête du panier -->
   <div class="cart-header">
-    <h2><i class="fas fa-shopping-cart"></i> Votre Panier</h2>
-    <button class="close-btn" (click)="isCartOpen = false">
-      <i class="fas fa-times"></i>
+    <h2><i class="material-icons">shopping_cart</i> Votre Panier</h2>
+    <button class="close-btn" (click)="closeCart()" aria-label="Fermer le panier">
+      <i class="material-icons">close</i>
     </button>
   </div>
 
-<!-- Dans le template du panier (cart sidebar) -->
-<div class="cart-items" *ngIf="cartItems.length > 0; else emptyCart">
-  <div *ngFor="let item of cartItems" class="cart-item">
-   
-    <div class="item-image">
-      <img [src]="getImageUrl(item)" 
-             [alt]="item.nomBassin || item.bassin?.nomBassin || 'Image de bassin'" 
-             (error)="onImageError($event)">
-    </div>
-    
-    <div class="item-details">
-      <h4>{{ item.bassin?.nomBassin || item.nomBassin || (item.isCustomized ? 'Bassin personnalisé' : 'Bassin standard') }}</h4>
-      <p class="item-description">{{ getDisplayDetails(item) }}</p>
-      
-      <div class="item-price-container">
-        <!-- Prix original barré si en promo -->
-        <div class="price-original" *ngIf="item.promotionActive">
-          {{ item.prixOriginal | currency:'TND':'symbol':'1.2-2' }}
-        </div>
-        
-        <div class="price-current-container">
-          <!-- Prix actuel -->
-          <div class="price-current" [class.price-promo]="item.promotionActive">
-            {{ (item.promotionActive ? item.effectivePrice : item.prixOriginal) | currency:'TND':'symbol':'1.2-2' }}
-          </div>
+  <!-- Contenu du panier -->
+  <div class="cart-items" *ngIf="cartItems.length > 0; else emptyCart">
+    <!-- Liste des articles du panier -->
+    <div class="cart-item" *ngFor="let item of cartItems">
+      <!-- En-tête de l'article -->
+      <div class="item-header">
+        <h3>{{ item.nomBassin || item.bassin?.nomBassin }}</h3>
+        <div class="badges">
+          <!-- Badge de statut -->
+          <span class="badge" [ngClass]="{
+            'badge-stock': item.status === 'DISPONIBLE',
+            'badge-custom': item.isCustomized,
+            'badge-order': !item.isCustomized && item.status === 'SUR_COMMANDE',
+            'badge-out-of-stock': item.status === 'RUPTURE_STOCK'
+          }">
+            {{ getStatusDisplay(item) }}
+          </span>
+          
           
           <!-- Badge de promotion -->
-          <div class="promotion-badge" *ngIf="item.promotionActive">
-            {{ getReductionPercentage(item) }}
-          </div>
+          <span class="badge badge-promo" *ngIf="item.promotionActive && item.tauxReduction">
+            PROMO -{{ item.tauxReduction * 100 | number:'1.0-0' }}%
+          </span>
+        </div>
+      </div>
+      
+      <!-- Contenu de l'article -->
+      <div class="item-content">
+        <!-- Image -->
+        <div class="item-image">
+          <img [src]="getItemImage(item)" 
+               [alt]="item.nomBassin || item.bassin?.nomBassin" 
+               (error)="handleImageError($event, item)">
         </div>
         
-        <!-- Timer pour les promotions qui expirent bientôt -->
-        <div class="promotion-timer" *ngIf="item.promotionActive && item.bassin?.promotion">
-          <i class="fas fa-clock"></i>
-          Expire dans: {{ getTimeLeft(item.bassin!.promotion!.dateFin) }}
+        <div class="item-details">
+          <!-- Description -->
+          <p class="item-description">{{ getItemDescription(item) }}</p>
+          
+          <!-- Détails pour articles personnalisés -->
+          <div *ngIf="item.isCustomized" class="custom-details">
+            <!-- Matériau -->
+            <div class="detail-row" *ngIf="item.customization?.materiauSelectionne">
+              <span class="detail-label">Matériau:</span>
+              <span>{{ item.customization!.materiauSelectionne }}</span>
+              <span class="price-addition" *ngIf="item.customization!.prixMateriau">
+                +{{ item.customization!.prixMateriau }} TND
+              </span>
+            </div>
+            
+            <!-- Dimensions -->
+            <div class="detail-row" *ngIf="item.customization?.dimensionSelectionnee">
+              <span class="detail-label">Dimensions:</span>
+              <span>{{ item.customization!.dimensionSelectionnee }}</span>
+              <span class="price-addition" *ngIf="item.customization!.prixDimension">
+                +{{ item.customization!.prixDimension }} TND
+              </span>
+            </div>
+            
+            <!-- Couleur -->
+            <div *ngIf="item.isCustomized && item.customization?.couleurSelectionnee" class="detail-row">
+              <span class="detail-label">Couleur:</span>
+              <span>{{ item.customization!.couleurSelectionnee }}</span>
+              <span class="color-preview" 
+                    [style.background-color]="getColorPreview(item.customization!.couleurSelectionnee)"
+                    [title]="item.customization!.couleurSelectionnee"></span>
+            </div>
+            
+            <!-- Accessoires -->
+            <div *ngIf="item.accessoires?.length" class="detail-row">
+              <span class="detail-label">Accessoires:</span>
+              <span>{{ item.accessoires!.length }} accessoire(s)</span>
+              <span class="price-addition">+{{ getTotalAccessoriesPrice(item) }} TND</span>
+            </div>
+            
+            <!-- Liste des accessoires -->
+            <div *ngIf="item.accessoires?.length" class="accessories-list">
+              <div *ngFor="let acc of item.accessoires" class="accessory-item">
+                <span>{{ acc.nomAccessoire }}</span>
+                <span>{{ acc.prixAccessoire }} TND</span>
+              </div>
+            </div>
+            
+            <!-- Délai de fabrication pour les articles personnalisés -->
+            <div class="detail-row fabrication-time">
+              <span class="detail-label">Délai de fabrication:</span>
+              <span>{{ item.customization?.dureeFabrication ? item.customization!.dureeFabrication + ' jours' : 'Non spécifié' }}</span>
+            </div>
+          </div>
+          
+          <!-- Détails pour les articles standard -->
+          <div *ngIf="!item.isCustomized" class="standard-details">
+            <!-- Dimensions -->
+            <div class="detail-row">
+              <span class="detail-label">Dimensions:</span>
+              <span>{{ item.bassin?.dimensions }}</span>
+            </div>
+            
+            <!-- Matériau -->
+            <div class="detail-row">
+              <span class="detail-label">Matériau:</span>
+              <span>{{ item.bassin?.materiau }}</span>
+            </div>
+            
+            <!-- Couleur -->
+            <div *ngIf="!item.isCustomized && item.bassin?.couleur" class="detail-row">
+              <span class="detail-label">Couleur:</span>
+              <span>{{ item.bassin!.couleur }}</span>
+              <span class="color-preview" 
+                    [style.background-color]="getColorPreview(item.bassin!.couleur)"
+                    [title]="item.bassin!.couleur"></span>
+            </div>
+            
+            <!-- Délai de fabrication pour les articles sur commande -->
+            <div class="detail-row fabrication-time" *ngIf="item.bassin?.surCommande">
+              <span class="detail-label">Délai de fabrication:</span>
+              <span>
+                <i class="material-icons">schedule</i>
+                {{ item.bassin?.dureeFabricationDisplay || '2-3 semaines' }}
+              </span>
+            </div>
+          </div>
+          
+          <!-- Résumé des prix -->
+          <div class="price-summary">
+            <!-- Prix de base -->
+            <div class="price-row">
+              <span>Prix de base:</span>
+              <span>{{ item.prixOriginal }} TND</span>
+            </div>
+            
+            <!-- Suppléments pour articles personnalisés -->
+            <div *ngIf="item.isCustomized" class="price-row">
+              <span>Suppléments:</span>
+              <span>{{ calculateSupplements(item) }} TND</span>
+            </div>
+            
+            <!-- Réduction si applicable -->
+            <div *ngIf="item.promotionActive" class="price-row promotion">
+              <span>Réduction:</span>
+              <span>-{{ calculateReduction(item) }} TND</span>
+            </div>
+            
+            
+            <!-- Prix total avec quantité -->
+            <div class="price-row grand-total">
+              <span>Total ({{ item.quantity }} bassin(s)):</span>
+              <span>{{ getItemEffectivePrice(item) * item.quantity }} TND</span>
+            </div>
+          </div>
+          
+          <!-- Contrôles de quantité -->
+          <div class="quantity-controls">
+            <button (click)="decrementQuantity(item)" [disabled]="item.quantity <= 1" class="qty-btn">
+              <i class="material-icons">remove</i>
+            </button>
+            <span class="qty-value">{{ item.quantity }}</span>
+            <button (click)="incrementQuantity(item)" 
+                    [disabled]="!item.isCustomized && item.status === 'DISPONIBLE' && item.quantity >= (item.bassin?.stock || 0)"
+                    class="qty-btn">
+              <i class="material-icons">add</i>
+            </button>
+          </div>
         </div>
       </div>
-    
-      <div class="quantity-controls" *ngIf="isCartOpen">
-        <button (click)="decrementQuantity(item)">-</button>
-        <span>{{ item.quantity }}</span>
-        <button (click)="incrementQuantity(item)">+</button>
+      
+      <!-- Actions pour l'article -->
+      <div class="item-actions">
+        <button (click)="confirmRemoveFromCart(item)" class="remove-btn">
+          <i class="material-icons">delete</i> Supprimer
+        </button>
       </div>
     </div>
     
-    <button class="remove-btn" (click)="removeFromCart(item)">&times;</button>
-  </div>
-</div>
-
-<ng-template #emptyCart>
-  <div class="empty-cart">
-    <p>Votre panier est vide</p>
-   
-  </div>
-</ng-template>
-
-  <div class="cart-empty" *ngIf="cartItems.length === 0">
-    <i class="material-icons">shopping_cart</i>
-    <p>Votre panier est vide</p>
-  </div>
-
-  <div class="cart-footer" *ngIf="cartItems.length > 0">
-    <div class="cart-total">
-      <p>Total:</p>
-      <p class="total-price">{{ getCartTotal() | currency:'TND':'symbol':'1.2-2' }}</p>
+    <!-- Totaux du panier -->
+    <div class="cart-totals">
+      <div class="total-row">
+        <span>Sous-total:</span>
+        <span>{{ totalPrice }} TND</span>
+      </div>
+      <div class="total-row">
+        <span>Frais de livraison:</span>
+        <span>--- TND</span>
+      </div>
+      <div class="total-row grand-total">
+        <span>Total:</span>
+        <span>{{ getCartTotal() }} TND</span>
+      </div>
     </div>
-    <button class="checkout-btn" (click)="goToCart()">Passer à la caisse</button>
   </div>
+
+  <!-- Pied de page du panier -->
+  <div class="cart-footer" *ngIf="cartItems.length > 0">
+    <div class="cart-actions">
+      <button class="continue-shopping" (click)="closeCart()">
+        <i class="material-icons">arrow_back</i>
+        Continuer mes achats
+      </button>
+      <button class="checkout-btn" routerLink="/cart">
+        <i class="material-icons">shopping_bag</i>
+        Passer commande
+      </button>
+    </div>
+  </div>
+
+  <!-- Template pour panier vide -->
+  <ng-template #emptyCart>
+    <div class="empty-cart">
+      <i class="material-icons">remove_shopping_cart</i>
+      <h3>Votre panier est vide</h3>
+      <p>Découvrez nos bassins et accessoires de qualité</p>
+      <a routerLink="/shop" (click)="closeCart()" class="btn-shop">
+        Commencer vos achats
+      </a>
+    </div>
+  </ng-template>
 </div>
 
-<div class="overlay" [class.active]="isCartOpen" (click)="isCartOpen = false"></div>
+<!-- Overlay pour fermer le panier en cliquant à l'extérieur -->
+<div class="overlay" [class.active]="isCartOpen" (click)="closeCart()"></div>

@@ -445,8 +445,12 @@ public class BassinRestController {
             @RequestParam Integer dureeFabricationJours) {
         
         try {
+        	
+        	
             Bassin bassin = bassinService.mettreSurCommande(id, dureeFabricationJours);
             return ResponseEntity.ok(bassin);
+       
+        
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().header("X-Error-Message", e.getMessage()).build();
         } catch (IllegalArgumentException e) {
@@ -477,6 +481,41 @@ public class BassinRestController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+    
+ // Method to update fabrication duration with exact days
+    public Bassin updateDureeFabrication(Long id, Integer duree) {
+        Bassin bassin = getBassinById(id);
+        if (bassin == null) {
+            throw new IllegalArgumentException("Bassin not found");
+        }
+        
+        bassin.setDureeFabricationJours(duree);
+        // Set min and max to null when using exact duration
+        bassin.setDureeFabricationJoursMin(null);
+        bassin.setDureeFabricationJoursMax(null);
+        
+        return bassinRepository.save(bassin);
+    }
+
+    // Method to update fabrication duration with min-max range
+    public Bassin updateDureeFabrication(Long id, Integer dureeMin, Integer dureeMax) {
+        Bassin bassin = getBassinById(id);
+        if (bassin == null) {
+            throw new IllegalArgumentException("Bassin not found");
+        }
+        
+        // Validate min <= max
+        if (dureeMin > dureeMax) {
+            throw new IllegalArgumentException("Minimum duration cannot be greater than maximum duration");
+        }
+        
+        // Set exact duration to null when using range
+        bassin.setDureeFabricationJours(null);
+        bassin.setDureeFabricationJoursMin(dureeMin);
+        bassin.setDureeFabricationJoursMax(dureeMax);
+        
+        return bassinRepository.save(bassin);
     }
 }
 

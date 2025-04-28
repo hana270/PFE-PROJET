@@ -1,34 +1,26 @@
 package com.example.orders_microservice.dto;
 
 import lombok.Data;
-import java.util.Map;
+import java.util.List;
 
 @Data
 public class PanierItemResponse {
     private Long id;
-    private int quantity;
     private Long bassinId;
-    private boolean customized; // Ajout du champ customized
-    
-    // Customization fields
-    private String materiau;
-    private String dimension;
-    private String couleur;
-    private Map<String, Object> customProperties; // Renommage pour cohérence
-    
-    // Product info
     private String nomBassin;
     private String description;
-    private Integer stock;
     private String imageUrl;
-    
-    // Price information
+    private Integer quantity;
     private Double prixOriginal;
     private Double prixPromo;
     private Double effectivePrice;
     private Double subtotal;
+    private String status;
+    private Boolean isCustomized;
     
-    // Promotion information
+    private CustomizationDetailsDTO customization;
+    private List<AccessoireDTO> accessoires;
+    
     private Boolean promotionActive;
     private String nomPromotion;
     private Double tauxReduction;

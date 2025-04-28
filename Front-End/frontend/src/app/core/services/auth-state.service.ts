@@ -47,18 +47,6 @@ export class AuthStateService {
     }
   }
 
-  get currentUserId(): number | null {
-    const token = this.tokenSubject.value;
-    if (token) {
-      try {
-        const decoded = this.jwtHelper.decodeToken(token);
-        return decoded?.userId || null;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }
 
   get currentUserEmail(): string | null {
     const token = this.tokenSubject.value;
@@ -89,4 +77,60 @@ export class AuthStateService {
       localStorage.removeItem('jwt');
     }
   }
+  // In AuthStateService
+isClient(): boolean {
+  const token = this.tokenSubject.value;
+  if (!token) return false;
+  try {
+    const decoded = this.jwtHelper.decodeToken(token);
+    return decoded?.roles?.includes('CLIENT') || false;
+  } catch {
+    return false;
+  }
+}
+
+isAdmin(): boolean {
+  const token = this.tokenSubject.value;
+  if (!token) return false;
+  try {
+    const decoded = this.jwtHelper.decodeToken(token);
+    return decoded?.roles?.includes('ADMIN') || false;
+  } catch {
+    return false;
+  }
+}
+
+isInstaller(): boolean {
+  const token = this.tokenSubject.value;
+  if (!token) return false;
+  try {
+    const decoded = this.jwtHelper.decodeToken(token);
+    return decoded?.roles?.includes('INSTALLATEUR') || false;
+  } catch {
+    return false;
+  }
+}
+
+isAuthenticated(): boolean {
+  return this.isLoggedIn;
+}
+
+getToken(): string | null {
+  return this.currentToken;
+}
+
+
+get currentUserId(): number | null {
+  const token = this.tokenSubject.value;
+  if (!token) return null;
+  
+  try {
+      const decoded = this.jwtHelper.decodeToken(token);
+      // Assurez-vous que votre token JWT contient bien un champ userId numérique
+      return decoded?.userId ? Number(decoded.userId) : null;
+  } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
+  }
+}
 }

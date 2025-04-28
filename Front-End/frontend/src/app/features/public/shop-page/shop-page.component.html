@@ -7,115 +7,133 @@
   <div id="notificationContainer" class="notification-container"></div>
 
   <!-- Promotion countdown banner -->
-  <div *ngIf="nextEndingPromotion" class="promotion-countdown-banner" @fadeIn>
+  <div *ngIf="nextEndingPromotion" class="promotion-countdown-banner">
     <div class="container">
-      <div class="row">
-        <div class="col-12">
-          <div class="promotion-countdown-content">
-            <div class="promotion-title">
-              <i class="fas fa-bolt" style="color: rgb(248, 232, 6);"></i> {{ nextEndingPromotion.nomPromotion }}
-            </div>
-            <div class="countdown-container">
-              <div class="countdown-item">
-                <div class="countdown-value">{{ countdownTime.days }}</div>
-                <div class="countdown-label">Jours</div>
-              </div>
-              <div class="countdown-separator">:</div>
-              <div class="countdown-item">
-                <div class="countdown-value">{{ countdownTime.hours }}</div>
-                <div class="countdown-label">Heures</div>
-              </div>
-              <div class="countdown-separator">:</div>
-              <div class="countdown-item">
-                <div class="countdown-value">{{ countdownTime.minutes }}</div>
-                <div class="countdown-label">Minutes</div>
-              </div>
-              <div class="countdown-separator">:</div>
-              <div class="countdown-item">
-                <div class="countdown-value">{{ countdownTime.seconds }}</div>
-                <div class="countdown-label">Secondes</div>
-              </div>
-            </div>
-            <div class="promotion-message">Offre limitée! Ne manquez pas cette opportunité.</div>
+      <div class="promotion-countdown-content">
+        <div class="promotion-title">
+          <i class="fas fa-bolt"></i> {{ nextEndingPromotion.nomPromotion }}
+        </div>
+        <div class="countdown-container">
+          <div class="countdown-item">
+            <div class="countdown-value">{{ countdownTime.days }}</div>
+            <div class="countdown-label">Jours</div>
+          </div>
+          <div class="countdown-separator">:</div>
+          <div class="countdown-item">
+            <div class="countdown-value">{{ countdownTime.hours }}</div>
+            <div class="countdown-label">Heures</div>
+          </div>
+          <div class="countdown-separator">:</div>
+          <div class="countdown-item">
+            <div class="countdown-value">{{ countdownTime.minutes }}</div>
+            <div class="countdown-label">Minutes</div>
+          </div>
+          <div class="countdown-separator">:</div>
+          <div class="countdown-item">
+            <div class="countdown-value">{{ countdownTime.seconds }}</div>
+            <div class="countdown-label">Secondes</div>
           </div>
         </div>
+        <div class="promotion-message">Offre limitée! Ne manquez pas cette opportunité.</div>
       </div>
     </div>
   </div>
 
   <!-- Hero Banner -->
-  <div class="hero-banner" @fadeIn>
+  <div class="hero-banner">
     <div class="container">
-      <div class="row">
-        <div class="col-md-12 text-center">
-          <h1 class="hero-title">Notre Sélection de Bassins</h1>
-          <p class="hero-subtitle">Découvrez notre collection complète pour embellir votre espace extérieur</p>
-        </div>
+      <div class="hero-content">
+        <h1 class="hero-title">Notre Sélection de Bassins</h1>
+        <p class="hero-subtitle">Découvrez notre collection complète pour embellir votre espace extérieur</p>
       </div>
     </div>
   </div>
 
   <!-- Main Content -->
-  <div class="container">
+  <div class="container main-content">
     <div class="row">
+      <!-- Filter toggle button for mobile -->
+      <div class="col-12 d-lg-none mb-3">
+        <button class="filters-toggle-btn" (click)="toggleFilters()">
+          <span>Filtres</span>
+          <i class="fas fa-sliders-h"></i>
+        </button>
+      </div>
+      
       <!-- Filters Sidebar -->
-      <div class="col-lg-3 shop-sidebar">
+      <div class="col-lg-3 shop-sidebar" [ngClass]="{'show': showFiltersMobile}">
         <div class="filter-panel">
           <div class="filter-header">
             <h4>Filtres</h4>
-            <button class="btn btn-sm reset-btn" (click)="resetFilters()">
+            <button class="btn reset-btn" (click)="resetFilters()">
               <i class="fas fa-redo-alt"></i> Réinitialiser
+            </button>
+            <!-- Close button for mobile filters -->
+            <button class="filters-close-btn d-lg-none" (click)="toggleFilters()">
+              <i class="fas fa-times"></i>
             </button>
           </div>
 
           <!-- Price Range -->
           <div class="filter-section">
-            <h5>Prix</h5>
-            <div class="price-slider">
-              <input type="range" class="form-range" min="0" max="1000" [(ngModel)]="selectedPrice" (change)="applyFilters()">
-              <div class="price-range-label">
-                <span>0 €</span>
-                <span>{{ selectedPrice }} €</span>
-              </div>
-            </div>
-          </div>
+            <h5><i class="fas fa-tag"></i> Prix (TND)</h5>
+<div class="price-filter">
+  <div class="price-values">
+    <span>{{ minPrice | number:'1.0-3' }} TND</span>
+    <span>{{ selectedPrice | number:'1.0-3' }} TND</span>
+  </div>
+  <input type="range" class="price-slider" min="0" [max]="maxPrice" 
+         [(ngModel)]="selectedPrice" (input)="applyFilters()">
+  <div class="price-range-inputs">
+    <input type="number" class="form-control" [(ngModel)]="minPrice" 
+           (change)="updatePriceRange('min')" placeholder="Min">
+    <span class="price-range-separator">-</span>
+    <input type="number" class="form-control" [(ngModel)]="selectedPrice" 
+           (change)="updatePriceRange('max')" placeholder="Max">
+  </div>
+</div>
 
+          </div>
 
           <!-- Categories -->
           <div class="filter-section">
-            <h5>Catégories</h5>
-            <div class="categories-list">
+            <h5><i class="fas fa-layer-group"></i> Catégories</h5>
+            <div class="categories-list custom-scrollbar">
               <div class="category-item" *ngFor="let categorie of categories">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" [value]="categorie.idCategorie" [id]="'cat-' + categorie.idCategorie" (change)="onCategoryChange($event)">
-                  <label class="form-check-label" [for]="'cat-' + categorie.idCategorie">
-                    {{ categorie.nomCategorie }}
-                  </label>
-                </div>
+                <label class="custom-checkbox">
+                  <input type="checkbox" [(ngModel)]="categorie.selected" 
+                         (change)="applyFilters()">
+                  <span class="checkmark"></span>
+                  {{ categorie.nomCategorie }}
+                </label>
               </div>
             </div>
           </div>
 
-          <!-- Promotions Filter -->
-          <div class="filter-section">
-            <h5>Promotions</h5>
-            <div class="form-check promo-check">
-              <input class="form-check-input" type="checkbox" id="promo-filter" [(ngModel)]="showOnlyPromotions" (change)="onPromotionFilterChange($event)">
-              <label class="form-check-label" for="promo-filter">
-                <i class="fas fa-tag"></i> Afficher uniquement les produits en promotion
-              </label>
-            </div>
-          </div>
+          <!-- Status Filter -->
+<div class="filter-section">
+  <h5><i class="fas fa-layer-group"></i> Catégories</h5>
+  <div class="categories-list custom-scrollbar">
+    <div class="category-item" *ngFor="let categorie of categories">
+      <label class="custom-checkbox">
+        <input type="checkbox" [(ngModel)]="categorie.selected" 
+               (change)="applyFilters()">
+        <span class="checkmark"></span>
+        {{ categorie.nomCategorie }}
+      </label>
+    </div>
+  </div>
+</div>
 
-          <!-- Availability Filter -->
+          <!-- Promotion Filter -->
           <div class="filter-section">
-            <h5>Disponibilité</h5>
-            <div class="form-check availability-check">
-              <input class="form-check-input" type="checkbox" id="availability-filter" [(ngModel)]="showOnlyAvailable" (change)="onAvailabilityChange($event)">
-              <label class="form-check-label" for="availability-filter">
-                <i class="fas fa-check-circle"></i> Afficher uniquement les produits disponibles
-              </label>
-            </div>
+            <h5><i class="fas fa-percentage"></i> Promotions</h5>
+            <label class="custom-checkbox">
+              <input type="checkbox" [(ngModel)]="showOnlyPromotions" 
+                     (change)="applyFilters()">
+              <span class="checkmark"></span>
+              En promotion
+            </label>
           </div>
         </div>
       </div>
@@ -138,102 +156,134 @@
         </div>
 
         <!-- Loading Indicator -->
-        <div *ngIf="isLoading" class="loading-container text-center py-5">
-          <div class="spinner-border text-primary" role="status">
+        <div *ngIf="isLoading" class="loading-container">
+          <div class="spinner-border" role="status">
             <span class="visually-hidden">Chargement...</span>
           </div>
-          <p class="mt-3">Chargement des produits...</p>
+          <p>Chargement des produits...</p>
         </div>
 
         <!-- Error Message -->
-        <div *ngIf="!isLoading && errorMessage" class="error-container alert alert-danger" role="alert">
+        <div *ngIf="!isLoading && errorMessage" class="error-container" role="alert">
           {{ errorMessage }}
         </div>
 
         <!-- Empty Results Message -->
-        <div *ngIf="!isLoading && !errorMessage && filteredBassins.length === 0" class="empty-results text-center py-5">
-          <i class="fas fa-search fa-3x mb-3 text-muted"></i>
+        <div *ngIf="!isLoading && !errorMessage && filteredBassins.length === 0" class="empty-results">
+          <i class="fas fa-search"></i>
           <h4>Aucun produit trouvé</h4>
           <p>Essayez de modifier vos filtres pour trouver ce que vous cherchez.</p>
-          <button class="btn btn-outline-primary mt-2" (click)="resetFilters()">
+          <button class="btn btn-outline-primary" (click)="resetFilters()">
             Réinitialiser les filtres
           </button>
         </div>
 
-        <!-- Products Grid -->
-        <div *ngIf="!isLoading && !errorMessage && filteredBassins.length > 0" class="row g-4" @staggerAnimation>
-          <div class="col-md-6 col-lg-4" *ngFor="let bassin of filteredBassins" @cardAnimation>
-            <div class="product-card" 
-                 (mouseenter)="setHoveredProduct(bassin.idBassin)" 
-                 (mouseleave)="setHoveredProduct(null)" 
-                 (click)="showDetails(bassin)">
-              
-              <!-- Promotion Badge -->
-              <div *ngIf="bassin.promotionActive" class="promotion-badge">
-                -{{ getTauxReduction(bassin) }}%
-              </div>
-          
-              <!-- Availability Badge -->
-              <div [ngClass]="['availability-badge', getAvailabilityClass(bassin)]">
-                <i class="fas" [ngClass]="{
-                  'fa-check-circle': bassin.disponible && bassin.stock > 0,
-                  'fa-exclamation-circle': bassin.disponible && (!bassin.stock || bassin.stock <= 0),
-                  'fa-times-circle': !bassin.disponible
-                }"></i>
-                {{ getAvailabilityStatus(bassin) }}
-              </div>
-          
-              <!-- Product Image -->
-              <div class="product-image">
-<img [src]="bassin.imageStr | bassinImage" [alt]="bassin.nomBassin" (error)="onImageError($event)">              </div>
-          
-              <!-- Product Content -->
-              <div class="product-content">
-                <div class="product-category">{{ getCategoryName(bassin.categorie!.idCategorie) }}</div>
-                <h5 class="product-title">{{ bassin.nomBassin }}</h5>
-          
-                <!-- Price Section -->
-                <div class="product-price">
-                  <div *ngIf="bassin.promotionActive; else regularPrice">
-                    <span class="discounted-price">{{ getPrixAvecPromotion(bassin) | currency:'TND':'symbol':'1.2-2' }}</span>
-                    <span class="original-price">{{ getPrixOriginal(bassin) | currency:'TND':'symbol':'1.2-2' }}</span>
-                  </div>
-                  <ng-template #regularPrice>
-                    <span class="price-value">{{ bassin.prix | currency:'TND':'symbol':'1.2-2' }}</span>
-                  </ng-template>
-                </div>
-          
-                <!-- Product Actions -->
-                <div class="product-actions">
-                 <button class="btn btn-primary add-to-cart-btn" 
-        (click)="addToCart(bassin, $event)" 
-        [disabled]="!bassin.disponible || !bassin.stock || bassin.stock <= 0">
-  <i class="fas fa-shopping-cart"></i>
-  <span class="btn-text">Ajouter au panier</span>
-</button>
+        <!-- Bassins Grid -->
+        <div *ngIf="!isLoading && !errorMessage && filteredBassins.length > 0">
+          <div class="product-grid">
+            <div class="product-card-wrapper" *ngFor="let bassin of pagedBassins">
+              <div class="product-card" 
+                   (mouseenter)="setHoveredProduct(bassin.idBassin)" 
+                   (mouseleave)="setHoveredProduct(null)" 
+                   (click)="showDetails(bassin)">
+                
+                <!-- Product Image -->
+                <div class="product-image-container">
+                 
+                  <img [src]="getBassinImageUrl(bassin)" 
+                  [alt]="getBassinName(bassin)" 
+                  (error)="onImageError($event)"
+                  class="img-fluid">
 
-                  <button style="color: black;" class="btn btn-icon favorite-btn" [class.favorited]="bassin.isFavorite" 
-                          (click)="addToFavorites(bassin, $event)">
-                    <i class="fas" [ngClass]="bassin.isFavorite ? 'fa-heart' : 'fa-heart-o'"></i>
-                  </button>
-                  <button class="btn btn-icon details-btn" (click)="showDetails(bassin, $event)">
-                    <i class="fas fa-eye"></i>
-                  </button>
+                  <!-- Promotion Badge -->
+                  <div *ngIf="bassin.promotionActive" class="promotion-badge">
+                    -{{ getTauxReduction(bassin) }}%
+                  </div>
                 </div>
-          
-                <!-- Product Specs -->
-                <div class="product-specs">
-                  <span class="spec-item" *ngIf="bassin.dimensions">
-                    <i class="fas fa-ruler"></i> {{ bassin.dimensions }}
-                  </span>
-                  <span class="spec-item" *ngIf="bassin.materiau">
-                    <i class="fas fa-cube"></i> {{ bassin.materiau }}
-                  </span>
-                  <span class="spec-item" *ngIf="bassin.couleur">
-                    <i class="fas fa-palette"></i> {{ bassin.couleur }}
-                  </span>
+            
+                <!-- Product Content -->
+                <div class="product-content">
+                  <div class="product-category">{{ getCategoryName(bassin.categorie!.idCategorie) }}</div>
+                  <h3 class="product-title">{{ bassin.nomBassin }}</h3>
+                  
+                  <!-- Status Indicator -->
+                  <div class="status-indicator">
+                    <span class="status-dot" [ngClass]="{
+                      'available': bassin.statut === 'DISPONIBLE',
+                      'on-order': bassin.statut === 'SUR_COMMANDE',
+                      'unavailable': bassin.statut !== 'DISPONIBLE' && bassin.statut !== 'SUR_COMMANDE'
+                    }"></span>
+                    <span class="status-text">{{ getAvailabilityStatus(bassin) }}</span>
+                  </div>
+            
+                  <!-- Price Section -->
+                  <div class="product-price">
+                    <div *ngIf="bassin.promotionActive; else regularPrice">
+                      <span class="discounted-price">{{ getPrixAvecPromotion(bassin) | currency:'TND':'symbol':'1.2-2' }}</span>
+                      <span class="original-price">{{ getPrixOriginal(bassin) | currency:'TND':'symbol':'1.2-2' }}</span>
+                    </div>
+                    <ng-template #regularPrice>
+                      <span class="price-value">{{ bassin.prix | currency:'TND':'symbol':'1.2-2' }}</span>
+                    </ng-template>
+                  </div>
+            
+                  <!-- Product Specs -->
+                  <div class="product-specs">
+                    <span class="spec-item" *ngIf="bassin.dimensions">
+                      <i class="fas fa-ruler"></i> {{ bassin.dimensions }}
+                    </span>
+                    <span class="spec-item" *ngIf="bassin.materiau">
+                      <i class="fas fa-cube"></i> {{ bassin.materiau }}
+                    </span>
+                    <span class="spec-item" *ngIf="bassin.couleur">
+                      <i class="fas fa-palette"></i> {{ bassin.couleur }}
+                    </span>
+                  </div>
+                  
+                  <!-- Product Actions -->
+                  <div class="product-actions">
+                    <button class="btn btn-primary add-to-cart-btn" 
+                            (click)="addToCart(bassin, $event)" 
+                            [disabled]="bassin.statut !== 'DISPONIBLE' && bassin.statut !== 'SUR_COMMANDE'">
+                      <i class="fas fa-shopping-cart"></i>
+                      <span class="btn-text">Ajouter au panier</span>
+                    </button>
+            
+                    <button class="favorite-btn" 
+                    [class.favorited]="bassin.isFavorite" 
+                    (click)="addToFavorites(bassin, $event)">
+              <i class="fas" [ngClass]="bassin.isFavorite ? 'fa-heart' : 'fa-heart'"></i>
+            </button>
+                  </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination-container" *ngIf="filteredBassins.length > itemsPerPage">
+            <nav aria-label="Page navigation">
+              <ul class="pagination">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <a class="page-link" (click)="previousPage()" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                  </a>
+                </li>
+                
+                <li class="page-item" *ngFor="let page of getPages()" [class.active]="page === currentPage">
+                  <a class="page-link" (click)="setPage(page)">{{ page }}</a>
+                </li>
+                
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <a class="page-link" (click)="nextPage()" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+            
+            <div class="pagination-info">
+              Affichage {{ startIndex + 1 }}-{{ endIndex }} sur {{ filteredBassins.length }} produits
             </div>
           </div>
         </div>

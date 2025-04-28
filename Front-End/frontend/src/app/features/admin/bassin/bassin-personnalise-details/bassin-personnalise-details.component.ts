@@ -18,6 +18,11 @@ export class BassinPersonnaliseDetailsComponent implements OnInit {
     dimensions: [], // Liste des dimensions sélectionnées
     accessoires: [], // Liste des accessoires
     dureeFabrication: 0,
+    isCustomized: false,
+    nomBassin: '',
+    prix: 0,
+    imagesBassin: [],
+    firstImageUrl: ''
   };
 
   loading: boolean = true; // Indicateur de chargement

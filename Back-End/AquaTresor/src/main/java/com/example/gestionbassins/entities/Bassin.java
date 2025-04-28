@@ -260,17 +260,7 @@ public class Bassin implements BassinBase, BassinMetadata, BassinPromotionInfo {
     @Column(name = "duree_fabrication_jours_max")
     private Integer dureeFabricationJoursMax = 15; // Valeur par défaut
 
-    public String getDureeFabricationDisplay() {
-        if (dureeFabricationJours != null) {
-            return dureeFabricationJours + " jours";
-        } else if (dureeFabricationJoursMin != null && dureeFabricationJoursMax != null) {
-            if (dureeFabricationJoursMin.equals(dureeFabricationJoursMax)) {
-                return dureeFabricationJoursMin + " jours";
-            }
-            return "Entre " + dureeFabricationJoursMin + " et " + dureeFabricationJoursMax + " jours";
-        }
-        return "Entre 3 et 15 jours (par défaut)";
-    }
+   
     // Getters et setters
     public Integer getDureeFabricationJoursMin() {
         return dureeFabricationJoursMin;
@@ -305,5 +295,15 @@ public class Bassin implements BassinBase, BassinMetadata, BassinPromotionInfo {
     }
 
 
-
+    public String getDureeFabricationDisplay() {
+        if (dureeFabricationJours != null) {
+            return dureeFabricationJours + " jours";
+        } else if (dureeFabricationJoursMin != null && dureeFabricationJoursMax != null) {
+            if (dureeFabricationJoursMin.equals(dureeFabricationJoursMax)) {
+                return dureeFabricationJoursMin + " jours";
+            }
+            return dureeFabricationJoursMin + " à " + dureeFabricationJoursMax + " jours";
+        }
+        return "3 à 15 jours (estimation)";
+    }
 }

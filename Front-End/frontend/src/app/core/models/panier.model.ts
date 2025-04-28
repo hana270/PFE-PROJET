@@ -1,12 +1,12 @@
 import { PanierItem } from './panier-item.model';
 
 export interface Panier {
-  id: number;
-  userId?: number | null;
-  sessionId?: string | null;
+  id: number; // ou string selon votre implémentation backend
   items: PanierItem[];
   totalPrice: number;
-  lastUpdated?: Date;
+  userId: number | null; // Pas undefined
+  sessionId: string | null; // Pas undefined
+  lastUpdated?: Date; // Optionnel si nécessaire
 }
 
 // Export the PanierItem type if needed elsewhere

@@ -1,13 +1,18 @@
 package com.example.orders_microservice.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;  // Utiliser LocalDate au lieu de Date
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class PromotionDTO {
     private Long idPromotion;
     private String nomPromotion;
     private Double tauxReduction;
-    private LocalDate dateDebut;
-    private LocalDate dateFin;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+    private LocalDateTime dateDebut;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+    private LocalDateTime dateFin;
     private boolean active;
 
     // Getters and Setters
@@ -35,19 +40,19 @@ public class PromotionDTO {
         this.tauxReduction = tauxReduction;
     }
 
-    public LocalDate getDateDebut() {
+    public LocalDateTime getDateDebut() {
         return dateDebut;
     }
 
-    public void setDateDebut(LocalDate dateDebut) {
+    public void setDateDebut(LocalDateTime dateDebut) {
         this.dateDebut = dateDebut;
     }
 
-    public LocalDate getDateFin() {
+    public LocalDateTime getDateFin() {
         return dateFin;
     }
 
-    public void setDateFin(LocalDate dateFin) {
+    public void setDateFin(LocalDateTime dateFin) {
         this.dateFin = dateFin;
     }
 

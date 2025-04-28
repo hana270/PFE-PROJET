@@ -204,57 +204,7 @@ public class PromotionRestController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Une erreur est survenue: " + e.getMessage());
         }
     }
-    @GetMapping("/bassins")
-    public ResponseEntity<List<Map<String, Object>>> getAllBassins(
-            @RequestParam(required = false) Boolean includePromotions) {
-        try {
-            List<Bassin> bassins = bassinService.getAllBassins();
-            List<Map<String, Object>> result = new ArrayList<>();
-            
-            for (Bassin bassin : bassins) {
-                Map<String, Object> bassinMap = new HashMap<>();
-                bassinMap.put("idBassin", bassin.getIdBassin());
-                bassinMap.put("nomBassin", bassin.getNomBassin());
-                bassinMap.put("description", bassin.getDescription());
-                bassinMap.put("prix", bassin.getPrix());
-                bassinMap.put("materiau", bassin.getMateriau());
-                bassinMap.put("couleur", bassin.getCouleur());
-                bassinMap.put("dimensions", bassin.getDimensions());
-                bassinMap.put("disponible", bassin.isDisponible());
-                bassinMap.put("stock", bassin.getStock());
-                bassinMap.put("archive", bassin.isArchive());
-                bassinMap.put("categorie", bassin.getCategorie());
-                bassinMap.put("imagesBassin", bassin.getImagesBassin());
-                bassinMap.put("imagePath", bassin.getImagePath());
-                
-                if (Boolean.TRUE.equals(includePromotions)) {
-                    Date now = new Date();
-                    List<Promotion> activePromotions = promotionService.getAllPromotions().stream()
-                        .filter(p -> p.getDateDebut().before(now) && p.getDateFin().after(now))
-                        .filter(p -> (p.getBassins() != null && p.getBassins().stream()
-                                    .anyMatch(b -> b.getIdBassin().equals(bassin.getIdBassin()))) ||
-                                    (p.getCategories() != null && p.getCategories().stream()
-                                    .anyMatch(c -> c.getIdCategorie().equals(bassin.getCategorie().getIdCategorie()))))
-                        .collect(Collectors.toList());
-                    
-                    bassinMap.put("promotionActive", !activePromotions.isEmpty());
-                    if (!activePromotions.isEmpty()) {
-                        Promotion bestPromotion = activePromotions.stream()
-                            .max(Comparator.comparing(Promotion::getTauxReduction))
-                            .orElse(null);
-                        bassinMap.put("activePromotion", bestPromotion);
-                    }
-                }
-                
-                result.add(bassinMap);
-            }
-            
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-    
+ 
     @GetMapping("/active-for-bassin/{bassinId}")
     public ResponseEntity<Promotion> getActivePromotionForBassin(@PathVariable Long bassinId) {
         try {
@@ -304,5 +254,48 @@ public class PromotionRestController {
         }
     }
     
-
+    @GetMapping("/bassins")
+    public ResponseEntity<List<Map<String, Object>>> getAllBassins(
+            @RequestParam(required = false) Boolean includePromotions) {
+        try {
+            List<Bassin> bassins = bassinService.getAllBassins();
+            List<Map<String, Object>> result = new ArrayList<>();
+            
+            for (Bassin bassin : bassins) {
+                Map<String, Object> bassinMap = new HashMap<>();
+                bassinMap.put("idBassin", bassin.getIdBassin());
+                bassinMap.put("nomBassin", bassin.getNomBassin());
+                bassinMap.put("description", bassin.getDescription());
+                bassinMap.put("prix", bassin.getPrix());
+                bassinMap.put("materiau", bassin.getMateriau());
+                bassinMap.put("couleur", bassin.getCouleur());
+                bassinMap.put("dimensions", bassin.getDimensions());
+                bassinMap.put("disponible", bassin.isDisponible());
+                bassinMap.put("stock", bassin.getStock());
+                bassinMap.put("archive", bassin.isArchive());
+                bassinMap.put("categorie", bassin.getCategorie());
+                bassinMap.put("imagesBassin", bassin.getImagesBassin());
+                bassinMap.put("imagePath", bassin.getImagePath());
+                
+                if (Boolean.TRUE.equals(includePromotions)) {
+                    List<Promotion> activePromotions = promotionService.getActivePromotionsForBassin(bassin.getIdBassin());
+                    
+                    bassinMap.put("promotionActive", !activePromotions.isEmpty());
+                    if (!activePromotions.isEmpty()) {
+                        Promotion bestPromotion = activePromotions.stream()
+                            .max(Comparator.comparing(Promotion::getTauxReduction))
+                            .orElse(null);
+                        bassinMap.put("activePromotion", bestPromotion);
+                        bassinMap.put("prixPromo", bassin.getPrix() * (1 - (bestPromotion.getTauxReduction() / 100.0)));
+                    }
+                }
+                
+                result.add(bassinMap);
+            }
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

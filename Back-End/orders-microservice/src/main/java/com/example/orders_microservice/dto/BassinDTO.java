@@ -3,12 +3,16 @@ package com.example.orders_microservice.dto;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.Column;
+import lombok.Data;
+
+@Data
 public class BassinDTO {
     private Long idBassin;
     private String nomBassin;
     private String description;
     private Double prix;
-    private Double prixPromo;
+  
     private Integer stock;
     private String materiau;
     private String couleur;
@@ -17,7 +21,7 @@ public class BassinDTO {
     private String imagePath;
     private String image3dPath;
     private boolean disponible;
-    private boolean promotionActive;
+ 
     private boolean isFavorite;
     private boolean archive;
     private Long promotionId;
@@ -28,7 +32,58 @@ public class BassinDTO {
     private CategorieDTO categorie;
     private List<PromotionDTO> promotions;
 
-    public static class CategorieDTO {
+    
+    private String status; // "DISPONIBLE" ou "SUR_COMMANDE"
+    private String dureeFabrication; // Pour stocker la durée formatée
+    private String dureeFabricationDisplay; // Optionnel, si vous voulez un champ séparé
+
+    
+    private Integer dureeFabricationJours;
+    private Integer dureeFabricationJoursMin;
+    private Integer dureeFabricationJoursMax;
+    @Column(name = "sur_commande")
+    private Boolean surCommande = false;
+    
+    public boolean isSurCommande() {
+        return surCommande;
+    }
+    
+    public void setSurCommande(boolean surCommande) {
+        this.surCommande = surCommande;
+    }
+    public Integer getDureeFabricationJours() {
+        return dureeFabricationJours;
+    }
+    
+    public Integer getDureeFabricationJoursMin() {
+        return dureeFabricationJoursMin;
+    }
+    
+    public Integer getDureeFabricationJoursMax() {
+        return dureeFabricationJoursMax;
+    }
+
+    
+    
+    public List<PromotionDTO> getPromotions() {
+		return promotions;
+	}
+
+	public void setPromotions(List<PromotionDTO> promotions) {
+		this.promotions = promotions;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+
+
+	public static class CategorieDTO {
         private Long idCategorie;
         private String nomCategorie;
         private String description;
@@ -243,4 +298,26 @@ public class BassinDTO {
             .map(Object::toString)
             .collect(Collectors.toList());
     }
+    
+    private Boolean promotionActive;
+    private PromotionDTO activePromotion;
+    private Double prixPromo;
+    
+    public Boolean getPromotionActive() {
+        return promotionActive;
+    }
+
+    public void setPromotionActive(Boolean promotionActive) {
+        this.promotionActive = promotionActive;
+    }
+
+    public PromotionDTO getActivePromotion() {
+        return activePromotion;
+    }
+
+    public void setActivePromotion(PromotionDTO activePromotion) {
+        this.activePromotion = activePromotion;
+    }
+
+
 }

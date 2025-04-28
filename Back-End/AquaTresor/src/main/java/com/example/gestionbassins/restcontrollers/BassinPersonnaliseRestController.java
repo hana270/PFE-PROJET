@@ -5,6 +5,7 @@ import com.example.gestionbassins.dto.BassinPersonnaliseDTO;
 import com.example.gestionbassins.entities.Accessoire;
 import com.example.gestionbassins.entities.Bassin;
 import com.example.gestionbassins.entities.BassinPersonnalise;
+import com.example.gestionbassins.repos.AccessoireRepository;
 import com.example.gestionbassins.repos.BassinPersonnaliseRepository;
 import com.example.gestionbassins.repos.BassinRepository;
 import com.example.gestionbassins.service.BassinPersonnaliseServiceImpl;
@@ -38,6 +39,11 @@ public class BassinPersonnaliseRestController {
     
     @Autowired
     private BassinPersonnaliseRepository bassinPersonnaliseRepository;
+    
+    @Autowired
+    private AccessoireRepository accessoireRepository;
+    
+    
     
     @Value("${upload.dir}")
     private String UPLOAD_DIR;
@@ -107,6 +113,9 @@ public class BassinPersonnaliseRestController {
             responseDTO.setMateriaux(bassinPersonnalise.getMateriaux());
             responseDTO.setDimensions(bassinPersonnalise.getDimensions());
 
+            
+            responseDTO.setDureeFabrication(bassinPersonnalise.getDureeFabrication());
+            
             // Convertir les Accessoire en AccessoireDTO
             List<AccessoireDTO> accessoireDTOs = convertirAccessoiresEnDTO(bassinPersonnalise.getAccessoires());
             responseDTO.setAccessoires(accessoireDTOs);
@@ -274,10 +283,14 @@ public class BassinPersonnaliseRestController {
         return ResponseEntity.ok(accessoires);
     }
     
-    @GetMapping("/options/{idBassin}")
-    public ResponseEntity<Map<String, Object>> getOptions(@PathVariable("idBassin") Long idBassin) {
-        Map<String, Object> options = bassinPersonnaliseService.getOptionsForBassin(idBassin);
-        return ResponseEntity.ok(options);
+    @GetMapping("/options/{idBassin}") 
+    public ResponseEntity<?> getOptions(@PathVariable("idBassin") Long idBassin) {
+        try {
+            Map<String, Object> options = bassinPersonnaliseService.getOptionsForBassin(idBassin);
+            return ResponseEntity.ok(options);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
     
     @GetMapping("/getBassinPersonnaliseByBassin/{idBassin}")
@@ -291,4 +304,27 @@ public class BassinPersonnaliseRestController {
         }
     }
     
+    @PostMapping("/accessoires/by-ids")
+    public ResponseEntity<List<Accessoire>> getAccessoiresByIds(@RequestBody List<Long> accessoireIds) {
+        List<Accessoire> accessoires = accessoireRepository.findAllById(accessoireIds);
+        return ResponseEntity.ok(accessoires);
+    }
+    @GetMapping("/accessoires/{id}")
+    public ResponseEntity<AccessoireDTO> getAccessoireDetails(@PathVariable Long id) {
+        try {
+            Accessoire accessoire = accessoireRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Accessoire not found"));
+            
+            AccessoireDTO dto = new AccessoireDTO();
+            dto.setIdAccessoire(accessoire.getIdAccessoire());
+            dto.setNomAccessoire(accessoire.getNomAccessoire());
+            dto.setPrixAccessoire(accessoire.getPrixAccessoire());
+            dto.setImagePath(accessoire.getImagePath());
+            // Set other fields as needed
+            
+            return ResponseEntity.ok(dto);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

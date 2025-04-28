@@ -10,6 +10,7 @@ import com.example.gestionbassins.repos.BassinRepository;
 import jakarta.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -772,12 +773,13 @@ public class BassinPersonnaliseServiceImpl implements BassinPersonnaliseService{
     }
     
     public Map<String, Object> getOptionsForBassin(Long idBassin) {
-        // Récupérer le bassin personnalisé associé à l'ID du bassin
+    	 // Récupérer le bassin personnalisé associé à l'ID du bassin
         BassinPersonnalise bassinPersonnalise = bassinPersonnaliseRepository.trouverBassinPersonnaliseParIdBassin(idBassin);
 
         if (bassinPersonnalise == null) {
-            throw new RuntimeException("Aucun bassin personnalisé trouvé pour l'ID du bassin : " + idBassin);
+            throw new ResourceNotFoundException("No personalized bassin found for bassin ID: " + idBassin);
         }
+
 
         // Récupérer les matériaux, dimensions et accessoires
         List<String> materiaux = bassinPersonnalise.getMateriaux();

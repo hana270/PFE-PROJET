@@ -224,4 +224,9 @@ public class PromotionServiceImpl implements PromotionService {
     public List<Promotion> getOverlappingPromotionsForCategorie(Long categorieId, Date dateDebut, Date dateFin) {
         return promotionRepository.findOverlappingPromotionsForCategorie(categorieId, dateDebut, dateFin);
     }
+    
+    public List<Promotion> getActivePromotionsForBassin(Long bassinId) {
+        Date now = new Date();
+        return promotionRepository.findActivePromotionsForBassin(bassinId, now);
+    }
 }

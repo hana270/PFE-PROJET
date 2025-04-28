@@ -21,4 +21,7 @@ public interface PromotionService {
     
     List<Promotion> getOverlappingPromotionsForBassin(Long bassinId, Date dateDebut, Date dateFin);
     List<Promotion> getOverlappingPromotionsForCategorie(Long categorieId, Date dateDebut, Date dateFin); 
+    public List<Promotion> getActivePromotionsForBassin(Long bassinId) ;
+        
+    
     }

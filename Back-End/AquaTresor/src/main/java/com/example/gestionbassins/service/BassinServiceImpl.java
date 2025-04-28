@@ -1784,49 +1784,54 @@ private void addStatCard(Table table, String label, String value, DeviceRgb valu
     cell.add(valuePara);
     table.addCell(cell);
 }
-
 @Override
 @Transactional
 public Bassin mettreSurCommande(Long id, Integer dureeFabricationJours) {
     Bassin bassin = bassinRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Bassin non trouvé"));
-    
+
     // Vérifications
     if (bassin.getStock() != 0) {
         throw new IllegalStateException("Le bassin doit avoir un stock à 0 pour être mis sur commande");
     }
+    
     if (dureeFabricationJours == null || dureeFabricationJours <= 0) {
-        throw new IllegalArgumentException("La durée de fabrication doit être un nombre positif de jours");
-    }
-    if (dureeFabricationJours == null) {
+        // Si durée null ou invalide, utiliser valeurs par défaut
+        bassin.setDureeFabricationJours(null);
         bassin.setDureeFabricationJoursMin(3);
         bassin.setDureeFabricationJoursMax(15);
-        bassin.setDureeFabricationJours(null);
     } else {
+        // Si durée spécifiée, utiliser la même valeur pour tous les champs
         bassin.setDureeFabricationJours(dureeFabricationJours);
         bassin.setDureeFabricationJoursMin(dureeFabricationJours);
         bassin.setDureeFabricationJoursMax(dureeFabricationJours);
     }
-    
+
     // Mise à jour du statut
     bassin.setStatut("SUR_COMMANDE");
     bassin.setArchive(false);
     bassin.setSurCommande(true);
-    bassin.setDureeFabricationJours(dureeFabricationJours);
-    
+
     // Calcul de la date de disponibilité prévue
     Calendar calendar = Calendar.getInstance();
-    calendar.add(Calendar.DAY_OF_YEAR, dureeFabricationJours);
-   
+    int joursDelai = dureeFabricationJours != null ? dureeFabricationJours : 
+                     (bassin.getDureeFabricationJoursMin() + bassin.getDureeFabricationJoursMax()) / 2;
+    calendar.add(Calendar.DAY_OF_YEAR, joursDelai);
+
     // Notification
     Notification notification = new Notification();
-    notification.setMessage("ℹ️ Bassin " + bassin.getNomBassin() + 
-            " est maintenant sur commande (Délai: " + dureeFabricationJours + " jours)");
+    String delaiMsg = dureeFabricationJours != null ? 
+                      dureeFabricationJours + " jours" : 
+                      "Entre " + bassin.getDureeFabricationJoursMin() + " et " + 
+                      bassin.getDureeFabricationJoursMax() + " jours";
+                      
+    notification.setMessage("ℹ️ Bassin " + bassin.getNomBassin() +
+            " est maintenant sur commande (Délai: " + delaiMsg + ")");
     notification.setType("info");
     notification.setDate(new Date());
     notification.setRead(false);
     notificationRepository.save(notification);
-    
+
     return bassinRepository.save(bassin);
 }
 @Override
