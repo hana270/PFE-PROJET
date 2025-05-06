@@ -24,4 +24,6 @@ public interface PanierService {
     public PanierItem updateItemQuantity(Long userId, String sessionId, Long itemId, int newQuantity) ;
     public void updatePanierTotals(Panier panier);
     
+    Panier getPanierById(Long panierId);
+    void clearPanierProperly(Long panierId);
 }

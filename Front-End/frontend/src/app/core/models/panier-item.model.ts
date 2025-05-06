@@ -79,6 +79,9 @@ export interface PanierItem {
       imageUrl: string;
       prix: number;
   };
+
+  orderDetails?: string; 
+  
 }
 
 export interface PanierItemRequest {

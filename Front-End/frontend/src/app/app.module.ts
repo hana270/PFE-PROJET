@@ -68,6 +68,13 @@ import { BassinImagePipe } from './pipes/bassin-image.pipe';
 import { AuthService } from './core/authentication/auth.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TruncatePipe } from './pipes/truncate.pipe';
+import { CheckoutComponent } from './features/public/checkout/checkout.component';
+import { CommandeConfirmationComponent } from './features/public/commande-confirmation/commande-confirmation.component';
+import { MesCommandesComponent } from './features/client/mes-commandes/mes-commandes.component';
+// Corriger l'import dans app.module.ts et app-routing.module.ts
+import { CardPaymentComponent } from './features/public/card-payment/card-payment.component';
+
+import { PaymentVerificationComponent } from './features/public/payment-verification/payment-verification.component';
 
 export function tokenGetter() {
   return localStorage.getItem('jwt');
@@ -79,7 +86,6 @@ export function tokenGetter() {
     DashboardComponent,
     EditProfileComponent,
     HomePageComponent,
-
     LoginComponent,
     RegisterComponent,
     VerifEmailComponent,
@@ -124,6 +130,11 @@ export function tokenGetter() {
     UpdateProfileComponent,
     UpdateProfilComponent,
     TruncatePipe,
+    CheckoutComponent,
+    CommandeConfirmationComponent,
+    MesCommandesComponent,
+    CardPaymentComponent,
+    PaymentVerificationComponent,
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'my-angular-app' }),

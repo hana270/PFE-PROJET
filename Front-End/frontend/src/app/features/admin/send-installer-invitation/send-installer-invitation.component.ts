@@ -1,10 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/authentication/auth.service';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
-import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-send-installer-invitation',
@@ -17,14 +15,12 @@ export class SendInstallerInvitationComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private http: HttpClient,
     private authService: AuthService,
-    private router: Router,
-    private snackBar: MatSnackBar
+    private router: Router
   ) {
     this.invitationForm = this.fb.group({
       email: [
-        '',
+        '', 
         [
           Validators.required,
           Validators.email,
@@ -34,49 +30,82 @@ export class SendInstallerInvitationComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
+  ngOnInit() {
     if (!this.authService.isLoggedIn) {
       this.router.navigate(['/admin/signin']);
     }
   }
 
   async sendInvitation() {
-    if (this.invitationForm.valid && !this.isLoading) {
-      this.isLoading = true;
-      const apiUrl = 'http://localhost:8002/users/send-installer-invitation';
+    if (this.invitationForm.invalid || this.isLoading) return;
 
-      try {
-        await this.http.post(apiUrl, { email: this.invitationForm.get('email')?.value }).toPromise();
-        Swal.fire({
-          icon: 'success',
-          title: 'Succès !',
-          text: 'L\'invitation a été envoyée avec succès.',
-          confirmButtonColor: '#333',
-        });
-        this.invitationForm.reset();
-      } catch (error) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Erreur',
-          text: 'Une erreur est survenue lors de l\'envoi de l\'invitation.',
-          confirmButtonColor: '#333',
-        });
-        console.error('Erreur:', error);
-      } finally {
-        this.isLoading = false;
-      }
+    this.isLoading = true;
+    
+    const confirmation = await Swal.fire({
+      title: 'Confirmer l\'envoi',
+      text: `Envoyer une invitation à ${this.invitationForm.value.email} ?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Oui, envoyer',
+      cancelButtonText: 'Annuler'
+    });
+
+    if (!confirmation.isConfirmed) {
+      this.isLoading = false;
+      return;
+    }
+
+    try {
+      await this.authService.sendInstallerInvitation(
+        this.invitationForm.value.email
+      ).toPromise();
+      
+      await this.showSuccessAlert();
+      this.invitationForm.reset();
+    } catch (error) {
+      this.showErrorAlert(error);
+    } finally {
+      this.isLoading = false;
     }
   }
 
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/admin/signin']);
+  private async showSuccessAlert() {
+    await Swal.fire({
+      icon: 'success',
+      title: 'Invitation envoyée!',
+      html: `
+        <div style="text-align: left;">
+          <p>Un email professionnel a été envoyé avec succès à <strong>${this.invitationForm.value.email}</strong>.</p>
+          <p>Le nouveau membre recevra :</p>
+          <ul>
+            <li>Un message de bienvenue personnalisé</li>
+            <li>Des instructions claires pour finaliser son inscription</li>
+            <li>Toutes les informations nécessaires pour commencer</li>
+          </ul>
+        </div>
+      `,
+      confirmButtonText: 'Fermer',
+      confirmButtonColor: '#4CAF50',
+      customClass: {
+        popup: 'professional-swal'
+      }
+    });
   }
 
-  showSuccessMessage(message: string): void {
-    this.snackBar.open(message, 'Fermer', {
-      duration: 3000,
-      panelClass: ['success-snackbar'],
+  private showErrorAlert(error: any) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Erreur',
+      text: this.getErrorMessage(error),
+      confirmButtonColor: '#F44336',
     });
+  }
+
+  private getErrorMessage(error: any): string {
+    if (error.status === 400) return 'Email invalide ou déjà utilisé';
+    if (error.status === 404) return 'Service indisponible';
+    return 'Une erreur est survenue lors de l\'envoi';
   }
 }

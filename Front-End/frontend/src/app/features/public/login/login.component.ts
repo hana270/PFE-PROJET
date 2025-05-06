@@ -1,22 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  SocialAuthService,
-  GoogleLoginProvider,
-  SocialUser,
-} from '@abacritt/angularx-social-login';
+import { SocialUser } from '@abacritt/angularx-social-login';
 import Swal from 'sweetalert2';
 import { User } from '../../../core/models/user.model';
 import { AuthService } from '../../../core/authentication/auth.service';
-
-declare const google: any;
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
 })
 export class LoginComponent implements OnInit {
-  user = new User();
+  user: User = new User();
   err: number = 0;
   message: string = '';
   isLoading: boolean = false;
@@ -25,77 +19,24 @@ export class LoginComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private socialAuthService: SocialAuthService
   ) {}
 
   ngOnInit(): void {
-    /*
-    this.loadGoogleScript()
-      .then(() => {
-        this.initializeGoogleSignIn();
-      })
-      .catch((error) => {
-        console.error('Failed to load Google script', error);
-        Swal.fire('Erreur', 'Problème de connexion Google. Réessayez.', 'error');
-      });  */
-  }
-/*
-  loadGoogleScript(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (document.getElementById('google-signin-script')) {
-        resolve();
-        return;
+    console.log('LoginComponent initialized');
+    
+    // Debug logs
+    if (typeof this.authService.isLoggedIn !== 'undefined') {
+      console.log('Login state:', this.authService.isLoggedIn);
+      
+      // Check for tokens in localStorage
+      if (localStorage.getItem('jwt')) {
+        console.log('JWT token found in localStorage');
       }
-
-      const script = document.createElement('script');
-      script.id = 'google-signin-script';
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Failed to load Google script'));
-      document.head.appendChild(script);
-    });
-  }*/
-    loadGoogleScript(): void {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-    }
-
-  initializeGoogleSignIn() {
-    if (typeof google === 'undefined' || !google.accounts) {
-      console.error('Google API not loaded yet.');
-      setTimeout(() => this.initializeGoogleSignIn(), 500);
-      return;
-    }
-
-    // Clear any existing button
-    const buttonContainer = document.getElementById('google-signin-button');
-    if (buttonContainer) {
-      buttonContainer.innerHTML = '';
-    }
-
-    google.accounts.id.initialize({
-      client_id:
-        '133465243893-f4gk1sbs2adeoc4i2sapighi25pai6qt.apps.googleusercontent.com',
-      callback: this.handleCredentialResponse.bind(this),
-      auto_select: false,
-      cancel_on_tap_outside: true,
-    });
-
-    google.accounts.id.renderButton(
-      document.getElementById('google-signin-button'),
-      {
-        theme: 'outline',
-        size: 'large',
-        text: 'signin_with',
-        shape: 'rectangular',
-        width: 240,
+      
+      if (localStorage.getItem('token')) {
+        console.log('Token found in localStorage');
       }
-    );
+    }
   }
 
   handleCredentialResponse(response: any) {
@@ -104,25 +45,35 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    const decodedToken = this.authService.deJWT(response.credential);
-    const email = decodedToken.email;
-    const name = decodedToken.name;
+    try {
+      // Use jwt-decode directly to avoid the circular reference issue
+      const payload = JSON.parse(atob(response.credential.split('.')[1]));
+      const email = payload.email;
+      const name = payload.name;
 
-    const socialUser: SocialUser = {
-      provider: 'GOOGLE',
-      id: decodedToken.sub,
-      email: email,
-      name: name,
-      photoUrl: decodedToken.picture,
-      firstName: decodedToken.given_name,
-      lastName: decodedToken.family_name,
-      authToken: response.credential,
-      idToken: response.credential,
-      authorizationCode: '',
-      response: response,
-    };
+      const socialUser: SocialUser = {
+        provider: 'GOOGLE',
+        id: payload.sub,
+        email: email,
+        name: name,
+        photoUrl: payload.picture,
+        firstName: payload.given_name,
+        lastName: payload.family_name,
+        authToken: response.credential,
+        idToken: response.credential,
+        authorizationCode: '',
+        response: response,
+      };
 
-    this.handleSocialLogin(socialUser);
+      this.handleSocialLogin(socialUser);
+    } catch (error) {
+      console.error('Error parsing Google credential:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Could not process Google authentication response',
+      });
+    }
   }
 
   handleSocialLogin(user: SocialUser) {
@@ -131,13 +82,26 @@ export class LoginComponent implements OnInit {
 
     this.authService.socialLogin(user).subscribe({
       next: (response) => {
-        console.log('Login successful:', response);
+        console.log('Social login successful:', response);
         this.isLoading = false;
-        if (response.headers.get('Authorization')) {
-          const jwt = response.headers.get('Authorization');
-          this.authService.saveToken(jwt);
+        
+        // Handle different response formats
+        let token = null;
+        
+        // Check if token is in headers
+        if (response.headers && response.headers.get('Authorization')) {
+          token = response.headers.get('Authorization');
+        } 
+        // Check if token is in response body
+        else if (response.body && (response.body.token || response.body.jwt)) {
+          token = response.body.token || response.body.jwt;
+        }
+        
+        if (token) {
+          this.authService.saveToken(token);
           this.authService.setLoggedInStatus(true);
-
+          
+          // Check if email verification is required
           if (response.body?.message === "Vérification d'email requise") {
             localStorage.setItem('pendingVerificationEmail', user.email);
             this.router.navigate(['/verifEmail']);
@@ -149,62 +113,146 @@ export class LoginComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Login error:', error);
-        let errorMessage = 'Connexion impossible. Réessayez.';
-        if (error.error?.message === 'EMAIL_NOT_VERIFIED') {
-          errorMessage = 'Validez le code reçu par email pour continuer.';
+        console.error('Social login error:', error);
+        let errorMessage = 'La connexion a échoué. Veuillez réessayer.';
+        if (error.message) {
+          errorMessage = error.message;
         }
-        Swal.fire('Erreur', errorMessage, 'error');
+        Swal.fire({
+          icon: 'error',
+          title: 'Connexion impossible',
+          text: errorMessage,
+          confirmButtonText: 'OK'
+        });
         this.isLoading = false;
       },
     });
   }
 
-// login.component.ts
-onLoggedin() {
+
+// Modifications à apporter au LoginComponent
+
+async onLoggedin() {
   this.isLoading = true;
-  const credentials = {
+
+  try {
+    // 1. Validation
+    if (!this.user.username || !this.user.password) {
+      throw new Error('Veuillez renseigner votre nom d\'utilisateur et mot de passe');
+    }
+
+    // 2. Appel au service
+    const response = await this.authService.login({
       username: this.user.username,
-      password: this.user.password,
-  };
+      password: this.user.password
+    }).toPromise();
 
-  this.authService.login(credentials).subscribe({
-      next: () => {
-          this.redirectBasedOnRole();
-      },
-      error: (error) => {
-          this.handleError('Erreur', error);
-      },
-      complete: () => {
-          this.isLoading = false;
-      },
-  });
+    // 3. Vérification du stockage et tentative de récupération si nécessaire
+    const storedJwt = localStorage.getItem('jwt');
+    const storedToken = localStorage.getItem('token');
+    
+    if (!storedJwt && storedToken) {
+      // Si token existe mais pas jwt, réparer
+      localStorage.setItem('jwt', storedToken);
+      console.log('JWT restauré depuis token après login');
+    }
+    
+    if (!storedToken && storedJwt) {
+      // Si jwt existe mais pas token, réparer
+      localStorage.setItem('token', storedJwt);
+      console.log('Token restauré depuis jwt après login');
+    }
+    
+    if (!storedJwt && !storedToken) {
+      throw new Error('Les tokens de connexion n\'ont pas été stockés correctement');
+    }
+    
+    console.log('Tokens après login:', {
+      jwt: localStorage.getItem('jwt'),
+      token: localStorage.getItem('token')
+    });
+
+    // 4. Vérifier l'intégrité de l'authentification
+    this.authService.verifyAuthIntegrity();
+
+    // 5. Redirection
+    await this.redirectBasedOnRole();
+    
+    // 6. Confirmation
+    Swal.fire({
+      icon: 'success',
+      title: 'Connexion réussie',
+      text: 'Bienvenue sur votre espace personnel',
+      timer: 2000,
+      showConfirmButton: false
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    
+    // Gestion type-safe de l'erreur
+    let errorMessage = 'Une erreur est survenue';
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error && typeof error === 'object' && 'message' in error) {
+      errorMessage = (error as { message: string }).message;
+    }
+  
+    this.handleError('Échec de connexion', errorMessage);
+  } finally {
+    this.isLoading = false;
+  } 
 }
 
-private handleError(title: string, error: any) {
+// Ne pas appeler clearSession dans le login component
+private handleError(title: string, errorMessage: string) {
   this.err = 1;
-  this.message = error.error?.message || error.message || 'Erreur inconnue.';
+  this.message = errorMessage;
+  
   Swal.fire({
-      icon: 'error',
-      title: title,
-      text: this.message,
+    icon: 'error',
+    title: title,
+    text: errorMessage,
+    confirmButtonText: 'OK',
+    confirmButtonColor: '#3085d6'
   });
 }
 
-  private redirectBasedOnRole() {
+private redirectBasedOnRole() {
+  try {
+    console.log('Redirecting based on role');
+    // Vérifier l'intégrité avant de rediriger
+    this.authService.verifyAuthIntegrity();
+    
     if (this.authService.isAdmin()) {
+      console.log('Detected admin role, redirecting to admin dashboard');
       this.router.navigate(['/admin/dashboard']);
     } else if (this.authService.isInstaller()) {
+      console.log('Detected installer role, redirecting to installer home');
       this.router.navigate(['/installer-home']);
     } else if (this.authService.isClient()) {
+      console.log('Detected client role, redirecting to homepage');
       this.router.navigate(['/homepage']);
     } else {
-      this.handleError('Erreur', 'Rôle non reconnu');
+      console.log('No specific role detected, redirecting to homepage');
+      this.router.navigate(['/homepage']);
     }
+    
+    // Vérifier à nouveau après la redirection
+    setTimeout(() => {
+      console.log('État après redirection:', {
+        jwt: localStorage.getItem('jwt'),
+        token: localStorage.getItem('token')
+      });
+    }, 500);
+  } catch (error) {
+    console.error('Error during role-based redirection:', error);
+    this.router.navigate(['/homepage']);
   }
+}
 
-
-  // Fonction pour basculer la visibilité du mot de passe
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
   }

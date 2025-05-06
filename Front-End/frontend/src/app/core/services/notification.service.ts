@@ -8,7 +8,7 @@ import { Notification } from '../models/notification.models';
   providedIn: 'root'
 })
 export class NotificationService {
-  private apiUrl = 'http://localhost:8089/aquatresor/api/notifications';
+  private apiUrl = 'http://localhost:8082/notifications/api/notifications';
   private notificationsSubject = new BehaviorSubject<Notification[]>([]);
   private unreadCountSubject = new BehaviorSubject<number>(0);
   

@@ -11,6 +11,7 @@ import com.example.orders_microservice.entities.Panier;
 import com.example.orders_microservice.entities.PanierItem;
 import com.example.orders_microservice.entities.PanierItemAccessoire;
 import com.example.orders_microservice.exceptions.InsufficientStockException;
+import com.example.orders_microservice.exceptions.PanierNotFoundException;
 import com.example.orders_microservice.repos.BassinCustomizationRepository;
 import com.example.orders_microservice.repos.CustomizationAccessoireRepository;
 import com.example.orders_microservice.repos.PanierItemAccessoireRepository;
@@ -29,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 @Service
 public class PanierServiceImpl implements PanierService {
@@ -53,16 +55,16 @@ public class PanierServiceImpl implements PanierService {
 
 	@Autowired
 	private BassinServiceClient bassinClient;
-	
+
 	@Autowired
 	private BassinPersonnaliseClient bassinPersonnaliseClient;
-	
-	
+
 	private static final int SESSION_CART_EXPIRATION_HOURS = 48;
 
 	public PanierServiceImpl(PanierRepository panierRepository, PanierItemRepository panierItemRepository,
 			PanierItemAccessoireRepository panierItemAccessoireRepository, BassinServiceClient bassinClient,
-			PromotionServiceClient promotionClient, AccessoireServiceClient accessoireClient,BassinPersonnaliseClient bassinPersonnaliseClient ) {
+			PromotionServiceClient promotionClient, AccessoireServiceClient accessoireClient,
+			BassinPersonnaliseClient bassinPersonnaliseClient) {
 		this.panierRepository = panierRepository;
 		this.panierItemRepository = panierItemRepository;
 		this.panierItemAccessoireRepository = panierItemAccessoireRepository;
@@ -72,80 +74,79 @@ public class PanierServiceImpl implements PanierService {
 		this.bassinPersonnaliseClient = bassinPersonnaliseClient;
 	}
 
-	
 	public BassinPersonnaliseDTO getBassinPersonnaliseDetails(Long bassinId) {
-	    if (bassinId == null) {
-	        throw new IllegalArgumentException("Basin ID cannot be null");
-	    }
-	    
-	    try {
-	        // First try to get detailed personalized basin info
-	        BassinPersonnaliseDTO bassinPersonnalise = bassinPersonnaliseClient.getDetailBassinPersonnalise(bassinId);
-	        return bassinPersonnalise;
-	    } catch (Exception e) {
-	        logger.error("Error getting personalized basin details: {}", e.getMessage());
-	        
-	        // Fallback to getting by ID
-	        try {
-	            return bassinPersonnaliseClient.getBassinPersonnaliseByBassinId(bassinId);
-	        } catch (Exception ex) {
-	            logger.error("Error getting personalized basin by ID: {}", ex.getMessage());
-	            throw new EntityNotFoundException("Personalized basin not found with ID: " + bassinId);
-	        }
-	    }
-	}
-	
-@Override
-    @Transactional
-    public Panier getOrCreatePanier(Long userId, String sessionId) {
-        logger.debug("Entering getOrCreatePanier - userId: {}, sessionId: {}", userId, sessionId);
-        
-        // Cas 1: Utilisateur authentifié
-        if (userId != null) {
-            logger.debug("Processing authenticated user cart");
-            Panier userPanier = panierRepository.findByUserId(userId).orElseGet(() -> {
-                Panier newPanier = new Panier();
-                newPanier.setUserId(userId);
-                newPanier.setItems(new ArrayList<>());
-                newPanier.setLastUpdated(LocalDateTime.now());
-                logger.info("Creating new cart for user ID: {}", userId);
-                return panierRepository.save(newPanier);
-            });
-            
-            // Si un sessionId est fourni, fusionner le panier de session avec celui de l'utilisateur
-            if (sessionId != null && !sessionId.isEmpty()) {
-                panierRepository.findBySessionId(sessionId).ifPresent(sessionCart -> {
-                    if (!sessionCart.getId().equals(userPanier.getId())) {
-                        mergeCarts(userPanier, sessionCart);
-                        // Supprimer l'ancien panier de session après la fusion
-                        panierRepository.delete(sessionCart);
-                    }
-                });
-            }
-            
-            // Mettre à jour la date de dernière modification
-            userPanier.setLastUpdated(LocalDateTime.now());
-            return panierRepository.save(userPanier);
-        }
-        
-        // Cas 2: Utilisateur non authentifié avec session
-        String effectiveSessionId = (sessionId == null || sessionId.isEmpty()) ? 
-                UUID.randomUUID().toString() : sessionId;
-                
-        Panier sessionPanier = panierRepository.findBySessionId(effectiveSessionId).orElseGet(() -> {
-            Panier newPanier = new Panier();
-            newPanier.setSessionId(effectiveSessionId);
-            newPanier.setItems(new ArrayList<>());
-            newPanier.setLastUpdated(LocalDateTime.now());
-            logger.info("Creating new session cart with ID: {}", effectiveSessionId);
-            return panierRepository.save(newPanier);
-        });
-        
-        // Mettre à jour la date de dernière modification
-        sessionPanier.setLastUpdated(LocalDateTime.now());
-        return panierRepository.save(sessionPanier);
-    }
+		if (bassinId == null) {
+			throw new IllegalArgumentException("Basin ID cannot be null");
+		}
 
+		try {
+			// First try to get detailed personalized basin info
+			BassinPersonnaliseDTO bassinPersonnalise = bassinPersonnaliseClient.getDetailBassinPersonnalise(bassinId);
+			return bassinPersonnalise;
+		} catch (Exception e) {
+			logger.error("Error getting personalized basin details: {}", e.getMessage());
+
+			// Fallback to getting by ID
+			try {
+				return bassinPersonnaliseClient.getBassinPersonnaliseByBassinId(bassinId);
+			} catch (Exception ex) {
+				logger.error("Error getting personalized basin by ID: {}", ex.getMessage());
+				throw new EntityNotFoundException("Personalized basin not found with ID: " + bassinId);
+			}
+		}
+	}
+
+	@Override
+	@Transactional
+	public Panier getOrCreatePanier(Long userId, String sessionId) {
+		logger.debug("Entering getOrCreatePanier - userId: {}, sessionId: {}", userId, sessionId);
+
+		// Cas 1: Utilisateur authentifié
+		if (userId != null) {
+			logger.debug("Processing authenticated user cart");
+			Panier userPanier = panierRepository.findByUserId(userId).orElseGet(() -> {
+				Panier newPanier = new Panier();
+				newPanier.setUserId(userId);
+				newPanier.setItems(new ArrayList<>());
+				newPanier.setLastUpdated(LocalDateTime.now());
+				logger.info("Creating new cart for user ID: {}", userId);
+				return panierRepository.save(newPanier);
+			});
+
+			// Si un sessionId est fourni, fusionner le panier de session avec celui de
+			// l'utilisateur
+			if (sessionId != null && !sessionId.isEmpty()) {
+				panierRepository.findBySessionId(sessionId).ifPresent(sessionCart -> {
+					if (!sessionCart.getId().equals(userPanier.getId())) {
+						mergeCarts(userPanier, sessionCart);
+						// Supprimer l'ancien panier de session après la fusion
+						panierRepository.delete(sessionCart);
+					}
+				});
+			}
+
+			// Mettre à jour la date de dernière modification
+			userPanier.setLastUpdated(LocalDateTime.now());
+			return panierRepository.save(userPanier);
+		}
+
+		// Cas 2: Utilisateur non authentifié avec session
+		String effectiveSessionId = (sessionId == null || sessionId.isEmpty()) ? UUID.randomUUID().toString()
+				: sessionId;
+
+		Panier sessionPanier = panierRepository.findBySessionId(effectiveSessionId).orElseGet(() -> {
+			Panier newPanier = new Panier();
+			newPanier.setSessionId(effectiveSessionId);
+			newPanier.setItems(new ArrayList<>());
+			newPanier.setLastUpdated(LocalDateTime.now());
+			logger.info("Creating new session cart with ID: {}", effectiveSessionId);
+			return panierRepository.save(newPanier);
+		});
+
+		// Mettre à jour la date de dernière modification
+		sessionPanier.setLastUpdated(LocalDateTime.now());
+		return panierRepository.save(sessionPanier);
+	}
 
 	private boolean isCartExpired(Panier panier) {
 		if (panier.getLastUpdated() == null)
@@ -265,32 +266,31 @@ public class PanierServiceImpl implements PanierService {
 
 		updatePanierTotals(panier);
 	}
-	 
-    @Override
-    public void clearPanier(Long userId, String sessionId) {
-        if (userId != null) {
-            panierRepository.findByUserId(userId).ifPresent(panier -> {
-                panier.getItems().clear();
-                panier.setLastUpdated(LocalDateTime.now());
-                panierRepository.save(panier);
-            });
-        } else if (sessionId != null) {
-            panierRepository.findBySessionId(sessionId).ifPresent(panier -> {
-                panier.getItems().clear();
-                panier.setLastUpdated(LocalDateTime.now());
-                panierRepository.save(panier);
-            });
-        }
-    }
-    
-    private Panier createNewSessionCart(String sessionId) {
-        Panier panier = new Panier();
-        panier.setSessionId(sessionId);
-        panier.setItems(new ArrayList<>());
-        panier.setLastUpdated(LocalDateTime.now());
-        return panierRepository.save(panier);
-    }
-	
+
+	@Override
+	public void clearPanier(Long userId, String sessionId) {
+		if (userId != null) {
+			panierRepository.findByUserId(userId).ifPresent(panier -> {
+				panier.getItems().clear();
+				panier.setLastUpdated(LocalDateTime.now());
+				panierRepository.save(panier);
+			});
+		} else if (sessionId != null) {
+			panierRepository.findBySessionId(sessionId).ifPresent(panier -> {
+				panier.getItems().clear();
+				panier.setLastUpdated(LocalDateTime.now());
+				panierRepository.save(panier);
+			});
+		}
+	}
+
+	private Panier createNewSessionCart(String sessionId) {
+		Panier panier = new Panier();
+		panier.setSessionId(sessionId);
+		panier.setItems(new ArrayList<>());
+		panier.setLastUpdated(LocalDateTime.now());
+		return panierRepository.save(panier);
+	}
 
 	public static class PartialAdditionException extends RuntimeException {
 		private final PanierItem item;
@@ -445,162 +445,160 @@ public class PanierServiceImpl implements PanierService {
 	 * Ajoute un article au panier Pour les bassins personnalisés, utilise toujours
 	 * createNewPanierItem
 	 */
-@Transactional
-public PanierItem addItemToPanier(Long userId, String sessionId, PanierItemRequest request) {
-    Panier panier = getOrCreatePanier(userId, sessionId);
-    
-    if (Boolean.TRUE.equals(request.getIsCustomized())) {
-        return handleCustomBassin(panier, request);
-    } else {
-        return handleStandardBassin(panier, request);
-    }
-}
+	@Transactional
+	public PanierItem addItemToPanier(Long userId, String sessionId, PanierItemRequest request) {
+		Panier panier = getOrCreatePanier(userId, sessionId);
 
-private PanierItem handleCustomBassin(Panier panier, PanierItemRequest request) {
-    // Validation
-    if (request.getPrixEstime() == null || request.getPrixEstime() <= 0) {
-        throw new IllegalArgumentException("Estimated price must be positive for custom items");
-    }
-    
-    // Add validation
-    if (request.getMateriauSelectionne() == null) {
-        logger.warn("MateriauSelectionne is null in request!");
-    }
-    
-    PanierItem item = new PanierItem();
-    item.setPanier(panier);
-    item.setQuantity(request.getQuantity());
-    item.setIsCustomized(true);
-    item.setStatus("SUR_COMMANDE");
-    
-    // Set base properties
-    item.setBassinId(request.getBassinId());
-    item.setNomBassin(request.getNomBassin());
-    item.setImageUrl(request.getImageUrl());
-    item.setPrixOriginal(request.getPrixOriginal());
-    
-    // Set customization details
-    item.setMateriauSelectionne(request.getMateriauSelectionne() != null ? 
-            request.getMateriauSelectionne() : "Non spécifié"); 
-    
-    item.setPrixMateriau(request.getPrixMateriau());
-    item.setDimensionSelectionnee(request.getDimensionSelectionnee());
-    item.setPrixDimension(request.getPrixDimension());
-    item.setCouleurSelectionnee(request.getCouleurSelectionnee());
-    item.setPrixEstime(request.getPrixEstime());
-    item.setEffectivePrice(request.getPrixEstime());
-    item.setDureeFabrication(request.getDureeFabrication().toString());
-    
-    // Process accessories
-    if (request.getAccessoireIds() != null && !request.getAccessoireIds().isEmpty()) {
-        List<AccessoireDTO> accessoires = accessoireClient.getAccessoiresByIds(request.getAccessoireIds());
-        List<PanierItemAccessoire> panierAccessoires = accessoires.stream()
-            .map(acc -> createPanierItemAccessoire(item, acc))
-            .collect(Collectors.toList());
-        item.setAccessoires(panierAccessoires);
-    }
-    
-    // Calculate subtotal
-    item.setSubtotal(item.getEffectivePrice() * item.getQuantity());
-    
-    panier.getItems().add(item);
-    panierRepository.save(panier);
-    updatePanierTotals(panier);
-    
-    return item;
-}
+		if (Boolean.TRUE.equals(request.getIsCustomized())) {
+			return handleCustomBassin(panier, request);
+		} else {
+			return handleStandardBassin(panier, request);
+		}
+	}
 
-private PanierItemAccessoire createPanierItemAccessoire(PanierItem item, AccessoireDTO accessoire) {
-    PanierItemAccessoire panierAccessoire = new PanierItemAccessoire();
-    panierAccessoire.setPanierItem(item);
-    panierAccessoire.setAccessoireId(accessoire.getId());
-    panierAccessoire.setNomAccessoire(accessoire.getNomAccessoire());
-    panierAccessoire.setPrixAccessoire(accessoire.getPrixAccessoire());
-    panierAccessoire.setImageUrl(accessoire.getImageUrl());
-    return panierAccessoire;
-}
+	private PanierItem handleCustomBassin(Panier panier, PanierItemRequest request) {
+		// Validation
+		if (request.getPrixEstime() == null || request.getPrixEstime() <= 0) {
+			throw new IllegalArgumentException("Estimated price must be positive for custom items");
+		}
 
-private PanierItem handleStandardBassin(Panier panier, PanierItemRequest request) {
-    if (request.getBassinId() == null) {
-        throw new IllegalArgumentException("Basin ID is required for standard items");
-    }
+		// Add validation
+		if (request.getMateriauSelectionne() == null) {
+			logger.warn("MateriauSelectionne is null in request!");
+		}
 
-    BassinDTO bassin = bassinClient.getBassinDetails(request.getBassinId());
-    
+		PanierItem item = new PanierItem();
+		item.setPanier(panier);
+		item.setQuantity(request.getQuantity());
+		item.setIsCustomized(true);
+		item.setStatus("SUR_COMMANDE");
 
-    PanierItem item = new PanierItem();
-    item.setPanier(panier);
-    item.setQuantity(request.getQuantity());
-    item.setAddedAt(LocalDateTime.now());
-    item.setIsCustomized(false);
-    item.setStatus(request.getStatus()); 
-    
-    
-    // Set standard basin properties
-    item.setBassinId(bassin.getIdBassin());
-    item.setNomBassin(bassin.getNomBassin());
-    item.setDescription(bassin.getDescription());
-    item.setImageUrl(bassin.getImagesBassin() != null && !bassin.getImagesBassin().isEmpty() ? 
-                   bassin.getImagesBassin().get(0).getImagePath() : null);
-    item.setStatus(bassin.getStatus());
-    item.setPrixOriginal(bassin.getPrix());
-    
-    // Handle promotion
-    if (request.getPromotionId() != null) {
-        try {
-            PromotionDTO promotion = promotionClient.getPromotionDetails(request.getPromotionId());
-            if (promotion != null && promotion.isActive()) {
-                item.setPromotionActive(true);
-                item.setNomPromotion(promotion.getNomPromotion());
-                item.setTauxReduction(promotion.getTauxReduction());
-                
-                double discountedPrice = Math.round(bassin.getPrix() * (1 - promotion.getTauxReduction() / 100.0) * 100.0) / 100.0;
-                
-                item.setPrixPromo(discountedPrice);
-                item.setEffectivePrice(discountedPrice);
-            }
-        } catch (Exception e) {
-            logger.warn("Could not apply promotion", e);
-        }
-    }
-    
-    if (item.getEffectivePrice() == null) {
-        item.setEffectivePrice(bassin.getPrix());
-    }
-    
-    // Process accessories
-    if (request.getAccessoireIds() != null && !request.getAccessoireIds().isEmpty()) {
-        List<PanierItemAccessoire> accessories = new ArrayList<>();
-        for (Long accessoireId : request.getAccessoireIds()) {
-            try {
-                AccessoireDTO accessoireDTO = accessoireClient.getAccessoireDetails(accessoireId);
-                if (accessoireDTO != null) {
-                    PanierItemAccessoire accessoire = new PanierItemAccessoire();
-                    accessoire.setPanierItem(item);
-                    accessoire.setAccessoireId(accessoireId);
-                    accessoire.setNomAccessoire(accessoireDTO.getNomAccessoire());
-                    accessoire.setPrixAccessoire(accessoireDTO.getPrixAccessoire());
-                    accessoire.setImageUrl(accessoireDTO.getImageUrl());
-                    accessories.add(accessoire);
-                }
-            } catch (Exception e) {
-                logger.warn("Could not retrieve accessory details for ID: {}", accessoireId, e);
-            }
-        }
-        item.setAccessoires(accessories);
-    }
-    
-    // Calculate subtotal
-    item.setSubtotal(item.getEffectivePrice() * item.getQuantity());
-    
-    // Save the item
-    panier.getItems().add(item);
-    panierRepository.save(panier);
-    updatePanierTotals(panier);
-    
-    return item;
-}
-	
+		// Set base properties
+		item.setBassinId(request.getBassinId());
+		item.setNomBassin(request.getNomBassin());
+		item.setImageUrl(request.getImageUrl());
+		item.setPrixOriginal(request.getPrixOriginal());
+
+		// Set customization details
+		item.setMateriauSelectionne(
+				request.getMateriauSelectionne() != null ? request.getMateriauSelectionne() : "Non spécifié");
+
+		item.setPrixMateriau(request.getPrixMateriau());
+		item.setDimensionSelectionnee(request.getDimensionSelectionnee());
+		item.setPrixDimension(request.getPrixDimension());
+		item.setCouleurSelectionnee(request.getCouleurSelectionnee());
+		item.setPrixEstime(request.getPrixEstime());
+		item.setEffectivePrice(request.getPrixEstime());
+		item.setDureeFabrication(request.getDureeFabrication().toString());
+
+		// Process accessories
+		if (request.getAccessoireIds() != null && !request.getAccessoireIds().isEmpty()) {
+			List<AccessoireDTO> accessoires = accessoireClient.getAccessoiresByIds(request.getAccessoireIds());
+			List<PanierItemAccessoire> panierAccessoires = accessoires.stream()
+					.map(acc -> createPanierItemAccessoire(item, acc)).collect(Collectors.toList());
+			item.setAccessoires(panierAccessoires);
+		}
+
+		// Calculate subtotal
+		item.setSubtotal(item.getEffectivePrice() * item.getQuantity());
+
+		panier.getItems().add(item);
+		panierRepository.save(panier);
+		updatePanierTotals(panier);
+
+		return item;
+	}
+
+	private PanierItemAccessoire createPanierItemAccessoire(PanierItem item, AccessoireDTO accessoire) {
+		PanierItemAccessoire panierAccessoire = new PanierItemAccessoire();
+		panierAccessoire.setPanierItem(item);
+		panierAccessoire.setAccessoireId(accessoire.getAccessoireId());
+		panierAccessoire.setNomAccessoire(accessoire.getNomAccessoire());
+		panierAccessoire.setPrixAccessoire(accessoire.getPrixAccessoire());
+		panierAccessoire.setImageUrl(accessoire.getImageUrl());
+		return panierAccessoire;
+	}
+
+	private PanierItem handleStandardBassin(Panier panier, PanierItemRequest request) {
+		if (request.getBassinId() == null) {
+			throw new IllegalArgumentException("Basin ID is required for standard items");
+		}
+
+		BassinDTO bassin = bassinClient.getBassinDetails(request.getBassinId());
+
+		PanierItem item = new PanierItem();
+		item.setPanier(panier);
+		item.setQuantity(request.getQuantity());
+		item.setAddedAt(LocalDateTime.now());
+		item.setIsCustomized(false);
+		item.setStatus(request.getStatus());
+
+		// Set standard basin properties
+		item.setBassinId(bassin.getIdBassin());
+		item.setNomBassin(bassin.getNomBassin());
+		item.setDescription(bassin.getDescription());
+		item.setImageUrl(bassin.getImagesBassin() != null && !bassin.getImagesBassin().isEmpty()
+				? bassin.getImagesBassin().get(0).getImagePath()
+				: null);
+		item.setStatus(bassin.getStatus());
+		item.setPrixOriginal(bassin.getPrix());
+
+		// Handle promotion
+		if (request.getPromotionId() != null) {
+			try {
+				PromotionDTO promotion = promotionClient.getPromotionDetails(request.getPromotionId());
+				if (promotion != null && promotion.isActive()) {
+					item.setPromotionActive(true);
+					item.setNomPromotion(promotion.getNomPromotion());
+					item.setTauxReduction(promotion.getTauxReduction());
+
+					double discountedPrice = Math
+							.round(bassin.getPrix() * (1 - promotion.getTauxReduction() / 100.0) * 100.0) / 100.0;
+
+					item.setPrixPromo(discountedPrice);
+					item.setEffectivePrice(discountedPrice);
+				}
+			} catch (Exception e) {
+				logger.warn("Could not apply promotion", e);
+			}
+		}
+
+		if (item.getEffectivePrice() == null) {
+			item.setEffectivePrice(bassin.getPrix());
+		}
+
+		// Process accessories
+		if (request.getAccessoireIds() != null && !request.getAccessoireIds().isEmpty()) {
+			List<PanierItemAccessoire> accessories = new ArrayList<>();
+			for (Long accessoireId : request.getAccessoireIds()) {
+				try {
+					AccessoireDTO accessoireDTO = accessoireClient.getAccessoireDetails(accessoireId);
+					if (accessoireDTO != null) {
+						PanierItemAccessoire accessoire = new PanierItemAccessoire();
+						accessoire.setPanierItem(item);
+						accessoire.setAccessoireId(accessoireId);
+						accessoire.setNomAccessoire(accessoireDTO.getNomAccessoire());
+						accessoire.setPrixAccessoire(accessoireDTO.getPrixAccessoire());
+						accessoire.setImageUrl(accessoireDTO.getImageUrl());
+						accessories.add(accessoire);
+					}
+				} catch (Exception e) {
+					logger.warn("Could not retrieve accessory details for ID: {}", accessoireId, e);
+				}
+			}
+			item.setAccessoires(accessories);
+		}
+
+		// Calculate subtotal
+		item.setSubtotal(item.getEffectivePrice() * item.getQuantity());
+
+		// Save the item
+		panier.getItems().add(item);
+		panierRepository.save(panier);
+		updatePanierTotals(panier);
+
+		return item;
+	}
 
 	/**
 	 * Creates a new standard basin item
@@ -648,7 +646,6 @@ private PanierItem handleStandardBassin(Panier panier, PanierItemRequest request
 
 		return panierItemRepository.save(item);
 	}
-
 
 	/*********************************/
 	@Override
@@ -772,9 +769,9 @@ private PanierItem handleStandardBassin(Panier panier, PanierItemRequest request
 	@Override
 	@Transactional
 	public Panier mergeCarts(Panier primaryCart, Panier secondaryCart) {
-		 logger.info("Merging cart {} into cart {}", primaryCart.getId(), secondaryCart.getId());
-	        
-		 if (primaryCart == null || secondaryCart == null) {
+		logger.info("Merging cart {} into cart {}", primaryCart.getId(), secondaryCart.getId());
+
+		if (primaryCart == null || secondaryCart == null) {
 			throw new IllegalArgumentException("Both carts must be non-null");
 		}
 
@@ -899,148 +896,172 @@ private PanierItem handleStandardBassin(Panier panier, PanierItemRequest request
 		return item;
 	}
 
-private PanierItem createNewPanierItem(Panier panier, PanierItemRequest request, BassinDTO bassin) {
-    PanierItem panierItem = new PanierItem();
-    panierItem.setPanier(panier);
-    panierItem.setQuantity(request.getQuantity());
-    panierItem.setPrixOriginal(request.getPrixOriginal());
-    panierItem.setIsCustomized(request.getIsCustomized());
-   
-    // Définir le statut correctement
-    if (request.getStatus() != null) {
-        panierItem.setStatus(request.getStatus());
-    } else if (bassin != null) {
-        panierItem.setStatus(bassin.getStatus());
-    } else {
-        panierItem.setStatus("SUR_COMMANDE"); // Valeur par défaut
-    }
-    
-    if (Boolean.TRUE.equals(request.getIsCustomized())) {
-        handleCustomizedItem(panierItem, request, bassin);
-    } else {
-        handleStandardItem(panierItem, request, bassin);
-    }
+	private PanierItem createNewPanierItem(Panier panier, PanierItemRequest request, BassinDTO bassin) {
+		PanierItem panierItem = new PanierItem();
+		panierItem.setPanier(panier);
+		panierItem.setQuantity(request.getQuantity());
+		panierItem.setPrixOriginal(request.getPrixOriginal());
+		panierItem.setIsCustomized(request.getIsCustomized());
 
-    handlePromotion(panierItem, request);
+		// Définir le statut correctement
+		if (request.getStatus() != null) {
+			panierItem.setStatus(request.getStatus());
+		} else if (bassin != null) {
+			panierItem.setStatus(bassin.getStatus());
+		} else {
+			panierItem.setStatus("SUR_COMMANDE"); // Valeur par défaut
+		}
 
-    PanierItem savedItem = panierItemRepository.save(panierItem);
-    if (panierItem.getAccessoires() != null && !panierItem.getAccessoires().isEmpty()) {
-        panierItemAccessoireRepository.saveAll(panierItem.getAccessoires());
-    }
+		if (Boolean.TRUE.equals(request.getIsCustomized())) {
+			handleCustomizedItem(panierItem, request, bassin);
+		} else {
+			handleStandardItem(panierItem, request, bassin);
+		}
 
-    return savedItem;
-}
+		handlePromotion(panierItem, request);
 
-private void handleCustomizedItem(PanierItem panierItem, PanierItemRequest request, BassinDTO bassin) {
-    // Set customization ID
-    panierItem.setCustomizationId(
-            request.getCustomizationId() != null ? request.getCustomizationId() : UUID.randomUUID().toString());
-    
-    // Set customization details
- // In your mapping code
-    panierItem.setMateriauSelectionne(request.getMateriauSelectionne()); 
-    
-    logger.debug("Returning item with materiau: {}", panierItem.getMateriauSelectionne());
-    
-    panierItem.setDimensionSelectionnee(request.getDimensionSelectionnee());
-    panierItem.setCouleurSelectionnee(request.getCouleurSelectionnee());
+		PanierItem savedItem = panierItemRepository.save(panierItem);
+		if (panierItem.getAccessoires() != null && !panierItem.getAccessoires().isEmpty()) {
+			panierItemAccessoireRepository.saveAll(panierItem.getAccessoires());
+		}
 
-    // Set product info
-    panierItem.setNomBassin(request.getNomBassin() != null ? request.getNomBassin() : "Bassin personnalisé");
-    panierItem.setImageUrl(request.getImageUrl());
+		return savedItem;
+	}
 
-    // Handle fabrication duration
-    if (request.getDureeFabrication() != null) {
-        panierItem.setDureeFabrication(request.getDureeFabrication() + " jours");
-    } else if (bassin != null && bassin.getDureeFabricationJours() != null) {
-        panierItem.setDureeFabrication(bassin.getDureeFabricationJours() + " jours");
-    }
+	private void handleCustomizedItem(PanierItem panierItem, PanierItemRequest request, BassinDTO bassin) {
+		// Set customization ID
+		panierItem.setCustomizationId(
+				request.getCustomizationId() != null ? request.getCustomizationId() : UUID.randomUUID().toString());
 
-    // Handle accessories
-    if (request.getAccessoireIds() != null && !request.getAccessoireIds().isEmpty()) {
-        List<AccessoireDTO> accessoires = accessoireClient.getAccessoiresByIds(request.getAccessoireIds());
-        List<PanierItemAccessoire> panierAccessoires = accessoires.stream()
-            .map(acc -> createPanierItemAccessoire(acc, panierItem))
-            .collect(Collectors.toList());
-        
-        panierItem.setAccessoires(panierAccessoires);
-        
-        // Calculate total price with accessories
-        double accessoriesPrice = accessoires.stream()
-            .mapToDouble(AccessoireDTO::getPrixAccessoire)
-            .sum();
-        
-        panierItem.setPrixOriginal(panierItem.getPrixOriginal() + accessoriesPrice);
-    }
-}
+		// Set customization details
+		// In your mapping code
+		panierItem.setMateriauSelectionne(request.getMateriauSelectionne());
 
-private PanierItemAccessoire createPanierItemAccessoire(AccessoireDTO accessoire, PanierItem panierItem) {
-    PanierItemAccessoire pa = new PanierItemAccessoire();
-    pa.setPanierItem(panierItem);
-    pa.setAccessoireId(accessoire.getId()); // Utilisez getId() au lieu de getIdAccessoire()
-    pa.setNomAccessoire(accessoire.getNomAccessoire());
-    pa.setPrixAccessoire(accessoire.getPrixAccessoire());
-    pa.setImageUrl(accessoire.getImageUrl());
-    return pa;
-}
+		logger.debug("Returning item with materiau: {}", panierItem.getMateriauSelectionne());
 
-private void handleStandardItem(PanierItem panierItem, PanierItemRequest request, BassinDTO bassin) {
-    if (bassin != null) {
-        panierItem.setNomBassin(bassin.getNomBassin());
-        panierItem.setDescription(bassin.getDescription());
-        panierItem.setImageUrl(bassin.getImagePath());
+		panierItem.setDimensionSelectionnee(request.getDimensionSelectionnee());
+		panierItem.setCouleurSelectionnee(request.getCouleurSelectionnee());
 
-        if ("SUR_COMMANDE".equals(bassin.getStatus())) {
-            setFabricationDuration(panierItem, bassin);
-        }
-    }
-}
+		// Set product info
+		panierItem.setNomBassin(request.getNomBassin() != null ? request.getNomBassin() : "Bassin personnalisé");
+		panierItem.setImageUrl(request.getImageUrl());
 
-/**
- * Helper method to set fabrication duration based on bassin data
- */
+		// Handle fabrication duration
+		if (request.getDureeFabrication() != null) {
+			panierItem.setDureeFabrication(request.getDureeFabrication() + " jours");
+		} else if (bassin != null && bassin.getDureeFabricationJours() != null) {
+			panierItem.setDureeFabrication(bassin.getDureeFabricationJours() + " jours");
+		}
 
-private void setFabricationDuration(PanierItem panierItem, BassinDTO bassin) {
-    if (bassin.getDureeFabricationJours() != null) {
-        panierItem.setDureeFabrication(bassin.getDureeFabricationJours() + " jours");
-    } else if (bassin.getDureeFabricationJoursMin() != null && bassin.getDureeFabricationJoursMax() != null) {
-        panierItem.setDureeFabrication(
-            bassin.getDureeFabricationJoursMin() + "-" + bassin.getDureeFabricationJoursMax() + " jours");
-    }
-}
+		// Handle accessories
+		if (request.getAccessoireIds() != null && !request.getAccessoireIds().isEmpty()) {
+			List<AccessoireDTO> accessoires = accessoireClient.getAccessoiresByIds(request.getAccessoireIds());
+			List<PanierItemAccessoire> panierAccessoires = accessoires.stream()
+					.map(acc -> createPanierItemAccessoire(acc, panierItem)).collect(Collectors.toList());
 
-private void handlePromotion(PanierItem panierItem, PanierItemRequest request) {
-    if (request.getPromotionId() != null) {
-        applyPromotionFromId(panierItem, request);
-    } else if (request.getTauxReduction() != null) {
-        applyDirectPromotion(panierItem, request);
-    }
-}
+			panierItem.setAccessoires(panierAccessoires);
 
-private void applyPromotionFromId(PanierItem panierItem, PanierItemRequest request) {
-    PromotionDTO promotion = promotionClient.getPromotionById(request.getPromotionId());
-    if (promotion != null && promotion.isActive()) {
-        panierItem.setPromotionActive(true);
-        panierItem.setNomPromotion(promotion.getNomPromotion());
-        panierItem.setTauxReduction(promotion.getTauxReduction());
-        panierItem.setPrixPromo(calculateDiscountedPrice(panierItem.getPrixOriginal(), promotion.getTauxReduction()));
-    }
-}
+			// Calculate total price with accessories
+			double accessoriesPrice = accessoires.stream().mapToDouble(AccessoireDTO::getPrixAccessoire).sum();
 
-private void applyDirectPromotion(PanierItem panierItem, PanierItemRequest request) {
-    panierItem.setPromotionActive(true);
-    panierItem.setNomPromotion(request.getNomPromotion());
-    panierItem.setTauxReduction(request.getTauxReduction());
-    panierItem.setPrixPromo(calculateDiscountedPrice(panierItem.getPrixOriginal(), request.getTauxReduction()));
-}
+			panierItem.setPrixOriginal(panierItem.getPrixOriginal() + accessoriesPrice);
+		}
+	}
 
-private double calculateDiscountedPrice(double originalPrice, double discountRate) {
-    return originalPrice * (1 - discountRate / 100);
-}
+	private PanierItemAccessoire createPanierItemAccessoire(AccessoireDTO accessoire, PanierItem panierItem) {
+		PanierItemAccessoire pa = new PanierItemAccessoire();
+		pa.setPanierItem(panierItem);
+		pa.setAccessoireId(accessoire.getAccessoireId()); // Utilisez getId() au lieu de getIdAccessoire()
+		pa.setNomAccessoire(accessoire.getNomAccessoire());
+		pa.setPrixAccessoire(accessoire.getPrixAccessoire());
+		pa.setImageUrl(accessoire.getImageUrl());
+		return pa;
+	}
+
+	private void handleStandardItem(PanierItem panierItem, PanierItemRequest request, BassinDTO bassin) {
+		if (bassin != null) {
+			panierItem.setNomBassin(bassin.getNomBassin());
+			panierItem.setDescription(bassin.getDescription());
+			panierItem.setImageUrl(bassin.getImagePath());
+
+			if ("SUR_COMMANDE".equals(bassin.getStatus())) {
+				setFabricationDuration(panierItem, bassin);
+			}
+		}
+	}
+
+	/**
+	 * Helper method to set fabrication duration based on bassin data
+	 */
+
+	private void setFabricationDuration(PanierItem panierItem, BassinDTO bassin) {
+		if (bassin.getDureeFabricationJours() != null) {
+			panierItem.setDureeFabrication(bassin.getDureeFabricationJours() + " jours");
+		} else if (bassin.getDureeFabricationJoursMin() != null && bassin.getDureeFabricationJoursMax() != null) {
+			panierItem.setDureeFabrication(
+					bassin.getDureeFabricationJoursMin() + "-" + bassin.getDureeFabricationJoursMax() + " jours");
+		}
+	}
+
+	private void handlePromotion(PanierItem panierItem, PanierItemRequest request) {
+		if (request.getPromotionId() != null) {
+			applyPromotionFromId(panierItem, request);
+		} else if (request.getTauxReduction() != null) {
+			applyDirectPromotion(panierItem, request);
+		}
+	}
+
+	private void applyPromotionFromId(PanierItem panierItem, PanierItemRequest request) {
+		PromotionDTO promotion = promotionClient.getPromotionById(request.getPromotionId());
+		if (promotion != null && promotion.isActive()) {
+			panierItem.setPromotionActive(true);
+			panierItem.setNomPromotion(promotion.getNomPromotion());
+			panierItem.setTauxReduction(promotion.getTauxReduction());
+			panierItem
+					.setPrixPromo(calculateDiscountedPrice(panierItem.getPrixOriginal(), promotion.getTauxReduction()));
+		}
+	}
+
+	private void applyDirectPromotion(PanierItem panierItem, PanierItemRequest request) {
+		panierItem.setPromotionActive(true);
+		panierItem.setNomPromotion(request.getNomPromotion());
+		panierItem.setTauxReduction(request.getTauxReduction());
+		panierItem.setPrixPromo(calculateDiscountedPrice(panierItem.getPrixOriginal(), request.getTauxReduction()));
+	}
+
+	private double calculateDiscountedPrice(double originalPrice, double discountRate) {
+		return originalPrice * (1 - discountRate / 100);
+	}
+
 	private PanierItem saveItem(PanierItem item) {
-	    if (item.getPromotionActive() == null) {
-	        item.setPromotionActive(false);
+		if (item.getPromotionActive() == null) {
+			item.setPromotionActive(false);
+		}
+		return panierItemRepository.save(item);
+	}
+
+	@Override
+	public Panier getPanierById(Long panierId) {
+	    return panierRepository.findById(panierId)
+	            .orElseThrow(() -> new PanierNotFoundException("Panier not found with id: " + panierId));
+	}
+
+	@Override
+	@Transactional
+	public void clearPanierProperly(Long panierId) {
+	    Panier panier = getPanierById(panierId);
+	    // Clear items and any related entities
+	    if (panier.getItems() != null) {
+	        // First delete all accessories
+	        panier.getItems().forEach(item -> {
+	            if (item.getAccessoires() != null) {
+	                panierItemAccessoireRepository.deleteAll(item.getAccessoires());
+	            }
+	        });
+	        // Then delete all items
+	        panierItemRepository.deleteAll(panier.getItems());
+	        panier.getItems().clear();
 	    }
-	    return panierItemRepository.save(item);
+	    panierRepository.save(panier);
 	}
 }

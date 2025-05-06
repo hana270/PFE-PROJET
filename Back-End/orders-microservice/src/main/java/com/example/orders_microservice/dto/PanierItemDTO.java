@@ -18,7 +18,7 @@ public class PanierItemDTO {
     private Double subtotal;
     private String status;
     private Boolean isCustomized;
-    
+    private Double basePrice;  
     // Promotion fields
     private Boolean promotionActive;
     private String nomPromotion;
@@ -41,4 +41,29 @@ public class PanierItemDTO {
     
     // Custom properties map
     private Map<String, Object> customProperties;
+    private String orderDetails;
+    
+    // Ajouter les getters manquants
+    public String getOrderDetails() {
+        return this.orderDetails;
+    }
+    
+    public String getDureeFabrication() {
+        return this.dureeFabrication;
+    }
+    
+    public String getNomBassin() {
+        return this.nomBassin;
+    }
+    
+    public boolean getIsCustomized() {
+        return this.isCustomized;
+    }
+    
+
+    private String materiauSelectionne;
+    
+    public Double getBasePrice() {
+        return this.basePrice;
+    }
 }

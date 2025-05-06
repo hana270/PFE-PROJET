@@ -2,131 +2,152 @@ package com.example.orders_microservice.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import org.hibernate.annotations.CreationTimestamp;
-
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "panier_items")
 @Data
+@NoArgsConstructor
 public class PanierItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(nullable = false)
-    @CreationTimestamp
-    private LocalDateTime addedAt;
-    
     @ManyToOne
     @JoinColumn(name = "panier_id")
     private Panier panier;
     
+    private Long bassinId;
     private String nomBassin;
     private String description;
     private String imageUrl;
-    
-    // Order info
     private Integer quantity;
+    private Double prixOriginal;
     private Double prixPromo;
-    private Double effectivePrice;  // Added persistent field
-    private Double subtotal;       // Added persistent field
-
-    // Customization fields
-    
-    @Column(name = "is_customized")
-    private Boolean isCustomized;
-    
-    @ManyToOne
-    @JoinColumn(name = "customization_id")
-    private BassinCustomization customization;
-    
-    // Quick-access fields
-    @Column(name = "materiau_selectionne")
-    private String materiauSelectionne;
-    
-    @Column(name = "dimension_selectionnee")
-    private String dimensionSelectionnee;
-    
-    @Column(name = "couleur_selectionnee")
-    private String couleurSelectionnee;
-    
-    @Column(name = "prix_unitaire")
     private Double prixUnitaire;
     
-    @Column(name = "duree_fabrication")
-    private String dureeFabrication;
+    @Column(nullable = false)
+    private Double effectivePrice = 0.0;
     
-    @Column(name = "status")
+    private Double subtotal;
     private String status;
+    private LocalDateTime addedAt;
+    private Boolean isCustomized = false;
     
-    @Column(name = "bassin_id")
-    private Long bassinId;
-    
-    // Promotion fields
-    private Boolean promotionActive;
-    private Double tauxReduction;
-    private String nomPromotion;
-    private Boolean isPromotionActive; 
-    
-    @Column(name = "customization_id_value")  // Different from the FK column
-    private String customizationId;
-    
- // Pricing
-    private Double prixOriginal;
+    // Champs pour les bassins personnalisés
+    private String materiauSelectionne;
     private Double prixMateriau;
+    private String dimensionSelectionnee;
     private Double prixDimension;
+    private String couleurSelectionnee;
     private Double prixAccessoires;
     private Double prixEstime;
     
+    // S'assurer que la durée de fabrication est cohérente avec les autres méthodes
+    private String dureeFabrication;
     
-   
-    private List<Long> accessoireIds;
+    @OneToOne(mappedBy = "panierItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private BassinCustomization customization;
     
-    // Accessories
-    @OneToMany(mappedBy = "panierItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "panierItem", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<PanierItemAccessoire> accessoires;
     
+    
+    // Propriétés pour la promotion
+    private Boolean promotionActive = false; 
+    private String nomPromotion;
+    private Double tauxReduction;
+    
+    private String customizationId;
 
+    
+    public Boolean getPromotionActive() {
+        return this.promotionActive;
+    }
 
-    // Methods for calculated fields
-    public Double getEffectivePrice() {
-        if (this.promotionActive != null && this.promotionActive && this.prixPromo != null) {
-            return this.prixPromo;
-        }
-        return this.prixOriginal != null ? this.prixOriginal : 0.0;
+    public void setPromotionActive(Boolean promotionActive) {
+        this.promotionActive = promotionActive != null ? promotionActive : false;
     }
-    
-    public void setEffectivePrice(Double effectivePrice) {
-        this.effectivePrice = effectivePrice;
-    }
-    
-    public Double getSubtotal() {
-        return getEffectivePrice() * (quantity != null ? quantity : 0);
-    }
-    
-    public void setSubtotal(Double subtotal) {
-        this.subtotal = subtotal;
-    }
-    
-    public Boolean isPromotionActive() {
-        return this.promotionActive != null ? this.promotionActive : false;
+
+    // Keep this for compatibility with existing code
+    public boolean isPromotionActive() {
+        return Boolean.TRUE.equals(this.promotionActive);
     }
     
     public String getCustomizationId() {
-        return this.customizationId;
+        return customizationId;
     }
-
+    
     public void setCustomizationId(String customizationId) {
         this.customizationId = customizationId;
     }
-
-   public String getFormattedFabricationTime() {
-        if (isCustomized || "SUR_COMMANDE".equalsIgnoreCase(status)) {
-            return dureeFabrication;
-        }
-        return null;
+    
+    public String getMateriauSelectionne() {
+        return this.materiauSelectionne;
     }
+
+    public String getDimensionSelectionnee() {
+        return this.dimensionSelectionnee;
+    }
+
+    public String getCouleurSelectionnee() {
+        return this.couleurSelectionnee;
+    }
+
+    public String getDureeFabrication() {
+        return this.dureeFabrication;
+    }
+
+    // Méthode pour obtenir les IDs des accessoires
+    public List<Long> getAccessoireIds() {
+        if (accessoires == null) {
+            return null;
+        }
+        return accessoires.stream()
+                .map(PanierItemAccessoire::getAccessoireId)
+                .collect(Collectors.toList());
+    }
+
+    
+    private String orderDetails;
+
+    public String getOrderDetails() {
+        return this.orderDetails;
+    }
+
+    public void setOrderDetails(String orderDetails) {
+        this.orderDetails = orderDetails;
+    }
+    
+    
+    
+    public void setEffectivePrice(Double effectivePrice) {
+        this.effectivePrice = effectivePrice != null ? effectivePrice : 0.0;
+    }
+    
+    // Add this method to calculate effective price if not set
+    public Double getEffectivePrice() {
+        if (this.effectivePrice == null) {
+            this.effectivePrice = calculateEffectivePrice();
+        }
+        return this.effectivePrice;
+    }
+    
+    private Double calculateEffectivePrice() {
+        if (this.isCustomized) {
+            return (this.prixOriginal != null ? this.prixOriginal : 0.0) 
+                 + (this.prixMateriau != null ? this.prixMateriau : 0.0)
+                 + (this.prixDimension != null ? this.prixDimension : 0.0)
+                 + (this.prixAccessoires != null ? this.prixAccessoires : 0.0);
+        } else if (this.promotionActive && this.tauxReduction != null) {
+            return this.prixOriginal * (1 - (this.tauxReduction / 100));
+        } else {
+            return this.prixOriginal != null ? this.prixOriginal : 0.0;
+        }
+    }
+    
 }

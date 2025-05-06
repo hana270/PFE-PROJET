@@ -13,6 +13,7 @@ import projet.spring.repos.UserRepository;
 
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 public class MyUserDetailsService implements UserDetailsService {
@@ -24,12 +25,14 @@ public class MyUserDetailsService implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
-  @Override
+    @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found: " + username);
-        }
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        
+        // Utilisation de orElseThrow pour gérer le cas où l'utilisateur n'existe pas
+        User user = userOptional.orElseThrow(() -> 
+            new UsernameNotFoundException("User not found: " + username)
+        );
 
         // Vérifier si le compte est activé
         if (!user.getEnabled()) {
@@ -45,4 +48,5 @@ public class MyUserDetailsService implements UserDetailsService {
                 user.getPassword(),
                 authorities
         );
-    }}
+    }
+}

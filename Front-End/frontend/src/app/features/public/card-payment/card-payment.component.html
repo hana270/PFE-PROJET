@@ -1,0 +1,117 @@
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">Paiement par Carte de Poste Tunisienne</h3>
+        </div>
+        <div class="card-body">
+       
+          <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
+            <!-- Card details section -->
+            <div class="mb-4">
+              <h5 class="card-title mb-3">Informations de la carte</h5>
+              
+              <div class="mb-3">
+                <label for="cardNumber" class="form-label">Numéro de carte</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="cardNumber" 
+                  formControlName="cardNumber"
+                  placeholder="1234 5678 9012 3456"
+                  (input)="formatCardNumber($event)"
+                  maxlength="19">
+                <div class="form-text text-muted">Entrez les 16 chiffres de votre carte sans espaces</div>
+                <div *ngIf="paymentForm.get('cardNumber')?.invalid && paymentForm.get('cardNumber')?.touched" class="text-danger">
+                  Numéro de carte invalide (16 chiffres requis)
+                </div>
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Date d'expiration</label>
+                  <div class="row">
+                    <div class="col-6">
+                      <select class="form-select" formControlName="expiryMonth">
+                        <option value="" disabled selected>Mois</option>
+                        <option *ngFor="let month of months" [value]="month">
+                          {{ month < 10 ? '0' + month : month }}
+                        </option>
+                      </select>
+                    </div>
+                    <div class="col-6">
+                      <select class="form-select" formControlName="expiryYear">
+                        <option value="" disabled selected>Année</option>
+                        <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div *ngIf="(paymentForm.get('expiryMonth')?.invalid && paymentForm.get('expiryMonth')?.touched) || 
+                             (paymentForm.get('expiryYear')?.invalid && paymentForm.get('expiryYear')?.touched)" 
+                       class="text-danger">
+                    Date d'expiration requise
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <label for="securityCode" class="form-label">Code de sécurité (CVV)</label>
+                  <input 
+                    type="password" 
+                    class="form-control" 
+                    id="securityCode" 
+                    formControlName="securityCode" 
+                    placeholder="123"
+                    maxlength="3">
+                  <div *ngIf="paymentForm.get('securityCode')?.invalid && paymentForm.get('securityCode')?.touched" class="text-danger">
+                    Code de sécurité invalide (3 chiffres requis)
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Cardholder information section -->
+            <div class="mb-4">
+              <h5 class="card-title mb-3">Informations du titulaire</h5>
+              
+              <div class="mb-3">
+                <label for="cardholderName" class="form-label">Nom du titulaire</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="cardholderName" 
+                  formControlName="cardholderName"
+                  placeholder="Nom prénom">
+                <div *ngIf="paymentForm.get('cardholderName')?.invalid && paymentForm.get('cardholderName')?.touched" class="text-danger">
+                  Nom du titulaire requis
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input 
+                  type="email" 
+                  class="form-control" 
+                  id="email" 
+                  formControlName="email"
+                  placeholder="exemple@email.com">
+                <div class="form-text text-muted">Le code de vérification sera envoyé à cette adresse</div>
+                <div *ngIf="paymentForm.get('email')?.invalid && paymentForm.get('email')?.touched" class="text-danger">
+                  Email invalide
+                </div>
+              </div>
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary btn-lg" [disabled]="isLoading || paymentForm.invalid">
+                <span *ngIf="!isLoading">Procéder au paiement</span>
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="btn btn-outline-secondary" routerLink="/checkout">Annuler</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

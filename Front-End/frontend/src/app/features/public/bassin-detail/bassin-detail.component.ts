@@ -50,6 +50,7 @@ import { Panier } from '../../../core/models/panier.model';
 import { forwardRef } from '@angular/core';
 import { AuthStateService } from '../../../core/services/auth-state.service';
 import { JwtHelperService } from '@auth0/angular-jwt';
+import { AuthService } from '../../../core/authentication/auth.service';
 
 @Component({
   selector: 'app-bassin-detail',
@@ -283,6 +284,7 @@ export class BassinDetailComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
     private arService: ArService,
+    public authService:AuthService,
     private avisService: AvisService,
     private jwtHelper: JwtHelperService,
     @Inject(forwardRef(() => AuthStateService))
@@ -306,6 +308,9 @@ export class BassinDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log('Connecté:', this.authService.isLoggedIn);
+  console.log('Est client:', this.authService.isClient());
+  
     this.cartService.forceRefreshCart().subscribe({
       next: (cart) => console.log('Panier rafraîchi:', cart),
       error: (err) =>
@@ -316,7 +321,7 @@ export class BassinDetailComponent implements OnInit {
 
     if (this.authState.isLoggedIn) {
       this.isLoggedIn = true;
-      const token = this.authState.currentToken;
+      const token = this.authState.token;
       if (token) {
         const decoded = this.jwtHelper.decodeToken(token);
         this.username = decoded.sub || ''; // 'sub' is typically the username in JWT
@@ -1452,9 +1457,7 @@ private getCustomizationSuccessHtml(customization: any, accessoiresPrice: number
     }
   }
 
-  isClient(): boolean {
-    return this.authState.isClient();
-  }
+
   getRatingLabel(note: number): string {
     switch (note) {
       case 1:

@@ -663,9 +663,11 @@
             <div class="add-review mt-5 p-4 rounded-3 bg-white shadow-sm">
               <h3 class="fw-bold mb-4 text-primary">{{ editingAvis ? 'Modifier votre avis' : 'Laisser un avis' }}</h3>
 
-              <form *ngIf="isLoggedIn && isClient()" [formGroup]="avisForm"
-                (ngSubmit)="editingAvis ? updateAvis() : onSubmitAvis()">
-                <!-- Champ nom avec style amélioré -->
+              <form *ngIf="(authService.isLoggedIn && authService.isClient()) else loginPrompt" 
+              [formGroup]="avisForm"
+              (ngSubmit)="editingAvis ? updateAvis() : onSubmitAvis()">
+              
+              <!-- Champ nom avec style amélioré -->
                 <div class="mb-3">
                   <label for="nom" class="form-label fw-bold">Votre nom d'affichage</label>
                   <div class="input-group">
@@ -720,7 +722,9 @@
               </form>
 
               <!-- Message pour les non-connectés -->
-              <div *ngIf="!isLoggedIn || !isClient()" class="alert alert-info mt-3">
+              
+              <ng-template #loginPrompt> 
+              <div *ngIf="!authService.isLoggedIn || !authService.isClient()" class="alert alert-info mt-3">
                 <div class="d-flex align-items-center">
                   <i class="fas fa-info-circle me-3 fa-2x"></i>
                   <div>
@@ -737,6 +741,7 @@
                   </button>
                 </div>
               </div>
+            </ng-template>
             </div>
 
 

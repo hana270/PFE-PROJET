@@ -42,6 +42,11 @@ import { UpdateProfileComponent } from './features/client/update-profile/update-
 import { CartComponent } from './features/public/cart/cart.component';
 import { ShopPageComponent } from './features/public/shop-page/shop-page.component';
 import { BassinDetailComponent } from './features/public/bassin-detail/bassin-detail.component';
+import { CommandeConfirmationComponent } from './features/public/commande-confirmation/commande-confirmation.component';
+import { CheckoutComponent } from './features/public/checkout/checkout.component';
+import { MesCommandesComponent } from './features/client/mes-commandes/mes-commandes.component';
+import { CardPaymentComponent } from './features/public/card-payment/card-payment.component';
+import { PaymentVerificationComponent } from './features/public/payment-verification/payment-verification.component';
 
 const routes: Routes = [
   // Admin Routes (Only accessible by users with the 'ADMIN' role)
@@ -230,6 +235,36 @@ const routes: Routes = [
     component: InstallerRegisterComponent,
   },
 
+
+  {
+    path: 'checkout', 
+    component: CheckoutComponent,
+  },
+
+
+  {
+    path: 'commande-confirmation/:numero', 
+    component: CommandeConfirmationComponent,
+  },
+  {
+    path: 'payment/card', 
+    component: CardPaymentComponent,
+  },
+  {
+    path: 'payment/verify', 
+    component: PaymentVerificationComponent,
+  },
+
+  {
+    path: 'mon-compte/mes-commandes', 
+    component: MesCommandesComponent,
+  },
+/*
+{
+  path: 'mon-compte/mes-commandes/:numero', 
+    component: DetailCommandeComponent,
+},
+*/
   // Authentication Routes (Public routes)
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
@@ -244,7 +279,7 @@ const routes: Routes = [
   { path: 'forbidden', component: ForbiddenComponent },
 
   // Default and Fallback Routes
-  { path: '', redirectTo: '/login', pathMatch: 'full' }, // Redirect to login by default
+  { path: '', redirectTo: '/homepage', pathMatch: 'full' }, // Redirect to login by default
   { path: '**', redirectTo: '/login' }, // Redirect to login for unknown routes
 ];
 

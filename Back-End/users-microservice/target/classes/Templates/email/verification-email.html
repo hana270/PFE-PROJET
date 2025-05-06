@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validation de votre compte</title>
+    <style>
+        /* Styles généraux */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Container principal */
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* En-tête */
+        .header {
+            background-color: #3498db;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        /* Contenu */
+        .content {
+            padding: 30px;
+        }
+        
+        /* Code de validation */
+        .validation-code {
+            background-color: #f2f7fb;
+            border: 2px dashed #3498db;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .validation-code h2 {
+            color: #333;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        
+        .code {
+            font-size: 32px;
+            font-weight: bold;
+            color: #3498db;
+            letter-spacing: 5px;
+        }
+        
+        /* Instructions */
+        .instructions {
+            margin: 25px 0;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        /* Pied de page */
+        .footer {
+            background-color: #f2f7fb;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Design responsive */
+        @media screen and (max-width: 480px) {
+            .container {
+                width: 100%;
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Confirmation de votre compte</h1>
+        </div>
+        <div class="content">
+            <p>Bonjour <strong th:text="${username}">[Nom Utilisateur]</strong>,</p>
+            
+            <p>Nous vous remercions de votre inscription à notre plateforme. Pour finaliser la création de votre compte, veuillez utiliser le code de validation ci-dessous :</p>
+            
+            <div class="validation-code">
+                <h2>Votre code de validation</h2>
+                <div class="code" th:text="${code}">[CODE]</div>
+            </div>
+            
+            <div class="instructions">
+                <p>Ce code est valable pendant 24 heures. Si vous n'avez pas demandé ce code, veuillez ignorer cet email.</p>
+            </div>
+            
+            <p>Nous sommes ravis de vous compter parmi nos utilisateurs et restons à votre disposition pour toute question.</p>
+            
+            <p>Cordialement,<br>L'équipe Support</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 - Tous droits réservés</p>
+            <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+        </div>
+    </div>
+</body>
+</html>

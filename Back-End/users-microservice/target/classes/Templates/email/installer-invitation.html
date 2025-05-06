@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitation - Réseau d'Installateurs</title>
+    <style>
+        /* Votre CSS existant */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <span>🔧</span>
+            </div>
+            <h1>Rejoignez notre Réseau d'Installateurs</h1>
+            <p>Une opportunité professionnelle qui vous attend</p>
+        </div>
+        <div class="content">
+            <p>Bonjour,</p>
+            
+            <p>Nous avons le plaisir de vous inviter à rejoindre notre réseau d'installateurs professionnels. Votre expertise et votre savoir-faire seraient un véritable atout pour notre plateforme et nos clients.</p>
+            
+            <div class="benefits">
+                <h3>Pourquoi nous rejoindre ?</h3>
+                <ul>
+                    <li><strong>Opportunités de business</strong> - Accédez à notre portefeuille de clients actifs à la recherche de professionnels qualifiés</li>
+                    <li><strong>Flexibilité totale</strong> - Choisissez vos missions selon votre disponibilité et votre zone géographique</li>
+                    <li><strong>Visibilité accrue</strong> - Profitez de notre plateforme pour augmenter votre présence sur le marché</li>
+                    <li><strong>Rémunération attractive</strong> - Bénéficiez de tarifs compétitifs et de paiements sécurisés</li>
+                    <li><strong>Support dédié</strong> - Notre équipe est à votre disposition pour vous accompagner au quotidien</li>
+                </ul>
+            </div>
+            
+            <p>Notre plateforme est conçue pour vous simplifier la vie et vous permettre de vous concentrer sur ce que vous faites de mieux : votre métier d'installateur.</p>
+            
+            <div class="cta-container">
+                <a th:href="${registrationUrl}" class="cta-button">CRÉER MON COMPTE INSTALLATEUR</a>
+            </div>
+            
+            <p class="expiration-note">Ce lien d'invitation est valable pendant 48 heures. Si vous n'avez pas demandé cette invitation, veuillez ignorer cet email.</p>
+            
+            <p>Nous restons à votre disposition pour toute question ou information complémentaire.</p>
+            
+            <p>Cordialement,<br><strong>L'équipe Partenariats</strong></p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 - Tous droits réservés</p>
+            <div class="contact-info">
+                <p>Pour toute assistance, contactez-nous à <a href="mailto:partenaires@entreprise.com">partenaires@entreprise.com</a></p>
+                <p>Ou par téléphone au 01 23 45 67 89</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

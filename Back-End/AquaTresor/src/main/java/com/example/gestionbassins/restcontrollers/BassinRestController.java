@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.scheduling.annotation.Scheduled;
 import com.example.gestionbassins.repos.TransactionRepository;
-import com.example.gestionbassins.service.NotificationService;
+import com.example.gestionbassins.service.NotificationServiceClient;
 import com.example.gestionbassins.service.UserServiceClient;
 
 
@@ -76,7 +76,7 @@ public class BassinRestController {
     private TransactionRepository transactionRepository;
 
     @Autowired
-    private NotificationService notificationService;
+    private NotificationServiceClient notificationService;
     @Autowired
     private UserServiceClient userServiceClient;
     /*******************Gestion bassin********************/
@@ -517,5 +517,51 @@ public class BassinRestController {
         
         return bassinRepository.save(bassin);
     }
+    
+    
+ // In BassinRestController.java
+    @PutMapping("/api/bassins/{id}/stock")
+    public ResponseEntity<Bassin> updateStock(
+            @PathVariable Long id,
+            @RequestParam int quantite) {
+        
+        try {
+            Bassin bassin = bassinService.getBassin(id);
+            if (bassin == null) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            // Update stock
+            int newStock = bassin.getStock() + quantite;
+            if (newStock < 0) {
+                return ResponseEntity.badRequest().body(null);
+            }
+            
+            bassin.setStock(newStock);
+            
+            // Archive if stock reaches 0
+            if (newStock == 0) {
+                bassin.setArchive(true);
+            } else if (newStock > 0 && bassin.isArchive()) {
+                bassin.setArchive(false);
+            }
+            
+            bassin = bassinService.updateBassin(bassin);
+            
+            // Create transaction record
+            Transaction transaction = new Transaction();
+            transaction.setBassin(bassin);
+            transaction.setQuantite(quantite);
+            transaction.setDateTransaction(new Date());
+            transaction.setTypeOperation(quantite > 0 ? "AJOUT" : "RETRAIT");
+            transaction.setRaison("Mise à jour via commande");
+            transactionRepository.save(transaction);
+            
+            return ResponseEntity.ok(bassin);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
 }
 

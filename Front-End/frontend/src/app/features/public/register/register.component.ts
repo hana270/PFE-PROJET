@@ -1,101 +1,99 @@
 import { Component, OnInit } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  Validators,
-  AbstractControl,
-  ValidationErrors,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
-import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/authentication/auth.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-register',
-  templateUrl: './register.component.html',
+  templateUrl: './register.component.html'
 })
 export class RegisterComponent implements OnInit {
-  myForm!: FormGroup;
-  err!: string;
+  myForm: FormGroup;
   loading: boolean = false;
 
   constructor(
-    private formBuilder: FormBuilder,
+    private fb: FormBuilder,
     private authService: AuthService,
     private router: Router
   ) {
-    this.myForm = this.formBuilder.group({
-      username: ['', Validators.required],
+    this.myForm = this.fb.group({
+      username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-    });
+      confirmPassword: ['', [Validators.required]],
+      firstName: ['', [Validators.required]],
+      lastName: ['', [Validators.required]],
+      phone: ['', [Validators.required, Validators.pattern(/^[0-9]{8,}$/)]],
+      defaultAddress: ['']
+    }, { validators: this.passwordMatchValidator });
   }
 
-  ngOnInit(): void {
-    this.myForm = this.formBuilder.group(
-      {
-        username: ['', [Validators.required]],
-        email: ['', [Validators.required, Validators.email]],
-        password: ['', [Validators.required, Validators.minLength(6)]],
-        confirmPassword: ['', [Validators.required]],
-      },
-      { validators: this.passwordsMatchValidator }
-    );
-  }
+  ngOnInit(): void {}
 
-  passwordsMatchValidator(control: AbstractControl): ValidationErrors | null {
+  passwordMatchValidator(control: AbstractControl) {
     const password = control.get('password')?.value;
     const confirmPassword = control.get('confirmPassword')?.value;
     return password === confirmPassword ? null : { mismatch: true };
   }
 
-  onRegister() {
+  onRegister(): void {
     if (this.myForm.invalid) {
+      this.myForm.markAllAsTouched();
       return;
     }
-
+  
     this.loading = true;
-    this.authService.registerUser(this.myForm.value).subscribe({
-      next: (response) => {
+    const formData = this.myForm.value;
+    
+    // Normaliser l'email
+    const normalizedEmail = formData.email.toLowerCase().trim();
+    
+    const registrationData = {
+      username: formData.username,
+      email: normalizedEmail,
+      password: formData.password,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phone: formData.phone,
+      defaultAddress: formData.defaultAddress || ''
+    };
+  
+    this.authService.registerUser(registrationData).subscribe({
+      next: (response: any) => {
         this.loading = false;
-
         Swal.fire({
           icon: 'success',
           title: 'Inscription réussie',
-          text: 'Un code de validation a été envoyé à votre adresse email. Veuillez vérifier votre boîte de réception.',
-          confirmButtonText: 'OK',
+          text: 'Veuillez vérifier votre email pour activer votre compte',
+          confirmButtonText: 'Continuer'
         }).then(() => {
-          this.router.navigate(['/verifEmail'], {
-            queryParams: { email: this.myForm.value.email },
+          this.router.navigate(['/verifEmail'], { 
+            queryParams: { email: normalizedEmail } 
           });
         });
       },
-      error: (err) => {
+      error: (error) => {
         this.loading = false;
-
-        let errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
-        if (err.error?.errorCode === 'USER_EMAIL_ALREADY_EXISTS') {
-          errorMessage =
-            'Cet email est déjà utilisé. Veuillez utiliser une autre adresse email.';
-        } else if (err.error?.message === 'EMAIL_NOT_VERIFIED') {
-          errorMessage =
-            "Vous n'avez pas validé le code envoyé à votre email. Veuillez vérifier votre boîte de réception.";
+        let errorMessage = 'Une erreur est survenue lors de l\'inscription';
+        
+        if (error.error) {
+          if (error.error.message) {
+            errorMessage = error.error.message;
+          } else if (error.error.error === 'EMAIL_ALREADY_EXISTS') {
+            errorMessage = 'Cet email est déjà utilisé';
+          } else if (error.error.error === 'USERNAME_ALREADY_EXISTS') {
+            errorMessage = 'Ce nom d\'utilisateur est déjà utilisé';
+          }
         }
-
+        
         Swal.fire({
           icon: 'error',
-          title: 'Erreur',
+          title: 'Erreur d\'inscription',
           text: errorMessage,
-          confirmButtonText: 'OK',
+          confirmButtonText: 'OK'
         });
-      },
+      }
     });
-  }
-
-  onSubmit() {
-    if (this.myForm.invalid) {
-      return;
-    }
-    console.log(this.myForm.value);
   }
 }

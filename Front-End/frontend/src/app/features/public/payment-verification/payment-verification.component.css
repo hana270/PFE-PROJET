@@ -1,0 +1,90 @@
+/* verification.component.css */
+.verification-container {
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 0 15px;
+}
+
+.invalid-feedback {
+    display: block;
+    color: #dc3545;
+    font-size: 0.875em;
+}
+
+/* checkout.component.css */
+.payment-method-item {
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.payment-method-item:hover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+}
+
+.payment-method-item.selected {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+/* confirmation.component.css */
+.confirmation-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 15px;
+}
+
+.confirmation-card {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.confirmation-header {
+    margin-bottom: 2rem;
+}
+
+.confirmation-icon {
+    font-size: 5rem;
+    color: #28a745;
+    margin-bottom: 1rem;
+}
+
+.confirmation-title {
+    color: #28a745;
+    margin-bottom: 0.5rem;
+}
+
+.confirmation-subtitle {
+    color: #6c757d;
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.confirmation-details {
+    text-align: left;
+    margin: 2rem auto;
+    max-width: 500px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.detail-label {
+    font-weight: bold;
+}
+
+.confirmation-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}

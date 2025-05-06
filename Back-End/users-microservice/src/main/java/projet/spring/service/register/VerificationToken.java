@@ -17,9 +17,10 @@ public class VerificationToken {
 	private String token;
 	private Date expirationTime;
 	private static final int EXPIRATION_TIME = 15;
-	@OneToOne
-	@JoinColumn(name = "user_id")
-	private User user;
+
+	  @ManyToOne(fetch = FetchType.LAZY)
+	    @JoinColumn(name = "user_id", nullable = false)
+	    private User user;
 	
 	public VerificationToken(String token, User user) {
 		super();
@@ -38,4 +39,9 @@ public class VerificationToken {
 		calendar.add(Calendar.MINUTE, EXPIRATION_TIME);
 		return new Date(calendar.getTime().getTime());
 	}
+	
+	public boolean isExpired() {
+	    return expirationTime.before(new Date());
+	}
+
 }

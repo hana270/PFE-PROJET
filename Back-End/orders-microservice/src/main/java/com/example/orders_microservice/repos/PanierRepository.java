@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.orders_microservice.entities.Panier;
+import com.example.orders_microservice.entities.PanierItem;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,13 +14,12 @@ import java.util.Optional;
 
 @Repository
 public interface PanierRepository extends JpaRepository<Panier, Long> {
-	 Optional<Panier> findByUserId(Long userId);
-	    Optional<Panier> findBySessionId(String sessionId);
-	    
-	    @Query("SELECT p FROM Panier p WHERE p.userId IS NULL AND p.lastUpdated < :cutoffTime")
-	    List<Panier> findExpiredSessionCarts(@Param("cutoffTime") LocalDateTime cutoffTime);
-	    
-	    
+    Optional<Panier> findByUserId(Long userId);
+    Optional<Panier> findBySessionId(String sessionId);
+    
+    @Query("SELECT p FROM Panier p WHERE p.userId IS NULL AND p.lastUpdated < :cutoffTime")
+    List<Panier> findExpiredSessionCarts(@Param("cutoffTime") LocalDateTime cutoffTime);
+    
     Optional<Panier> findFirstByUserId(Long userId);
     Optional<Panier> findFirstBySessionId(String sessionId);
     
@@ -47,4 +47,4 @@ public interface PanierRepository extends JpaRepository<Panier, Long> {
     @Query("SELECT p FROM Panier p WHERE p.userId = :userId")
     List<Panier> findAllByUserId(@Param("userId") Long userId);
 
-}
+  }

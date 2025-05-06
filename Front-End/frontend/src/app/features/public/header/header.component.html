@@ -45,27 +45,29 @@
             <span class="favorites-count" *ngIf="favoritesCount > 0">{{ favoritesCount }}</span>
           </a>
         </div>
-
+      
         <div class="cart">
           <a class="cart-btn" (click)="toggleCart($event)" title="Panier">
             <i class="material-icons">shopping_cart</i>
             <span class="cart-count" *ngIf="cartItemCount > 0">{{ cartItemCount }}</span>
           </a>
         </div>
-
-        <div class="profile" *ngIf="isAuthenticated">
+      
+        <!-- Menu dropdown quand connecté -->
+        <div class="profile" *ngIf="authService.isLoggedIn">
           <div class="profile-btn" (click)="toggleDropdown($event)" title="Mon compte">
             <i class="material-icons">person</i>
             <i class="material-icons arrow">expand_more</i>
           </div>
           <ul class="dropdown-menu" [class.active]="isDropdownOpen">
-            <li><a routerLink="/client/edit-profile/"><i class="material-icons">edit</i> Edit Profile</a></li>
-            <li><a routerLink="/orders">Mes commandes</a></li>
-            <li><a (click)="logout()"><i class="material-icons">exit_to_app</i> Logout</a></li>
+            <li><a routerLink="/client/edit-profile/"><i class="material-icons">edit</i> Modifier Profil</a></li>
+            <li><a routerLink="/orders"><i class="material-icons">shopping_bag</i> Mes commandes</a></li>
+            <li><a (click)="logout()"><i class="material-icons">exit_to_app</i> Déconnexion</a></li>
           </ul>
         </div>
-
-        <div class="auth-buttons" *ngIf="!isAuthenticated">
+      
+        <!-- Boutons de connexion quand déconnecté -->
+        <div class="auth-buttons" *ngIf="!authService.isLoggedIn">
           <a routerLink="/login" class="login-btn">Connexion</a>
           <a routerLink="/register" class="register-btn">Inscription</a>
         </div>

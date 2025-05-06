@@ -56,54 +56,63 @@ public class PanierRestController {
 	}
 
 
-	@GetMapping
-public ResponseEntity<?> getPanier(
-        @RequestHeader(value = "X-Session-ID", required = false) String sessionId,
-        @RequestHeader(value = "Authorization", required = false) String authHeader,
-        HttpServletRequest request) {
-    
-    try {
-        // Vérifier l'authentification
-        boolean isAuthenticated = authHeader != null && authHeader.startsWith("Bearer ");
-        Long userId = isAuthenticated ? getCurrentUserId() : null;
+
+    @GetMapping
+    public ResponseEntity<?> getPanier(
+            @RequestHeader(value = "X-Session-ID", required = false) String sessionId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            HttpServletRequest request) {
         
-        // Si utilisateur authentifié, ignorer le sessionId
-        if (userId != null) {
-            sessionId = null;
-        }
-        
-        logger.info("Getting cart for userId: {}, sessionId: {}", userId, sessionId);
-        
-        // Récupérer ou créer le panier en fonction de l'utilisateur ou de la session
-        Panier panier = panierService.getOrCreatePanier(userId, sessionId);
-        
-        // Vérifier si le panier anonyme est expiré
-        if (userId == null && isCartExpired(panier)) {
-            logger.info("Clearing expired session cart: {}", sessionId);
-            panierService.clearPanier(null, sessionId);
-            panier = panierService.getOrCreatePanier(null, sessionId);
-        }
-        
-        // Convertir le panier en réponse
-        PanierResponse response = mapToPanierResponse(panier);
-        
-        // Préparer les en-têtes HTTP
-        HttpHeaders headers = new HttpHeaders();
-        if (userId == null) {
-            // Renvoyer l'ID de session dans les en-têtes pour les utilisateurs anonymes
-            headers.add("X-Session-ID", panier.getSessionId());
-        }
-        
-        return new ResponseEntity<>(response, headers, HttpStatus.OK);
-    } catch (Exception e) {
-        logger.error("Erreur lors de la récupération du panier", e);
-        return ResponseEntity.internalServerError()
-                .body(Map.of(
-                    "success", false,
-                    "message", "Erreur lors de la récupération du panier: " + e.getMessage()
-                ));
-    }
-}
+        try {
+            // Vérifier l'authentification
+            boolean isAuthenticated = authHeader != null && authHeader.startsWith("Bearer ");
+            Long userId = isAuthenticated ? getCurrentUserId() : null;
+            
+            // Si utilisateur authentifié, ignorer le sessionId
+            if (userId != null) {
+                sessionId = null;
+            }
+            
+            logger.info("Getting cart for userId: {}, sessionId: {}", userId, sessionId);
+            
+            // Récupérer ou créer le panier en fonction de l'utilisateur ou de la session
+            Panier panier = panierService.getOrCreatePanier(userId, sessionId);
+            
+            // Vérifier si le panier anonyme est expiré
+            if (userId == null && isCartExpired(panier)) {
+                logger.info("Clearing expired session cart: {}", sessionId);
+                panierService.clearPanier(null, sessionId);
+                panier = panierService.getOrCreatePanier(null, sessionId);
+            }
+            
+            // Convertir le panier en réponse
+            PanierResponse response = mapToPanierResponse(panier);
+            
+            // Préparer les en-têtes HTTP
+            HttpHeaders headers = new HttpHeaders();
+            if (userId == null && panier.getSessionId() != null) {
+                // Renvoyer l'ID de session dans les en-têtes pour les utilisateurs anonymes
+                headers.add("X-Session-ID", panier.getSessionId());
+            }
+            
+            return new ResponseEntity<>(response, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Erreur lors de la récupération du panier", e);
+            
+            // Ajouter des détails techniques pour faciliter le débogage
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Erreur lors de la récupération du panier: " + e.getMessage());
+            errorResponse.put("errorType", e.getClass().getName());
+            
+            // En cas d'erreur IncorrectResultSizeDataAccessException spécifique
+            if (e instanceof org.springframework.dao.IncorrectResultSizeDataAccessException) {
+                errorResponse.put("suggestion", "Problème de relation entre Panier et PanierItem. " +
+                        "Vérifiez les mappings JPA et assurez-vous d'utiliser getResultList() au lieu de getSingleResult().");
+            }
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }}
 
 	
 	@PostMapping("/items")
@@ -337,7 +346,7 @@ private PanierItemResponse convertToResponse(PanierItem item) {
         List<AccessoireDTO> accessoires = item.getAccessoires().stream()
             .map(acc -> {
                 AccessoireDTO accDto = new AccessoireDTO();
-                accDto.setId(acc.getAccessoireId());
+                accDto.setAccessoireId(acc.getAccessoireId());
                 accDto.setNomAccessoire(acc.getNomAccessoire());
                 accDto.setPrixAccessoire(acc.getPrixAccessoire());
                 accDto.setImageUrl(acc.getImageUrl());

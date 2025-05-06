@@ -81,7 +81,7 @@ export class CartComponent implements OnInit, OnDestroy {
     private toastService: ToastService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private authStateService: AuthStateService,
+    public authStateService: AuthStateService,
     public authService: AuthService,
     private bassinService: BassinService,
     @Inject(PLATFORM_ID) private platformId: Object

@@ -5,10 +5,11 @@ import { AuthService } from '../../../core/authentication/auth.service';
 import Swal from 'sweetalert2';
 import { ChangeDetectorRef } from '@angular/core';
 
+
 @Component({
   selector: 'app-edit-profile',
   templateUrl: './edit-profile.component.html',
-  styleUrls: ['./edit-profile.component.css'],
+  styleUrls: ['./edit-profile.component.css']
 })
 export class EditProfileComponent implements OnInit {
   emailForm: FormGroup;
@@ -20,8 +21,9 @@ export class EditProfileComponent implements OnInit {
   showNewPassword: boolean = false;
   showConfirmPassword: boolean = false;
   currentEmail: string = '';
+  currentUsername: string = ''; // Ajouté
   activeTab: string = 'email';
-  profileImageUrl: string | null = null;
+  profileImageUrl: string = 'assets/images/default-profile.jpg'; // Chemin modifié
   selectedFile: File | null = null;
 
   constructor(
@@ -32,27 +34,44 @@ export class EditProfileComponent implements OnInit {
   ) {
     this.emailForm = this.fb.group({
       newEmail: ['', [Validators.email, Validators.required]],
-      currentPassword: ['', [Validators.required]],
+      currentPassword: ['', [Validators.required]]
     });
 
     this.passwordForm = this.fb.group(
       {
         currentPassword: ['', [Validators.required]],
         newPassword: ['', [Validators.required, Validators.minLength(6)]],
-        confirmPassword: ['', [Validators.required]],
+        confirmPassword: ['', [Validators.required]]
       },
       { validator: this.passwordMatchValidator }
     );
 
     this.profileImageForm = this.fb.group({
       currentPassword: ['', [Validators.required]],
-      file: [null, [Validators.required]],
+      file: [null, [Validators.required]]
     });
   }
 
+
   ngOnInit(): void {
+    this.loadUserProfile();
     this.loadCurrentEmail();
     this.loadCurrentImage(); // Charger l'image de profil actuelle
+  }
+  private loadUserProfile(): void {
+    this.authService.getUserProfile().subscribe({
+      next: (user: any) => {
+        this.currentEmail = user.email;
+        this.currentUsername = user.username; // Récupération du nom d'utilisateur
+        this.profileImageUrl = user.profileImage 
+          ? `http://localhost:8002/uploads/${user.profileImage}` 
+          : 'assets/images/default-profile.jpg';
+        this.cdr.detectChanges();
+      },
+      error: (error: any) => {
+        this.showMessage('Erreur lors de la récupération des informations', false);
+      }
+    });
   }
 
   private loadCurrentEmail(): void {
@@ -71,8 +90,8 @@ export class EditProfileComponent implements OnInit {
       next: (user: any) => {
         console.log('User profile response:', user);
         this.profileImageUrl = user.profileImage 
-          ? `http://localhost:8002/uploads/${user.profileImage}` 
-          : 'assets/default-profile.jpg';
+        ? `http://localhost:8002/uploads/${user.profileImage}` 
+        : 'assets/images/default-profile.jpg'; 
         console.log('Profile image URL:', this.profileImageUrl);
         this.cdr.detectChanges(); // Force la détection des changements
       },
@@ -140,24 +159,30 @@ export class EditProfileComponent implements OnInit {
 
   onUpdateEmail(): void {
     if (this.emailForm.invalid) {
-      this.showMessage('Veuillez remplir tous les champs obligatoires.', false);
-      return;
+        this.showMessage('Veuillez remplir tous les champs obligatoires.', false);
+        return;
     }
 
     const { newEmail, currentPassword } = this.emailForm.value;
     const username = this.authService.loggedUser;
+    console.log('Username being sent:', username); // Debug log
+
+    if (!username) {
+        this.showMessage('Utilisateur non connecté. Veuillez vous reconnecter.', false);
+        return;
+    }
 
     this.authService.updateProfile(username, newEmail, undefined, currentPassword).subscribe({
-      next: () => {
-        this.showMessage('Email mis à jour avec succès.', true);
-        this.emailForm.reset();
-        this.loadCurrentEmail();
-      },
-      error: (error: any) => {
-        this.showMessage(error.error.message || 'Une erreur est survenue.', false);
-      },
+        next: () => {
+            this.showMessage('Email mis à jour avec succès.', true);
+            this.emailForm.reset();
+            this.loadCurrentEmail();
+        },
+        error: (error: any) => {
+            this.showMessage(error.error.message || 'Une erreur est survenue.', false);
+        },
     });
-  }
+}
 
   onUpdatePassword(): void {
     if (this.passwordForm.invalid) {

@@ -11,6 +11,7 @@ import { CategorieWrapper } from '../models/CategorieWrapper.models';
 import { BassinPersonnalise } from '../models/bassinpersonnalise.models';
 import { Accessoire } from '../models/accessoire.models';
 import { Promotion } from '../models/promotion.model';
+import { Transaction } from '../models/transaction.models';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -623,6 +624,15 @@ getBassinDetails(id: number): Observable<Bassin> {
       return throwError(() => new Error('Could not load bassin details'));
     })
   );
+}
+/*** teba3 commande*****/
+updateStock(bassinId: number, quantite: number): Observable<Bassin> {
+  return this.http.put<Bassin>(`${this.apiURL}/bassins/${bassinId}/stock`, null, {
+    params: { quantite: quantite.toString() }
+  });
+}
+getBassinTransactions(bassinId: number): Observable<Transaction[]> {
+  return this.http.get<Transaction[]>(`${this.apiURL}/transactions/${bassinId}`);
 }
 
 }

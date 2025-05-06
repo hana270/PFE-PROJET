@@ -18,13 +18,13 @@
         <input
           type="text"
           class="form-control"
-          placeholder="Code à 4 chiffres"
+          placeholder="Code à 6 chiffres"
           formControlName="code"
           [ngClass]="{'is-invalid': validateCodeForm.controls['code'].invalid && validateCodeForm.controls['code'].touched}"
         />
         <div *ngIf="validateCodeForm.controls['code'].invalid && validateCodeForm.controls['code'].touched" class="invalid-feedback">
           <div *ngIf="validateCodeForm.controls['code'].hasError('required')">Le code est obligatoire.</div>
-          <div *ngIf="validateCodeForm.controls['code'].hasError('pattern')">Veuillez entrer un code à 4 chiffres.</div>
+          <div *ngIf="validateCodeForm.controls['code'].hasError('pattern')">Veuillez entrer un code à 6 chiffres.</div>
         </div>
       </div>
 

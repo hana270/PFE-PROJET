@@ -20,4 +20,10 @@ import org.springframework.web.bind.annotation.*;
 	    
 	    @PostMapping("/api/bassins/update-stock")
 	    void updateStock(@RequestBody UpdateStockRequest request);
-	}
+	    
+	    
+	    @PutMapping("/api/bassins/{id}/stock")
+	    void mettreAJourStock(@PathVariable Long id, @RequestParam int quantite);
+	
+
+}

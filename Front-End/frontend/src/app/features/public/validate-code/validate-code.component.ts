@@ -22,7 +22,7 @@ export class ValidateCodeComponent {
   ) {
     this.email = this.route.snapshot.queryParams['email'];
     this.validateCodeForm = this.fb.group({
-      code: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]],
+      code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
     });
   }
 

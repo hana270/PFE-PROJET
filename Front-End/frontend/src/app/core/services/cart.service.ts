@@ -1,4 +1,4 @@
-import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, Inject, Injector } from '@angular/core';
 import {
   HttpClient,
   HttpHeaders,
@@ -22,6 +22,7 @@ import {
   finalize,
   takeUntil,
   timeout,
+  retry,
 } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
 import { Bassin } from '../models/bassin.models';
@@ -39,6 +40,7 @@ import { InsufficientStockError } from '../errors/insufficient-stock.error';
 import { BassinPersonnalise } from '../models/bassinpersonnalise.models';
 import { BassinService } from './bassin.service';
 import { ImageBassin } from '../models/image.models';
+import { AuthService } from '../authentication/auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -46,29 +48,34 @@ import { ImageBassin } from '../models/image.models';
 export class CartService {
   apiUrl = 'http://localhost:8090/orders/api/panier';
 
-  // Configuration
-  private CART_EXPIRATION_HOURS = 2; // 2 heures d'expiration
-
+  private CART_EXPIRATION_HOURS = 2;
   private readonly LOCAL_CART_KEY = 'local_cart_v2';
   private readonly SESSION_ID_KEY = 'user_session_id';
+  private readonly CURRENT_CART_ID_KEY = 'current_cart_id';
 
-  // État du panier
   private panierSubject = new BehaviorSubject<Panier>(this.getInitialCart());
   public panier$ = this.panierSubject.asObservable();
+
+  private lastCartState: Panier | null = null;
+
+  private currentCartIdSubject = new BehaviorSubject<string | null>(
+    this.getStoredCartId()
+  );
+  private currentCartIdKey = 'current_cart_id';
 
   private sessionId: string = '';
   private isInitialized = false;
   private pendingRequests = 0;
-  private promotionCheckInterval = 60000;
+  private retryCount = 3;
+  private retryDelay = 1000; // 1 seconde
 
   private destroy$ = new Subject<void>();
-  private lastCartState: Panier | null = null;
-  cart$ = this.panierSubject.asObservable();
-
+  public cart$ = this.panierSubject.asObservable();
 
   constructor(
     private authState: AuthStateService,
     private http: HttpClient,
+    private injector: Injector,
     private toastService: ToastService,
     private bassinService: BassinService,
     @Inject(PLATFORM_ID) private platformId: Object
@@ -77,80 +84,165 @@ export class CartService {
     this.setupAuthSubscription();
     this.checkPromotionsInRealTime();
 
-     // Initialisation du panier
-  if (isPlatformBrowser(this.platformId)) {
-    this.initializeSessionId();
-    this.loadCart();
-  }
-
+    // Initialisation du panier
+    if (isPlatformBrowser(this.platformId)) {
+      this.initializeSessionId();
+      this.loadCart();
+    }
   }
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
-// Méthode pour initialiser un sessionId persistant
-private initializeSessionId(): void {
-  let sessionId = localStorage.getItem(this.SESSION_ID_KEY);
-  
-  // Si aucun sessionId n'existe, en créer un nouveau
-  if (!sessionId) {
-    sessionId = this.generateUniqueSessionId();
-    localStorage.setItem(this.SESSION_ID_KEY, sessionId);
+  private get authService(): AuthService {
+    return this.injector.get(AuthService);
   }
-}
+  // Méthode pour initialiser un sessionId persistant
+  private initializeSessionId(): void {
+    let sessionId = localStorage.getItem(this.SESSION_ID_KEY);
 
-// Génération d'un identifiant unique pour la session
-private generateUniqueSessionId(): string {
-  return 'sess_' + Math.random().toString(36).substring(2, 15) + 
-         Math.random().toString(36).substring(2, 15);
-}
-// Méthode pour obtenir les en-têtes avec le sessionId
-private getHeaders(): HttpHeaders {
-  let headers = new HttpHeaders({
-    'Content-Type': 'application/json'
-  });
-  
-  // Ajouter le token JWT si l'utilisateur est connecté
-  if (this.authState.isLoggedIn) {
-    headers = headers.set('Authorization', `Bearer ${this.authState.getToken()}`);
+    // Si aucun sessionId n'existe, en créer un nouveau
+    if (!sessionId) {
+      sessionId = this.generateUniqueSessionId();
+      localStorage.setItem(this.SESSION_ID_KEY, sessionId);
+    }
   }
-  
-  // Ajouter toujours le sessionId pour assurer la persistance du panier
-  const sessionId = localStorage.getItem(this.SESSION_ID_KEY);
-  if (sessionId) {
-    headers = headers.set('X-Session-ID', sessionId);
-  }
-  
-  return headers;
-}
 
-
-// Méthode pour charger le panier (connecté ou non)
-loadCart(): Observable<Panier> {
-  if (!isPlatformBrowser(this.platformId)) {
-    return of(this.createEmptyCart());
+  // Génération d'un identifiant unique pour la session
+  private generateUniqueSessionId(): string {
+    return (
+      'sess_' +
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15)
+    );
   }
-  
-  this.pendingRequests++;
-  
-  return this.http.get<{ success: boolean; cart: Panier }>(`${this.apiUrl}`, {
-    headers: this.getHeaders()
-  }).pipe(
-    map(response => response.cart),
-    tap(cart => {
-      if (cart?.items) {
-        cart.items.forEach(item => this.enrichItemWithDetails(item));
+  // Méthode pour obtenir les en-têtes avec le sessionId
+  private getHeaders(): HttpHeaders {
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+
+    // Ajouter le token JWT si l'utilisateur est connecté
+    if (this.authState.isLoggedIn) {
+      headers = headers.set(
+        'Authorization',
+        `Bearer ${this.authState.getToken()}`
+      );
+    }
+
+    // Ajouter toujours le sessionId pour assurer la persistance du panier
+    const sessionId = localStorage.getItem(this.SESSION_ID_KEY);
+    if (sessionId) {
+      headers = headers.set('X-Session-ID', sessionId);
+    }
+
+    return headers;
+  }
+
+  // Méthode pour charger le panier (connecté ou non)
+  // Chargement du panier depuis l'API
+  loadCart(): Observable<Panier> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of(this.getInitialCart());
+    }
+
+    this.pendingRequests++;
+
+    let headers = new HttpHeaders();
+    if (this.sessionId) {
+      headers = headers.set('X-Session-ID', this.sessionId);
+    }
+
+    return this.http.get<any>(this.apiUrl, { headers }).pipe(
+      retry({ count: this.retryCount, delay: this.retryDelay }),
+      map((response) => {
+        // Enregistrer le sessionId s'il est présent dans la réponse
+        if (response.sessionId) {
+          this.sessionId = response.sessionId;
+          localStorage.setItem(this.SESSION_ID_KEY, this.sessionId);
+        }
+
+        if (response.cart && response.cart.id) {
+          this.setCurrentCartId(response.cart.id.toString());
+        }
+
+        return this.adaptApiResponseToCart(response);
+      }),
+      catchError((error) => this.handleCartError(error)),
+      finalize(() => this.pendingRequests--)
+    );
+  }
+
+  // Gestion d'erreur lors du chargement du panier
+  private handleCartError(error: HttpErrorResponse): Observable<Panier> {
+    console.error('Erreur lors du chargement du panier:', error);
+
+    // Si l'erreur est liée au problème de résultat non unique, utiliser le panier local
+    if (
+      error.status === 500 &&
+      error.error?.message?.includes('Query did not return a unique result')
+    ) {
+      console.warn(
+        'Problème de requête côté serveur détecté. Utilisation du panier local comme solution de secours.'
+      );
+      return of(this.getLocalCartFallback());
+    }
+
+    // Pour les erreurs 404 (panier non trouvé), créer un nouveau panier
+    if (error.status === 404) {
+      return this.createNewCart().pipe(switchMap(() => this.loadCart()));
+    }
+
+    // Pour les autres erreurs, utiliser le panier local
+    return of(this.getLocalCartFallback());
+  }
+
+  // Conversion de la réponse API en objet Panier
+  private adaptApiResponseToCart(apiResponse: any): Panier {
+    let cart: Panier;
+
+    // Vérifier si la réponse contient directement un panier ou un objet cart
+    if (apiResponse.id !== undefined) {
+      cart = apiResponse as Panier;
+    } else if (apiResponse.cart) {
+      cart = apiResponse.cart as Panier;
+    } else {
+      // Créer un panier vide si la structure de réponse est inconnue
+      cart = this.getInitialCart();
+    }
+
+    // S'assurer que les champs nécessaires sont initialisés
+    cart.items = cart.items || [];
+    cart.totalPrice = cart.totalPrice || 0;
+
+    return cart;
+  }
+
+  // Panier par défaut utilisé comme solution de secours
+  private getLocalCartFallback(): Panier {
+    if (!isPlatformBrowser(this.platformId)) {
+      return this.getInitialCart();
+    }
+
+    const savedCart = localStorage.getItem(this.LOCAL_CART_KEY);
+    if (savedCart) {
+      try {
+        const parsedCart = JSON.parse(savedCart) as Panier;
+        return parsedCart;
+      } catch (e) {
+        console.error('Erreur lors de la lecture du panier local:', e);
       }
-      this.panierSubject.next(cart);
-    }),
-    catchError(error => {
-      console.error('Error loading cart:', error);
-      return of(this.createEmptyCart());
-    }),
-    finalize(() => this.pendingRequests--)
-  );
-}
+    }
 
+    return this.getInitialCart();
+  }
+
+  // Sauvegarde du panier dans le localStorage
+  private saveCartToLocalStorage(cart: Panier): void {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem(this.LOCAL_CART_KEY, JSON.stringify(cart));
+    }
+  }
 
   /**
    * Met à jour la quantité d'un article dans le panier
@@ -182,7 +274,7 @@ loadCart(): Observable<Panier> {
    * @param newQuantity Nouvelle quantité
    * @returns Observable avec le résultat
    */
-   updateCartItemQuantity(
+  updateCartItemQuantity(
     itemId: number,
     newQuantity: number
   ): Observable<boolean> {
@@ -235,63 +327,63 @@ loadCart(): Observable<Panier> {
         finalize(() => this.pendingRequests--)
       );
   }
-// Dans la classe CartService
+  // Dans la classe CartService
 
-/**
- * Retourne le prix supplémentaire pour un matériau donné
- */
-public getMaterialPrice(materiau: string): number {
-  // Vous pouvez soit:
-  // 1. Utiliser une liste de prix définie dans le service
-  // 2. Faire une requête API pour obtenir le prix
-  // 3. Utiliser une logique de calcul
-  
-  // Exemple avec une liste de prix locale:
-  const materialPrices: {[key: string]: number} = {
-    'Béton fibré haute performance': 50,
-    'Polyéthylène haute densité (PEHD)': 60,
-    'Composite verre-résine': 70,
-    'Acier inoxydable 316L (marine)': 80,
-    "Tôle d'acier galvanisé à chaud": 90,
-    'PVC renforcé': 100,
-    'Membrane EPDM épaisseur 1.5mm': 110,
-    'Géomembrane HDPE': 120,
-    'Pierre reconstituée': 130,
-    'Fibre de carbone': 140,
-    'Bâche armée PVC 900g/m²': 150,
-    'Polypropylène expansé': 160,
-    'Béton polymère': 170,
-    'Aluminium anodisé': 180,
-    'Titane grade 2': 190,
-    'Bois composite': 200,
-    'Résine époxy renforcée': 210,
-  };
-  
-  return materialPrices[materiau] || 0;
-}
+  /**
+   * Retourne le prix supplémentaire pour un matériau donné
+   */
+  public getMaterialPrice(materiau: string): number {
+    // Vous pouvez soit:
+    // 1. Utiliser une liste de prix définie dans le service
+    // 2. Faire une requête API pour obtenir le prix
+    // 3. Utiliser une logique de calcul
 
-/**
- * Retourne le prix supplémentaire pour une dimension donnée
- */
-public getDimensionPrice(dimension: string): number {
-  // Même approche que pour les matériaux
-  const dimensionPrices: {[key: string]: number} = {
-    '150x100x80 cm (≈ 1 200L)': 100,
-    '180x120x90 cm (≈ 1 944L)': 150,
-    '200x150x100 cm (≈ 3 000L)': 200,
-    '250x180x120 cm (≈ 5 400L)': 300,
-    '300x200x150 cm (≈ 9 000L)': 400,
-    '350x250x150 cm (≈ 13 125L)': 500,
-    '400x300x200 cm (≈ 24 000L)': 600,
-    '500x350x200 cm (≈ 35 000L)': 700,
-    '600x400x250 cm (≈ 60 000L)': 800,
-    '700x500x300 cm (≈ 105 000L)': 900,
-    '800x600x350 cm (≈ 168 000L)': 1000,
-    '1000x700x400 cm (≈ 280 000L)': 1200,
-  };
-  
-  return dimensionPrices[dimension] || 0;
-}
+    // Exemple avec une liste de prix locale:
+    const materialPrices: { [key: string]: number } = {
+      'Béton fibré haute performance': 50,
+      'Polyéthylène haute densité (PEHD)': 60,
+      'Composite verre-résine': 70,
+      'Acier inoxydable 316L (marine)': 80,
+      "Tôle d'acier galvanisé à chaud": 90,
+      'PVC renforcé': 100,
+      'Membrane EPDM épaisseur 1.5mm': 110,
+      'Géomembrane HDPE': 120,
+      'Pierre reconstituée': 130,
+      'Fibre de carbone': 140,
+      'Bâche armée PVC 900g/m²': 150,
+      'Polypropylène expansé': 160,
+      'Béton polymère': 170,
+      'Aluminium anodisé': 180,
+      'Titane grade 2': 190,
+      'Bois composite': 200,
+      'Résine époxy renforcée': 210,
+    };
+
+    return materialPrices[materiau] || 0;
+  }
+
+  /**
+   * Retourne le prix supplémentaire pour une dimension donnée
+   */
+  public getDimensionPrice(dimension: string): number {
+    // Même approche que pour les matériaux
+    const dimensionPrices: { [key: string]: number } = {
+      '150x100x80 cm (≈ 1 200L)': 100,
+      '180x120x90 cm (≈ 1 944L)': 150,
+      '200x150x100 cm (≈ 3 000L)': 200,
+      '250x180x120 cm (≈ 5 400L)': 300,
+      '300x200x150 cm (≈ 9 000L)': 400,
+      '350x250x150 cm (≈ 13 125L)': 500,
+      '400x300x200 cm (≈ 24 000L)': 600,
+      '500x350x200 cm (≈ 35 000L)': 700,
+      '600x400x250 cm (≈ 60 000L)': 800,
+      '700x500x300 cm (≈ 105 000L)': 900,
+      '800x600x350 cm (≈ 168 000L)': 1000,
+      '1000x700x400 cm (≈ 280 000L)': 1200,
+    };
+
+    return dimensionPrices[dimension] || 0;
+  }
   /**
    * Ajoute un bassin (standard ou personnalisé) au panier avec tous les détails de personnalisation
    * @param bassin Le bassin à ajouter
@@ -304,7 +396,7 @@ public getDimensionPrice(dimension: string): number {
   /**
    * Ajoute un bassin (standard ou personnalisé) au panier
    */
-  
+
   addBassinToCart(
     bassin: Bassin | BassinPersonnalise,
     quantity: number,
@@ -323,76 +415,83 @@ public getDimensionPrice(dimension: string): number {
     if (!bassin?.idBassin) {
       return throwError(() => new Error('Bassin invalide'));
     }
-  
+
     // Calcul du prix des accessoires
-    const accessoiresPrice = customProperties?.accessoires?.reduce(
-      (sum, acc) => sum + (acc.prixAccessoire || 0),
-      0
-    ) || 0;
-  
+    const accessoiresPrice =
+      customProperties?.accessoires?.reduce(
+        (sum, acc) => sum + (acc.prixAccessoire || 0),
+        0
+      ) || 0;
+
     // Récupération de l'image
     const getImagePath = (image: ImageBassin | string): string => {
       if (typeof image === 'string') return image;
       return image.imagePath || 'assets/default-image.webp';
     };
-  
-    const imageUrl = bassin.imagesBassin?.length > 0
-      ? getImagePath(bassin.imagesBassin[0])
-      : 'assets/default-image.webp';
-   
-  // Détermination du statut
-  let status: 'DISPONIBLE' | 'SUR_COMMANDE' | 'RUPTURE_STOCK';
-  if (isCustomized) {
-    status = 'SUR_COMMANDE';
-  } else {
-    const bassinStandard = bassin as Bassin;
-    status = bassinStandard.statut; // Récupération directe du statut du bassin
-  }
 
-   // Création de la requête
-  const request: PanierItemRequest = {
-    bassinId: bassin.idBassin,
-    quantity: quantity,
-    isCustomized: isCustomized,
-    prixOriginal: bassin.prix,
-    prixMateriau: 0,
-    prixDimension: 0,
-    prixAccessoires: accessoiresPrice,
-    prixEstime: bassin.prix + accessoiresPrice,
-    nomBassin: bassin.nomBassin,
-    imageUrl: imageUrl,
-    status: status, // Utilisation du statut déterminé
-  };
-  
+    const imageUrl =
+      bassin.imagesBassin?.length > 0
+        ? getImagePath(bassin.imagesBassin[0])
+        : 'assets/default-image.webp';
+
+    // Détermination du statut
+    let status: 'DISPONIBLE' | 'SUR_COMMANDE' | 'RUPTURE_STOCK';
+    if (isCustomized) {
+      status = 'SUR_COMMANDE';
+    } else {
+      const bassinStandard = bassin as Bassin;
+      status = bassinStandard.statut; // Récupération directe du statut du bassin
+    }
+
+    // Création de la requête
+    const request: PanierItemRequest = {
+      bassinId: bassin.idBassin,
+      quantity: quantity,
+      isCustomized: isCustomized,
+      prixOriginal: bassin.prix,
+      prixMateriau: 0,
+      prixDimension: 0,
+      prixAccessoires: accessoiresPrice,
+      prixEstime: bassin.prix + accessoiresPrice,
+      nomBassin: bassin.nomBassin,
+      imageUrl: imageUrl,
+      status: status, // Utilisation du statut déterminé
+    };
+
     // Ajout des propriétés de personnalisation si nécessaire
     if (isCustomized && customProperties) {
       request.materiauSelectionne = customProperties.materiau || '';
       request.dimensionSelectionnee = customProperties.dimensions || '';
       request.couleurSelectionnee = customProperties.couleur || '';
-      request.dureeFabrication = customProperties.dureeFabrication || 'À déterminer';
-  
+      request.dureeFabrication =
+        customProperties.dureeFabrication || 'À déterminer';
+
       // Calcul des suppléments pour matériau et dimensions
       if (customProperties.materiau) {
         request.prixMateriau = this.getMaterialPrice(customProperties.materiau);
         request.prixEstime += request.prixMateriau;
       }
-  
+
       if (customProperties.dimensions) {
-        request.prixDimension = this.getDimensionPrice(customProperties.dimensions);
+        request.prixDimension = this.getDimensionPrice(
+          customProperties.dimensions
+        );
         request.prixEstime += request.prixDimension;
       }
-  
+
       // Si un prix estimé est fourni explicitement, l'utiliser
       if (customProperties.prixEstime !== undefined) {
         request.prixEstime = customProperties.prixEstime;
       }
-  
+
       // Ajout des IDs des accessoires
       if (customProperties.accessoires?.length) {
-        request.accessoireIds = customProperties.accessoires.map(acc => acc.idAccessoire);
+        request.accessoireIds = customProperties.accessoires.map(
+          (acc) => acc.idAccessoire
+        );
       }
     }
-  
+
     // Ajout des informations de promotion
     if (promotion) {
       request.promotionId = promotion.idPromotion;
@@ -400,78 +499,96 @@ public getDimensionPrice(dimension: string): number {
       request.tauxReduction = promotion.tauxReduction;
       request.promotionActive = true;
     }
-  
+
     return this.addItemToCart(request);
   }
 
-// Méthode unifiée addItemToCart
-addItemToCart(item: PanierItemRequest): Observable<{ success: boolean; message?: string; cart?: Panier }> {
-  // Pour les bassins personnalisés, vérifier s'il en existe un identique
-  if (item.isCustomized && this.hasIdenticalCustomBassin(item)) {
-    const existingItem = this.panierSubject.value.items?.find(cartItem => {
-      return cartItem.isCustomized &&
-             cartItem.bassinId === item.bassinId &&
-             cartItem.customization?.materiauSelectionne === item.materiauSelectionne &&
-             cartItem.customization?.dimensionSelectionnee === item.dimensionSelectionnee &&
-             cartItem.customization?.couleurSelectionnee === item.couleurSelectionnee &&
-             this.areAccessoiresIdentical(cartItem.accessoireIds, item.accessoireIds);
-    });
-    
-    if (existingItem) {
-      return this.updateQuantity(existingItem, existingItem.quantity + item.quantity).pipe(
-        switchMap(success => {
-          if (success) {
-            return of({ success: true, cart: this.panierSubject.value });
+  // Méthode unifiée addItemToCart
+  addItemToCart(
+    item: PanierItemRequest
+  ): Observable<{ success: boolean; message?: string; cart?: Panier }> {
+    // Pour les bassins personnalisés, vérifier s'il en existe un identique
+    if (item.isCustomized && this.hasIdenticalCustomBassin(item)) {
+      const existingItem = this.panierSubject.value.items?.find((cartItem) => {
+        return (
+          cartItem.isCustomized &&
+          cartItem.bassinId === item.bassinId &&
+          cartItem.customization?.materiauSelectionne ===
+            item.materiauSelectionne &&
+          cartItem.customization?.dimensionSelectionnee ===
+            item.dimensionSelectionnee &&
+          cartItem.customization?.couleurSelectionnee ===
+            item.couleurSelectionnee &&
+          this.areAccessoiresIdentical(
+            cartItem.accessoireIds,
+            item.accessoireIds
+          )
+        );
+      });
+
+      if (existingItem) {
+        return this.updateQuantity(
+          existingItem,
+          existingItem.quantity + item.quantity
+        ).pipe(
+          switchMap((success) => {
+            if (success) {
+              return of({ success: true, cart: this.panierSubject.value });
+            }
+            return of({
+              success: false,
+              message: 'Échec de la mise à jour de la quantité',
+            });
+          })
+        );
+      }
+    }
+
+    // Pour les bassins standards ou un nouveau bassin personnalisé
+    return this.http
+      .post<{ success: boolean; message?: string; cart?: Panier }>(
+        `${this.apiUrl}/items`,
+        item,
+        { headers: this.getHeaders() }
+      )
+      .pipe(
+        tap((response) => {
+          if (response.success && response.cart) {
+            this.panierSubject.next(response.cart);
           }
-          return of({ success: false, message: 'Échec de la mise à jour de la quantité' });
+        }),
+        catchError((error) => {
+          console.error('Error adding to cart:', error);
+          return of({
+            success: false,
+            message: error.error?.message || "Erreur lors de l'ajout au panier",
+          });
         })
       );
-    }
   }
-  
-  // Pour les bassins standards ou un nouveau bassin personnalisé
-  return this.http.post<{ success: boolean; message?: string; cart?: Panier }>(
-    `${this.apiUrl}/items`,
-    item,
-    { headers: this.getHeaders() }
-  ).pipe(
-    tap(response => {
-      if (response.success && response.cart) {
-        this.panierSubject.next(response.cart);
-      }
-    }),
-    catchError(error => {
-      console.error('Error adding to cart:', error);
-      return of({
-        success: false,
-        message: error.error?.message || 'Erreur lors de l\'ajout au panier'
-      });
-    })
-  );
-}
 
-private defaultCart(): Panier {
-  return {
+  private defaultCart(): Panier {
+    return {
       id: 0,
       userId: this.authState.currentUserId,
       sessionId: this.sessionId,
       items: [],
       totalPrice: 0,
-      lastUpdated: new Date()
-  };
-}
-private getErrorMessage(error: HttpErrorResponse): string {
+      lastUpdated: new Date(),
+    };
+  }
+  private getErrorMessage(error: HttpErrorResponse): string {
     if (error.error?.message) {
-        return error.error.message;
+      return error.error.message;
     }
     if (error.status === 409) {
-        return 'Stock insuffisant';
+      return 'Stock insuffisant';
     }
     if (error.status === 400) {
-        return 'Données invalides';
+      return 'Données invalides';
     }
     return "Erreur lors de l'ajout au panier";
-}
+  }
 
   // Méthode pour obtenir les détails complets d'un article du panier
   getItemDetails(item: PanierItem): Observable<PanierItem> {
@@ -1014,9 +1131,9 @@ private getErrorMessage(error: HttpErrorResponse): string {
    */
   private enrichItemWithDetails(item: PanierItem, bassin?: Bassin): void {
     if (!item) return;
-  
+
     const sourceBassin = bassin || item.bassin;
-  
+
     // Initialisation des customProperties si inexistants
     if (item.isCustomized && !item.customProperties) {
       item.customProperties = {
@@ -1031,15 +1148,19 @@ private getErrorMessage(error: HttpErrorResponse): string {
         accessoiresPrice: item.prixAccessoires || 0,
         basePrice: item.prixOriginal || 0,
         imageUrl: item.imageUrl,
-        bassinBase: item.bassinBase || (sourceBassin ? {
-          id: sourceBassin.idBassin,
-          nom: sourceBassin.nomBassin,
-          imageUrl: this.extractFirstImageUrl(sourceBassin),
-          prix: sourceBassin.prix
-        } : undefined)
+        bassinBase:
+          item.bassinBase ||
+          (sourceBassin
+            ? {
+                id: sourceBassin.idBassin,
+                nom: sourceBassin.nomBassin,
+                imageUrl: this.extractFirstImageUrl(sourceBassin),
+                prix: sourceBassin.prix,
+              }
+            : undefined),
       };
     }
-  
+
     // Calcul du prix effectif
     this.calculateEffectivePrix(item);
   }
@@ -1075,24 +1196,26 @@ private getErrorMessage(error: HttpErrorResponse): string {
 
   private getInitialCart(): Panier {
     return {
-        id: -1,
-        items: [],
-        totalPrice: 0,
-        userId: null, // Au lieu de undefined
-        sessionId: null // Au lieu de undefined
+      id: -1,
+      items: [],
+      totalPrice: 0,
+      userId: null, // Au lieu de undefined
+      sessionId: null, // Au lieu de undefined
     };
-}
+  }
 
-private createEmptyCart(): Panier {
+  private createEmptyCart(): Panier {
     return {
-        id: -1,
-        items: [],
-        totalPrice: 0,
-        userId: this.authState.isLoggedIn ? this.authState.currentUserId : null,
-        sessionId: !this.authState.isLoggedIn ? this.getOrCreateSessionId() : null
+      id: -1,
+      items: [],
+      totalPrice: 0,
+      userId: this.authState.isLoggedIn ? this.authState.currentUserId : null,
+      sessionId: !this.authState.isLoggedIn
+        ? this.getOrCreateSessionId()
+        : null,
     };
-}
-/*
+  }
+  /*
   private getHeaders(): HttpHeaders {
     let headers = new HttpHeaders({
       'Content-Type': 'application/json',
@@ -1118,25 +1241,29 @@ private createEmptyCart(): Panier {
     return headers;
   }
 */
- 
+
   private getOrCreateSessionId(): string | null {
     if (typeof window !== 'undefined' && window.localStorage) {
-        let sessionId = localStorage.getItem('sessionId');
-        if (!sessionId) {
-            sessionId = this.generateSessionId();
-            localStorage.setItem('sessionId', sessionId);
-        }
-        return sessionId;
+      let sessionId = localStorage.getItem('sessionId');
+      if (!sessionId) {
+        sessionId = this.generateSessionId();
+        localStorage.setItem('sessionId', sessionId);
+      }
+      return sessionId;
     }
     return null;
-}
+  }
 
-private generateSessionId(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+  private generateSessionId(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+      /[xy]/g,
+      function (c) {
+        const r = (Math.random() * 16) | 0,
+          v = c == 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
-    });
-}
+      }
+    );
+  }
   private updateSessionId(newSessionId?: string | null): void {
     if (
       newSessionId &&
@@ -1570,19 +1697,20 @@ private generateSessionId(): string {
 
   calculateEffectivePrix(item: PanierItem): void {
     if (!item) return;
-  
+
     // Pour les articles personnalisés
     if (item.isCustomized) {
       // Utiliser le prix estimé s'il existe
       if (item.customProperties?.prixEstime !== undefined) {
         item.effectivePrice = item.customProperties.prixEstime;
-      } 
+      }
       // Sinon calculer à partir des composants
       else {
-        item.effectivePrice = (item.prixOriginal || 0) +
-                            (item.customization!.prixMateriau || 0) +
-                            (item.customization!.prixDimension || 0) +
-                            (item.prixAccessoires || 0);
+        item.effectivePrice =
+          (item.prixOriginal || 0) +
+          (item.customization!.prixMateriau || 0) +
+          (item.customization!.prixDimension || 0) +
+          (item.prixAccessoires || 0);
       }
     }
     // Pour les articles standards avec promotion
@@ -1596,12 +1724,15 @@ private generateSessionId(): string {
     else {
       item.effectivePrice = item.prixOriginal || 0;
     }
-  
+
     // Calculer le sous-total
     item.subtotal = item.effectivePrice * (item.quantity || 1);
   }
-  
-  private calculateDiscountedPrice(basePrice: number, reductionRate?: number): number {
+
+  private calculateDiscountedPrice(
+    basePrice: number,
+    reductionRate?: number
+  ): number {
     if (!reductionRate) return basePrice;
     return Math.round(basePrice * (1 - reductionRate / 100) * 100) / 100;
   }
@@ -1753,84 +1884,86 @@ private generateSessionId(): string {
       })
     );
   }
-/********************
- * 
- * 
- * 
- * 
- * 
- * 
- */
-addItemToLocalCartOptimistic(item: {
-  bassin: Bassin | BassinPersonnalise;
-  quantity: number;
-  isCustomized: boolean;
-  customProperties?: any;
-}): void {
-  this.lastCartState = this.panierSubject.getValue();
+  /********************
+   *
+   *
+   *
+   *
+   *
+   *
+   */
+  addItemToLocalCartOptimistic(item: {
+    bassin: Bassin | BassinPersonnalise;
+    quantity: number;
+    isCustomized: boolean;
+    customProperties?: any;
+  }): void {
+    this.lastCartState = this.panierSubject.getValue();
 
-  const prixUnitaire = item.isCustomized
-    ? (item.bassin as BassinPersonnalise).prixEstime || item.bassin.prix
-    : item.bassin.prix;
+    const prixUnitaire = item.isCustomized
+      ? (item.bassin as BassinPersonnalise).prixEstime || item.bassin.prix
+      : item.bassin.prix;
 
-  const newItem: PanierItem = {
-    id: Math.floor(Math.random() * 1000000),
-    bassinId: item.bassin.idBassin,
-    quantity: item.quantity,
-    prixOriginal: item.bassin.prix,
-    prixUnitaire: prixUnitaire,
-    effectivePrice: prixUnitaire,
-    isCustomized: item.isCustomized,
-    customProperties: item.customProperties,
-    status: item.isCustomized
-      ? 'SUR_COMMANDE'
-      : (item.bassin as Bassin).statut,
-    surCommande: item.isCustomized || (item.bassin as Bassin).statut === 'SUR_COMMANDE',
-    bassin: item.isCustomized ? undefined : (item.bassin as Bassin),
-    dureeFabrication: item.isCustomized
-      ? item.customProperties?.dureeFabrication
-      : (item.bassin as Bassin).dureeFabricationJours?.toString(),
-    nomBassin: item.isCustomized
-      ? `${(item.bassin as Bassin).nomBassin} Personnalisé`
-      : (item.bassin as Bassin).nomBassin,
-    imageUrl: item.isCustomized
-      ? (item.bassin as Bassin).imagesBassin?.[0]?.imagePath ||
-      'assets/default-image.webp'
-      : (item.bassin as Bassin).imagesBassin?.[0]?.imagePath,
-    prixAccessoires: 0,
-    description: item.bassin.description || "Non spécifié",
-    // Initialiser l'objet customization pour les articles personnalisés
-    customization: item.isCustomized ? {
-      
-      materiauSelectionne: item.customProperties?.materiauSelectionne,
-      prixMateriau: item.customProperties?.materiauPrice || 0,
-      dimensionSelectionnee: item.customProperties?.dimensionSelectionnee,
-      prixDimension: item.customProperties?.dimensionPrice || 0,
-      couleurSelectionnee: item.customProperties?.couleurSelectionnee,
-      prixEstime: item.customProperties?.prixEstime || prixUnitaire,
-      dureeFabrication: item.customProperties?.dureeFabrication
-    } : undefined
-  };
+    const newItem: PanierItem = {
+      id: Math.floor(Math.random() * 1000000),
+      bassinId: item.bassin.idBassin,
+      quantity: item.quantity,
+      prixOriginal: item.bassin.prix,
+      prixUnitaire: prixUnitaire,
+      effectivePrice: prixUnitaire,
+      isCustomized: item.isCustomized,
+      customProperties: item.customProperties,
+      status: item.isCustomized
+        ? 'SUR_COMMANDE'
+        : (item.bassin as Bassin).statut,
+      surCommande:
+        item.isCustomized || (item.bassin as Bassin).statut === 'SUR_COMMANDE',
+      bassin: item.isCustomized ? undefined : (item.bassin as Bassin),
+      dureeFabrication: item.isCustomized
+        ? item.customProperties?.dureeFabrication
+        : (item.bassin as Bassin).dureeFabricationJours?.toString(),
+      nomBassin: item.isCustomized
+        ? `${(item.bassin as Bassin).nomBassin} Personnalisé`
+        : (item.bassin as Bassin).nomBassin,
+      imageUrl: item.isCustomized
+        ? (item.bassin as Bassin).imagesBassin?.[0]?.imagePath ||
+          'assets/default-image.webp'
+        : (item.bassin as Bassin).imagesBassin?.[0]?.imagePath,
+      prixAccessoires: 0,
+      description: item.bassin.description || 'Non spécifié',
+      // Initialiser l'objet customization pour les articles personnalisés
+      customization: item.isCustomized
+        ? {
+            materiauSelectionne: item.customProperties?.materiauSelectionne,
+            prixMateriau: item.customProperties?.materiauPrice || 0,
+            dimensionSelectionnee: item.customProperties?.dimensionSelectionnee,
+            prixDimension: item.customProperties?.dimensionPrice || 0,
+            couleurSelectionnee: item.customProperties?.couleurSelectionnee,
+            prixEstime: item.customProperties?.prixEstime || prixUnitaire,
+            dureeFabrication: item.customProperties?.dureeFabrication,
+          }
+        : undefined,
+    };
 
-  const currentCart = this.panierSubject.getValue();
-  const updatedCart = {
-    ...currentCart,
-    items: [...currentCart.items, newItem],
-    totalPrice:
-      (currentCart.totalPrice || 0) + prixUnitaire * newItem.quantity,
-  };
+    const currentCart = this.panierSubject.getValue();
+    const updatedCart = {
+      ...currentCart,
+      items: [...currentCart.items, newItem],
+      totalPrice:
+        (currentCart.totalPrice || 0) + prixUnitaire * newItem.quantity,
+    };
 
-  this.panierSubject.next(updatedCart);
-}
-/*******
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- */
+    this.panierSubject.next(updatedCart);
+  }
+  /*******
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   */
   // Annulation de la mise à jour optimiste
   revertLocalCart(): void {
     if (this.lastCartState) {
@@ -1885,39 +2018,87 @@ addItemToLocalCartOptimistic(item: {
   }
 
   hasIdenticalCustomBassin(newItem: PanierItemRequest): boolean {
-    const existing = this.panierSubject.value.items?.find(item => {
+    const existing = this.panierSubject.value.items?.find((item) => {
       // Vérifier si c'est un bassin personnalisé avec le même bassinId
       if (!item.isCustomized || item.bassinId !== newItem.bassinId) {
         return false;
       }
-      
+
       // Vérifier si toutes les personnalisations sont identiques
-      const sameMaterial = item.customization?.materiauSelectionne === newItem.materiauSelectionne;
-      const sameDimensions = item.customization?.dimensionSelectionnee === newItem.dimensionSelectionnee;
-      const sameColor = item.customization?.couleurSelectionnee === newItem.couleurSelectionnee;
-      const sameAccessories = this.areAccessoiresIdentical(item.accessoireIds, newItem.accessoireIds);
-      
+      const sameMaterial =
+        item.customization?.materiauSelectionne === newItem.materiauSelectionne;
+      const sameDimensions =
+        item.customization?.dimensionSelectionnee ===
+        newItem.dimensionSelectionnee;
+      const sameColor =
+        item.customization?.couleurSelectionnee === newItem.couleurSelectionnee;
+      const sameAccessories = this.areAccessoiresIdentical(
+        item.accessoireIds,
+        newItem.accessoireIds
+      );
+
       return sameMaterial && sameDimensions && sameColor && sameAccessories;
     });
-    
+
     return !!existing;
   }
 
-private areAccessoiresIdentical(ids1?: number[], ids2?: number[]): boolean {
-  if (!ids1 && !ids2) return true;
-  if (!ids1 || !ids2) return false;
-  if (ids1.length !== ids2.length) return false;
-  
-  // Trier les deux tableaux pour comparer les valeurs
-  const sorted1 = [...ids1].sort();
-  const sorted2 = [...ids2].sort();
-  
-  return sorted1.every((id, index) => id === sorted2[index]);
-}
-// Remplacer currentCart par panierSubject
-get currentCart(): BehaviorSubject<Panier> {
-  return this.panierSubject;
-}
+  private areAccessoiresIdentical(ids1?: number[], ids2?: number[]): boolean {
+    if (!ids1 && !ids2) return true;
+    if (!ids1 || !ids2) return false;
+    if (ids1.length !== ids2.length) return false;
 
+    // Trier les deux tableaux pour comparer les valeurs
+    const sorted1 = [...ids1].sort();
+    const sorted2 = [...ids2].sort();
 
+    return sorted1.every((id, index) => id === sorted2[index]);
+  }
+  // Remplacer currentCart par panierSubject
+  get currentCart(): BehaviorSubject<Panier> {
+    return this.panierSubject;
+  }
+
+  // Création d'un nouveau panier
+  createNewCart(): Observable<number> {
+    this.pendingRequests++;
+
+    return this.http.post<any>(this.apiUrl, {}).pipe(
+      tap((response) => {
+        const newCartId = Number(response.id);
+        this.setCurrentCartId(newCartId.toString());
+      }),
+      catchError((error) => {
+        console.error("Erreur lors de la création d'un nouveau panier:", error);
+        return throwError(() => new Error('Échec de la création du panier'));
+      }),
+      finalize(() => this.pendingRequests--)
+    );
+  }
+
+  // Méthode pour obtenir l'ID du panier actuel
+  getCurrentCartId(): Observable<string | null> {
+    return this.currentCartIdSubject.asObservable();
+  }
+
+  // Méthode pour stocker l'ID du panier
+  private setCurrentCartId(cartId: string): void {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem(this.currentCartIdKey, cartId);
+    }
+    this.currentCartIdSubject.next(cartId);
+  }
+
+  // Récupération de l'ID du panier depuis le localStorage
+  private getStoredCartId(): string | null {
+    if (isPlatformBrowser(this.platformId)) {
+      return localStorage.getItem(this.currentCartIdKey);
+    }
+    return null;
+  }
+  // Dans cart.service.ts
+getCurrentCartIdw(): number | null {
+  const panierId = localStorage.getItem('currentPanierId');
+  return panierId ? Number(panierId) : null;
+}
 }

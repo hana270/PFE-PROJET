@@ -101,7 +101,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   };
   
   constructor(
-    private authService: AuthService,
+    public authService: AuthService,
     private router: Router,
     private cartService: CartService,
     private favoritesService: FavoritesService,
@@ -111,6 +111,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
+  
+    this.authService.isAuthenticated$.subscribe(isAuth => {
+      this.isAuthenticated = isAuth;
+    });
   }
 
   ngOnInit(): void {
@@ -299,11 +303,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
   }
 
-  logout(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      this.authService.logout();
-      this.router.navigate(['/login']);
-    }
+  logout() {
+    this.authService.logout();
+    this.isDropdownOpen = false;
   }
 
   getUniqueItemsCount(): number {

@@ -309,14 +309,14 @@
           </div>
 
           <!-- Bouton de paiement -->
-          <button *ngIf="isAuthenticated" (click)="proceedToCheckout()" class="btn btn-success btn-checkout">
+          <button *ngIf="authService.isLoggedIn" (click)="proceedToCheckout()" class="btn btn-success btn-checkout">
             <i class="fas fa-lock me-2"></i>Procéder au paiement
           </button>
 
-          <!-- Bouton de connexion -->
-          <button *ngIf="!isAuthenticated" (click)="redirectToLogin()" class="btn btn-primary btn-checkout">
-            <i class="fas fa-sign-in-alt me-2"></i>Connectez-vous pour commander
-          </button>
+        <!-- Bouton de connexion -->
+<button *ngIf="!authService.isLoggedIn" (click)="redirectToLogin()" class="btn btn-primary btn-checkout">
+  <i class="fas fa-sign-in-alt me-2"></i>Connectez-vous pour commander
+</button>
 
           <div class="secure-payment">
             <div class="secure-payment-text">

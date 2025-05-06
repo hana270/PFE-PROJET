@@ -77,8 +77,6 @@ public class BassinServiceImpl implements BassinService {
     @Autowired
     private TransactionRepository transactionRepository;
     
-    @Autowired
-    private NotificationRepository notificationRepository;
 
     @Autowired
     private BassinPersonnaliseRepository bassinPersonnaliseRepository;
@@ -91,10 +89,9 @@ public class BassinServiceImpl implements BassinService {
     
     @Autowired
     private PdfReportService pdfReportService;
-    
     @Autowired
-    private NotificationService notificationService;
-
+    private NotificationServiceClient notificationServiceClient;
+  
     // Couleurs pour le design des rapports
     private static final DeviceRgb PRIMARY_COLOR = new DeviceRgb(0, 90, 170);      // Bleu principal
     private static final DeviceRgb SECONDARY_COLOR = new DeviceRgb(70, 130, 180);  // Bleu secondaire
@@ -281,21 +278,20 @@ public class BassinServiceImpl implements BassinService {
     }
 
 
-
-@Transactional
-public Bassin mettreAJourQuantite(Long id, int quantite, String raison) {
-	 Bassin bassin = bassinRepository.findById(id)
-	            .orElseThrow(() -> new RuntimeException("Bassin non trouvé"));
-	    
-	    int nouveauStock = bassin.getStock() + quantite;
-	    
-	    if (nouveauStock < 0) {
-	        throw new IllegalArgumentException("La quantité ne peut pas rendre le stock négatif");
-	    }
+    @Transactional
+    public Bassin mettreAJourQuantite(Long id, int quantite, String raison) {
+        Bassin bassin = bassinRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Bassin non trouvé"));
+        
+        int nouveauStock = bassin.getStock() + quantite;
+        
+        if (nouveauStock < 0) {
+            throw new IllegalArgumentException("La quantité ne peut pas rendre le stock négatif");
+        }
         
         // Mise à jour du stock
         bassin.setStock(nouveauStock);
-
+        
         // Gestion automatique du statut SUR_COMMANDE
         if (nouveauStock == 0) {
             bassin.setStatut("SUR_COMMANDE");
@@ -307,19 +303,21 @@ public Bassin mettreAJourQuantite(Long id, int quantite, String raison) {
             
             // Notification
             Notification notification = new Notification();
+            notification.setTitle("Bassin en rupture de stock");
             notification.setMessage("⚠️ Le bassin " + bassin.getNomBassin() + 
                     " est maintenant sur commande. Durée de fabrication: " + 
                     bassin.getDureeFabricationDisplay());
             notification.setType("warning");
             notification.setDate(new Date());
             notification.setRead(false);
-            notificationRepository.save(notification);
+            notificationServiceClient.createNotification(notification);
         } else {
             bassin.setStatut("DISPONIBLE");
             bassin.setSurCommande(false);
             bassin.setDureeFabricationJoursMin(null);
             bassin.setDureeFabricationJoursMax(null);
         }
+        
         return bassinRepository.save(bassin);
     }
     
@@ -329,40 +327,40 @@ public Bassin mettreAJourQuantite(Long id, int quantite, String raison) {
         return calendar.getTime();
     }
     
-@Transactional
-public Bassin updateDureeFabrication(Long id, int dureeMin, int dureeMax) {
-    if (dureeMin <= 0 || dureeMax <= 0 || dureeMin > dureeMax) {
-        throw new IllegalArgumentException("La durée doit être une fourchette valide (min <= max)");
-    }
-    
-    Bassin bassin = bassinRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Bassin non trouvé"));
-    
-    // Autoriser la modification si le bassin est sur commande ou si le stock est à 0
-    if (bassin.getStock() == 0 && !"SUR_COMMANDE".equals(bassin.getStatut())) {
-        bassin.setStatut("SUR_COMMANDE");
-        bassin.setSurCommande(true);
-    }
-    
-    if (!"SUR_COMMANDE".equals(bassin.getStatut())) {
-        throw new IllegalStateException("La durée de fabrication ne peut être modifiée que pour les bassins sur commande");
-    }
-    
-    bassin.setDureeFabricationJoursMin(dureeMin);
-    bassin.setDureeFabricationJoursMax(dureeMax);
-    
-    // Notification
-    Notification notification = new Notification();
-    notification.setMessage("ℹ️ Durée de fabrication mise à jour pour " + bassin.getNomBassin() + 
-            ": " + bassin.getDureeFabricationDisplay());
-    notification.setType("info");
-    notification.setDate(new Date());
-    notification.setRead(false);
-    notificationRepository.save(notification);
-    
-    return bassinRepository.save(bassin);
-}
+    @Transactional
+    public Bassin updateDureeFabrication(Long id, int dureeMin, int dureeMax) {
+        if (dureeMin <= 0 || dureeMax <= 0 || dureeMin > dureeMax) {
+            throw new IllegalArgumentException("La durée doit être une fourchette valide (min <= max)");
+        }
+        
+        Bassin bassin = bassinRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Bassin non trouvé"));
+        
+        // Autoriser la modification si le bassin est sur commande ou si le stock est à 0
+        if (bassin.getStock() == 0 && !"SUR_COMMANDE".equals(bassin.getStatut())) {
+            bassin.setStatut("SUR_COMMANDE");
+            bassin.setSurCommande(true);
+        }
+        
+        if (!"SUR_COMMANDE".equals(bassin.getStatut())) {
+            throw new IllegalStateException("La durée de fabrication ne peut être modifiée que pour les bassins sur commande");
+        }
+        
+        bassin.setDureeFabricationJoursMin(dureeMin);
+        bassin.setDureeFabricationJoursMax(dureeMax);
+        
+        // Notification
+        Notification notification = new Notification();
+        notification.setMessage("ℹ️ Durée de fabrication mise à jour pour " + bassin.getNomBassin() + 
+                ": " + bassin.getDureeFabricationDisplay());
+        notification.setType("info");
+        notification.setDate(new Date());
+        notification.setRead(false);
+        notificationServiceClient.createNotification(notification);
 
+        
+        return bassinRepository.save(bassin);
+    }
 
     @Override
     public Bassin archiverBassin(Long id) {
@@ -384,10 +382,12 @@ public Bassin updateDureeFabrication(Long id, int dureeMin, int dureeMax) {
         notification.setType("success");
         notification.setDate(new Date());
         notification.setRead(false);
-        notificationRepository.save(notification);
+        notificationServiceClient.createNotification(notification);
+
         
         return bassinRepository.save(bassin);
     }
+    
     @Override
     public Bassin mettreSurCommande(Long id) {
         Bassin bassin = bassinRepository.findById(id)
@@ -408,10 +408,12 @@ public Bassin updateDureeFabrication(Long id, int dureeMin, int dureeMax) {
         notification.setType("info");
         notification.setDate(new Date());
         notification.setRead(false);
-        notificationRepository.save(notification);
+        notificationServiceClient.createNotification(notification);
+
         
         return bassinRepository.save(bassin);
     }
+    
     @Override
     public List<Bassin> getBassinsNonArchives() {
         return bassinRepository.findByArchiveFalse();
@@ -434,7 +436,8 @@ public Bassin updateDureeFabrication(Long id, int dureeMin, int dureeMax) {
                 notification.setType("warning"); // Set notification type
                 notification.setDate(new Date());
                 notification.setRead(false);
-                notificationRepository.save(notification);
+                notificationServiceClient.createNotification(notification);
+
             }
         }
     }
@@ -501,14 +504,14 @@ public Bassin updateDureeFabrication(Long id, int dureeMin, int dureeMax) {
             notification.setType("warning");
             notification.setDate(new Date());
             notification.setRead(false);
-            notificationService.createNotification(notification);
+            notificationServiceClient.createNotification(notification);
         } else if (bassin.getStock() == 0) {
             Notification notification = new Notification();
             notification.setMessage("🚫 RUPTURE DE STOCK: " + bassin.getNomBassin());
             notification.setType("danger");
             notification.setDate(new Date());
             notification.setRead(false);
-            notificationService.createNotification(notification);
+            notificationServiceClient.createNotification(notification);
         }
         
         return bassinRepository.save(bassin);
@@ -1830,8 +1833,7 @@ public Bassin mettreSurCommande(Long id, Integer dureeFabricationJours) {
     notification.setType("info");
     notification.setDate(new Date());
     notification.setRead(false);
-    notificationRepository.save(notification);
-
+    notificationServiceClient.createNotification(notification);
     return bassinRepository.save(bassin);
 }
 @Override
@@ -1877,7 +1879,7 @@ public Bassin updateDureeFabrication(Long id, Integer dureeMin, Integer dureeMax
     notification.setType("info");
     notification.setDate(new Date());
     notification.setRead(false);
-    notificationRepository.save(notification);
+    notificationServiceClient.createNotification(notification);
     
     return bassinRepository.save(bassin);
 }

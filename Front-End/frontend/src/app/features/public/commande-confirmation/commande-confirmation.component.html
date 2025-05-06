@@ -1,0 +1,122 @@
+<!-- commande-confirmation.component.html -->
+<div class="confirmation-container">
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement des détails de votre commande...</p>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="error && !loading" class="error-container">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h2>Oups ! Une erreur est survenue</h2>
+    <p>{{ error }}</p>
+    <div class="button-container">
+      <button class="retry-button" (click)="retryLoading()">Réessayer</button>
+      <button class="home-button" (click)="retourAccueil()">Retour à l'accueil</button>
+    </div>
+  </div>
+
+  <!-- Success state -->
+  <div *ngIf="commande && !loading && !error" class="success-container">
+    <div class="success-icon">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <h1>Merci pour votre commande !</h1>
+    <p class="confirmation-subtitle">Votre commande a été reçue et est en cours de traitement.</p>
+    
+    <div class="order-details">
+      <h2>Détails de la commande</h2>
+      <div class="order-info">
+        <div class="info-row">
+          <span class="label">Numéro de commande:</span>
+          <span class="value">{{ commande.numeroCommande }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Date:</span>
+          <span class="value">{{ commande.dateCreation | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Statut:</span>
+          <span class="value status" [ngClass]="{'confirmed': commande.statut === 'VALIDEE'}">
+            {{ commande.statut === 'VALIDEE' ? 'Confirmée' : commande.statut }}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="label">Mode de livraison:</span>
+          <span class="value">{{ commande.modeLivraison === 'STANDARD' ? 'Standard' : commande.modeLivraison }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Adresse:</span>
+          <span class="value">
+            {{ commande.adresseLivraison }}<br>
+            {{ commande.codePostal }} {{ commande.ville }}<br>
+            {{ commande.pays }}
+          </span>
+        </div>
+      </div>
+
+      <h3>Articles commandés</h3>
+      <div class="order-items">
+        <div *ngFor="let ligne of commande.lignesCommande" class="order-item">
+          <div class="item-image">
+            <img [src]="ligne.imageUrl || '/assets/img/product-placeholder.jpg'" [alt]="ligne.nomProduit">
+          </div>
+          <div class="item-details">
+            <h4>{{ ligne.nomProduit }}</h4>
+            <p class="item-description">{{ ligne.description }}</p>
+            <div class="item-customizations" *ngIf="ligne.materiauSelectionne || ligne.dimensionSelectionnee || ligne.couleurSelectionnee">
+              <span *ngIf="ligne.materiauSelectionne" class="customization">
+                Matériau: {{ ligne.materiauSelectionne }}
+              </span>
+              <span *ngIf="ligne.dimensionSelectionnee" class="customization">
+                Dimension: {{ ligne.dimensionSelectionnee }}
+              </span>
+              <span *ngIf="ligne.couleurSelectionnee" class="customization">
+                Couleur: {{ ligne.couleurSelectionnee }}
+              </span>
+            </div>
+            <div class="accessoires" *ngIf="ligne.accessoires && ligne.accessoires.length > 0">
+              <h5>Accessoires:</h5>
+              <ul>
+                <li *ngFor="let acc of ligne.accessoires">
+                  {{ acc.nomAccessoire }} - {{ acc.prixAccessoire | currency:'EUR' }}
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="item-price">
+            <div class="quantity">{{ ligne.quantite }} x {{ ligne.prixUnitaire | currency:'EUR' }}</div>
+            <div class="total">{{ ligne.prixTotal | currency:'EUR' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="order-summary">
+        <div class="summary-row">
+          <span>Sous-total:</span>
+          <span>{{ commande.montantTotal | currency:'EUR' }}</span>
+        </div>
+        <div class="summary-row">
+          <span>TVA (19%):</span>
+          <span>{{ commande.montantTVA | currency:'EUR' }}</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total:</span>
+          <span>{{ commande.montantTotalTTC | currency:'EUR' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="next-steps">
+      <p>Un email de confirmation a été envoyé à {{ commande.emailClient }}.</p>
+      <p>Vous pouvez suivre l'état de votre commande depuis votre compte dans la section "Mes commandes".</p>
+    </div>
+
+    <div class="button-container">
+      <button class="home-button" (click)="retourAccueil()">Continuer vos achats</button>
+    </div>
+  </div>
+</div>

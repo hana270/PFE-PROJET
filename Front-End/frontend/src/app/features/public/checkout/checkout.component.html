@@ -1,0 +1,327 @@
+<!-- checkout.component.html -->
+<div class="container mx-auto p-4">
+  <div class="max-w-5xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+    <!-- Header -->
+    <div class="bg-blue-600 text-white p-4">
+      <h1 class="text-2xl font-bold">Finaliser votre commande</h1>
+    </div>
+
+    <!-- Progress steps -->
+    <div class="flex justify-between p-4 border-b">
+      <div class="flex flex-col items-center">
+        <div [ngClass]="{'bg-blue-600 text-white': currentStep === 'info' || currentStep === 'bassin-details' || currentStep === 'delivery', 'bg-gray-300': currentStep !== 'info' && currentStep !== 'bassin-details' && currentStep !== 'delivery'}" 
+             class="w-10 h-10 rounded-full flex items-center justify-center font-bold">1</div>
+        <span class="mt-2 text-sm">Informations client</span>
+      </div>
+      
+      <div *ngIf="hasCustomOrSpecialOrderItems()" class="flex flex-col items-center">
+        <div [ngClass]="{'bg-blue-600 text-white': currentStep === 'bassin-details' || currentStep === 'delivery', 'bg-gray-300': currentStep !== 'bassin-details' && currentStep !== 'delivery'}" 
+             class="w-10 h-10 rounded-full flex items-center justify-center font-bold">2</div>
+        <span class="mt-2 text-sm">Détails bassins</span>
+      </div>
+      
+      <div class="flex flex-col items-center">
+        <div [ngClass]="{'bg-blue-600 text-white': currentStep === 'delivery', 'bg-gray-300': currentStep !== 'delivery'}" 
+             class="w-10 h-10 rounded-full flex items-center justify-center font-bold">{{ getDeliveryStepNumber() }}</div>
+        <span class="mt-2 text-sm">Livraison</span>
+      </div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div *ngIf="isLoading" class="flex justify-center items-center p-8">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Chargement...</span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div *ngIf="!isLoading" class="p-4">
+      <!-- Step 1: Client Information -->
+      <div *ngIf="currentStep === 'info'" class="animate__animated animate__fadeIn">
+        <h2 class="text-xl font-bold mb-4">Vos informations</h2>
+        
+        <form [formGroup]="clientInfoForm" (ngSubmit)="onSubmitClientInfo()">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+              <label for="lastName" class="block text-sm font-medium text-gray-700">Nom*</label>
+              <input type="text" id="lastName" formControlName="lastName" 
+                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
+                     [ngClass]="{'border-red-500': clientInfoForm.get('lastName')?.invalid && clientInfoForm.get('lastName')?.touched}">
+              <div *ngIf="clientInfoForm.get('lastName')?.invalid && clientInfoForm.get('lastName')?.touched" class="text-red-500 text-sm mt-1">
+                Nom requis
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="firstName" class="block text-sm font-medium text-gray-700">Prénom*</label>
+              <input type="text" id="firstName" formControlName="firstName" 
+                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
+                     [ngClass]="{'border-red-500': clientInfoForm.get('firstName')?.invalid && clientInfoForm.get('firstName')?.touched}">
+              <div *ngIf="clientInfoForm.get('firstName')?.invalid && clientInfoForm.get('firstName')?.touched" class="text-red-500 text-sm mt-1">
+                Prénom requis
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="email" class="block text-sm font-medium text-gray-700">Email*</label>
+              <input type="email" id="email" formControlName="email" 
+                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
+                     [ngClass]="{'border-red-500': clientInfoForm.get('email')?.invalid && clientInfoForm.get('email')?.touched}">
+              <div *ngIf="clientInfoForm.get('email')?.invalid && clientInfoForm.get('email')?.touched" class="text-red-500 text-sm mt-1">
+                Email valide requis
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="phone" class="block text-sm font-medium text-gray-700">Téléphone*</label>
+              <input type="tel" id="phone" formControlName="phone" 
+                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
+                     [ngClass]="{'border-red-500': clientInfoForm.get('phone')?.invalid && clientInfoForm.get('phone')?.touched}">
+              <div *ngIf="clientInfoForm.get('phone')?.invalid && clientInfoForm.get('phone')?.touched" class="text-red-500 text-sm mt-1">
+                Numéro de téléphone valide requis (8 chiffres)
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-6 flex justify-end">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Continuer
+            </button>
+          </div>
+        </form>
+      </div>
+      
+    <!-- Step 2: Bassin Details (only for custom or special order items) -->
+<div *ngIf="currentStep === 'bassin-details'" class="animate__animated animate__fadeIn">
+  <h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Configuration de votre commande</h2>
+  
+  <div class="space-y-6">
+    <div *ngFor="let item of cartItems" class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+      <div class="flex flex-col md:flex-row">
+        <!-- Image Section -->
+        <div class="md:w-1/3 p-4 bg-gray-50 flex items-center justify-center">
+          <img [src]="getImageUrl(item)" 
+                 [alt]="getItemName(item)" 
+                 (error)="onImageError($event)"
+                 class="img-fluid">
+                
+                </div>
+        
+        <!-- Details Section -->
+        <div class="md:w-2/3 p-6">
+          <div class="flex justify-between items-start">
+            <h3 class="text-xl font-semibold text-gray-800">{{ item.nomBassin }}</h3>
+            
+            <div class="flex space-x-2">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                    [ngClass]="{
+                      'bg-green-100 text-green-800': item.status === 'DISPONIBLE',
+                      'bg-orange-100 text-orange-800': item.status === 'SUR_COMMANDE',
+                      'bg-red-100 text-red-800': item.status === 'RUPTURE_STOCK'
+                    }">
+                {{ getBassinStatusLabel(item.status) }}
+              </span>
+              
+              <span *ngIf="item.isCustomized || item.status === 'SUR_COMMANDE'" 
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <i class="fas fa-clock mr-1"></i>
+                Délai: {{ item.dureeFabrication || item.customization?.dureeFabrication || '7' }} jours
+              </span>
+            </div>
+          </div>
+          
+          <p class="text-gray-600 mt-2">{{ item.description }}</p>
+          
+          <!-- Customization Details -->
+          <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Material -->
+            <div *ngIf="item.customization?.materiauSelectionne" class="bg-gray-50 p-3 rounded-lg">
+              <div class="flex justify-between items-center">
+                <div>
+                  <p class="text-sm font-medium text-gray-500">Matériau</p>
+                  <p class="font-semibold">{{ item.customization?.materiauSelectionne }}</p>
+                </div>
+                <span *ngIf="item.customization?.prixMateriau" class="text-sm font-medium text-blue-600">
+                  +{{ item.customization?.prixMateriau | currency:'EUR':'symbol':'1.2-2' }}
+                </span>
+              </div>
+            </div>
+            
+            <!-- Dimensions -->
+            <div *ngIf="item.customization?.dimensionSelectionnee" class="bg-gray-50 p-3 rounded-lg">
+              <div class="flex justify-between items-center">
+                <div>
+                  <p class="text-sm font-medium text-gray-500">Dimensions</p>
+                  <p class="font-semibold">{{ item.customization?.dimensionSelectionnee }}</p>
+                </div>
+                <span *ngIf="item.customization?.prixDimension" class="text-sm font-medium text-blue-600">
+                  +{{ item.customization?.prixDimension | currency:'EUR':'symbol':'1.2-2' }}
+                </span>
+              </div>
+            </div>
+            
+            <!-- Color -->
+            <div *ngIf="item.customization?.couleurSelectionnee" class="bg-gray-50 p-3 rounded-lg">
+              <div class="flex items-center">
+                <div>
+                  <p class="text-sm font-medium text-gray-500">Couleur</p>
+                  <div class="flex items-center mt-1">
+                    <span class="font-semibold mr-2">{{ item.customization?.couleurSelectionnee }}</span>
+                    <span class="inline-block w-4 h-4 rounded-full border border-gray-300" 
+                          [style.backgroundColor]="getColorPreview(item.customization?.couleurSelectionnee)"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Accessories -->
+          <div *ngIf="item.accessoires && item.accessoires.length > 0" class="mt-4">
+            <h4 class="text-sm font-medium text-gray-700 mb-2">Accessoires inclus:</h4>
+            <ul class="space-y-2">
+              <li *ngFor="let acc of item.accessoires" class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded">
+                <span class="text-sm">{{ acc.nomAccessoire }}</span>
+                <span class="text-sm font-medium text-blue-600">
+                  +{{ acc.prixAccessoire | currency:'EUR':'symbol':'1.2-2' }}
+                </span>
+              </li>
+            </ul>
+          </div>
+          
+          <!-- Price Summary -->
+          <div class="mt-6 pt-4 border-t border-gray-200">
+            <div class="flex justify-between items-center">
+              <div class="text-sm text-gray-600">
+                <span class="font-medium">Quantité:</span> {{ item.quantity }}
+              </div>
+              <div class="text-right">
+                <div class="text-xl font-bold text-gray-900">
+                  {{ item.effectivePrice * item.quantity | currency:'EUR':'symbol':'1.2-2' }}
+                </div>
+                <div *ngIf="item.promotionActive" class="text-xs text-green-600">
+                  Économie: {{ (item.prixOriginal - item.effectivePrice) * item.quantity | currency:'EUR':'symbol':'1.2-2' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Navigation Buttons -->
+  <div class="mt-8 flex justify-between border-t pt-6">
+    <button (click)="goBack()" class="flex items-center px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <i class="fas fa-arrow-left mr-2"></i>
+      Retour
+    </button>
+    <button (click)="onSubmitBassinDetails()" class="flex items-center px-5 py-2.5 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      Continuer vers la livraison
+      <i class="fas fa-arrow-right ml-2"></i>
+    </button>
+  </div>
+</div>
+    
+      <!-- Step 3: Delivery -->
+      <div *ngIf="currentStep === 'delivery'" class="animate__animated animate__fadeIn">
+        <h2 class="text-xl font-bold mb-4">Adresse de livraison</h2>
+        
+        <form [formGroup]="checkoutForm" (ngSubmit)="onSubmitDelivery()">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group md:col-span-2">
+              <label for="adresseLivraison" class="block text-sm font-medium text-gray-700">Adresse*</label>
+              <input type="text" id="adresseLivraison" formControlName="adresseLivraison" 
+                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
+                     [ngClass]="{'border-red-500': checkoutForm.get('adresseLivraison')?.invalid && checkoutForm.get('adresseLivraison')?.touched}">
+              <div *ngIf="checkoutForm.get('adresseLivraison')?.invalid && checkoutForm.get('adresseLivraison')?.touched" class="text-red-500 text-sm mt-1">
+                Adresse requise
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="codePostal" class="block text-sm font-medium text-gray-700">Code postal*</label>
+              <input type="text" id="codePostal" formControlName="codePostal" 
+                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
+                     [ngClass]="{'border-red-500': checkoutForm.get('codePostal')?.invalid && checkoutForm.get('codePostal')?.touched}">
+              <div *ngIf="checkoutForm.get('codePostal')?.invalid && checkoutForm.get('codePostal')?.touched" class="text-red-500 text-sm mt-1">
+                Code postal valide requis (4 chiffres)
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="ville" class="block text-sm font-medium text-gray-700">Ville*</label>
+              <input type="text" id="ville" formControlName="ville" 
+                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
+                     [ngClass]="{'border-red-500': checkoutForm.get('ville')?.invalid && checkoutForm.get('ville')?.touched}">
+              <div *ngIf="checkoutForm.get('ville')?.invalid && checkoutForm.get('ville')?.touched" class="text-red-500 text-sm mt-1">
+                Ville requise
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="region" class="block text-sm font-medium text-gray-700">Région*</label>
+              <select id="region" formControlName="region" 
+                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
+                      [ngClass]="{'border-red-500': checkoutForm.get('region')?.invalid && checkoutForm.get('region')?.touched}">
+                <option value="">Sélectionnez une région</option>
+                <option *ngFor="let region of regions" [value]="region">{{ region }}</option>
+              </select>
+              <div *ngIf="checkoutForm.get('region')?.invalid && checkoutForm.get('region')?.touched" class="text-red-500 text-sm mt-1">
+                Région requise
+              </div>
+            </div>
+            
+            <div class="form-group md:col-span-2">
+              <label for="commentaires" class="block text-sm font-medium text-gray-700">Commentaires (facultatif)</label>
+              <textarea id="commentaires" formControlName="commentaires" rows="3" 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label class="block text-sm font-medium text-gray-700">Mode de livraison*</label>
+              <div class="mt-2">
+                <div class="flex items-center bg-blue-50 p-3 rounded-md">
+                  <input type="radio" id="standard" value="STANDARD" formControlName="modeLivraison" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                  <label for="standard" class="ml-3 block text-sm font-medium text-gray-700">
+                    Livraison standard (20 DT)
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-6">
+            <h3 class="text-lg font-bold mb-3">Récapitulatif de la commande</h3>
+            <div class="border-t border-b py-3">
+              <div class="flex justify-between">
+                <span>Sous-total</span>
+                <span>{{ subtotal | currency:'EUR':'symbol':'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-between mt-2">
+                <span>TVA ({{ vatRate * 100 }}%)</span>
+                <span>{{ vatAmount | currency:'EUR':'symbol':'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-between mt-2">
+                <span>Frais de livraison</span>
+                <span>{{ shippingCost | currency:'EUR':'symbol':'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-between mt-3 font-bold text-lg">
+                <span>Total</span>
+                <span>{{ total | currency:'EUR':'symbol':'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-6 flex justify-between">
+            <button type="button" (click)="goBack()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+              Retour
+            </button>
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+              Procéder au paiement
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
